@@ -1,3 +1,4 @@
+//app/(super-admine)/schools/page.jsx
 'use client';
 
 import { useState, useEffect } from 'react'; // Import useEffect for data fetching/filtering
@@ -19,7 +20,7 @@ const ITEMS_PER_PAGE = 5;
 const SchoolsPage = () => {
   // Use a state variable for demoData to ensure re-renders when it changes
   const [data, setData] = useState({ schools: [], users: [], userSchools: [] });
-
+   const [currentDemoData, setCurrentDemoData] = useState(demoData);
   const [schoolsToDisplay, setSchoolsToDisplay] = useState([]); // This will hold the filtered and enriched schools
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState(null);
@@ -31,23 +32,32 @@ const SchoolsPage = () => {
   async function loadSchools() {
     try {
       const schools = await fetchSchools();
+      console.log(schools)
 
-      const formattedSchools = schools.map((school) => ({
-        id: school.id,
-        name: school.name,
-        email: school.email,
-        phone: school.phone,
-        address: school.address,
-        city: school.city,
-        isActive: school.isActive,
-        createdAt: school.createdAt,
-        establishmentCount: school.establishments.length,
-        admins: school.userSchools.map(us => us.user), // 👈 admins directement accessibles
-        adminName:
-          school.userSchools.find(us => us.user?.role === 'ADMIN')?.user?.fullname ?? 'N/A',
-      }));
+    const formattedSchools = schools.map((school) => ({
+  id: school.id,
+  name: school.name,
+  email: school.email,
+  phone: school.phone,
+  address: school.address,
+  city: school.city,
+  isActive: school.isActive,
+  createdAt: school.createdAt,
+  establishmentCount: school.establishmentCount,
+
+  // ✅ Utilise admins directement au lieu de userSchools.map(us => us.user)
+  admins: school.admins || [],
+
+  // ✅ Récupère le fullname du premier admin
+  adminName: school.admins?.[0]?.fullname ?? 'N/A',
+}));
+console.log("data stor dans state",formattedSchools);
 
       setData({ schools: formattedSchools });
+      setCurrentDemoData({ 
+      ...demoData, 
+      schools: formattedSchools 
+     });
     } catch (error) {
       toast.error("Erreur lors du chargement des écoles");
       console.error(error);

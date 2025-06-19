@@ -82,6 +82,13 @@ const LogInForm = () => {
 
     // ✅ Sauvegarder l'utilisateur dans le localStorage
     localStorage.setItem("user", JSON.stringify(result.user));
+    console.log(localStorage)
+     // ✅ Sauvegarde utilisateur + token
+    const { user, token } = result;
+
+    if (user && token) {
+      saveUser({ user, token }); // ← Appel à saveUser avec user et token
+    }
 
     toast.success("Connexion réussie");
 

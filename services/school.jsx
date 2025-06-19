@@ -1,7 +1,7 @@
 //file:services/school.jsx
 
-
 import axios from 'axios';
+import { getUser, getToken, isAuthenticated } from '@/utils/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -16,9 +16,11 @@ const axiosInstance = axios.create({
 // Intercepteur pour inclure le token automatiquement
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = getToken();
+     console.log("Token envoyé dans la requête :", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+
     }
     return config;
   },
@@ -54,4 +56,3 @@ export async function deleteSchool(id) {
   const response = await axiosInstance.delete(`/schools/${id}`);
   return response.status === 204 || response.status === 200;
 }
-

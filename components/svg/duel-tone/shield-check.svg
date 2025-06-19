@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Bouclier principal -->
+  <path opacity="0.35" d="M16 3L26 7.5V14.5C26 21 21.5 26.1 16 29C10.5 26.1 6 21 6 14.5V7.5L16 3Z" fill="currentColor"/>
+  
+  <!-- Check -->
+  <path fill="currentColor" d="M14.2 19.3L10.9 16C10.5 15.6 9.9 15.6 9.5 16C9.1 16.4 9.1 17 9.5 17.4L13.5 21.4C13.9 21.8 14.5 21.8 14.9 21.4L22.5 13.8C22.9 13.4 22.9 12.8 22.5 12.4C22.1 12 21.5 12 21.1 12.4L14.2 19.3Z"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Corps du bus -->
+  <rect x="4" y="8" width="24" height="14" rx="2" fill="currentColor" opacity="0.35" />
+  
+  <!-- Fenêtres du bus -->
+  <rect x="6" y="10" width="5" height="4" rx="0.5" fill="currentColor" opacity="0.5" />
+  <rect x="12" y="10" width="5" height="4" rx="0.5" fill="currentColor" opacity="0.5" />
+  <rect x="18" y="10" width="5" height="4" rx="0.5" fill="currentColor" opacity="0.5" />
+
+  <!-- Portière -->
+  <rect x="24" y="10" width="3" height="10" rx="0.5" fill="currentColor" />
+
+  <!-- Roues -->
+  <circle cx="9" cy="24" r="2" fill="currentColor" />
+  <circle cx="23" cy="24" r="2" fill="currentColor" />
+</svg>

@@ -1,0 +1,715 @@
+// pages/driver/DailyTripDetailsPage.jsx
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  demoData,
+  getDailyTripsForDriver,
+  getStudentsByTrip,
+  getStopsByRoute,
+  getAttendanceForDailyTripAndStudent,
+  updateDailyTripStatus,
+  addBusPosition,
+  getLatestBusPosition,
+  getTripById,
+} from '@/data/data';
+
+import { MarkAttendanceModal } from '../MarkAttendanceModal';
+import { ReportIncidentModal } from '../ReportIncidentModal';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Icon } from '@iconify/react';
+import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+// Import Leaflet components for the embedded map
+import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default Leaflet marker icons
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x.src,
+  iconUrl: markerIcon.src,
+  shadowUrl: markerShadow.src,
+});
+
+const MOCK_DRIVER_ID = 4;
+const TODAY_DATE_STRING = new Date().toISOString().split('T')[0];
+
+export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
+  const [currentDemoData, setCurrentDemoData] = useState(demoData);
+  const [dailyTrip, setDailyTrip] = useState(null);
+  const [studentsInTrip, setStudentsInTrip] = useState([]);
+  const [stopsInRoute, setStopsInRoute] = useState([]);
+  const [busPosition, setBusPosition] = useState(null);
+  const [isTrackingActive, setIsTrackingActive] = useState(false);
+  const [busTrackingInterval, setBusTrackingInterval] = useState(null);
+
+  // Modal states
+  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [attendanceModalStudentId, setAttendanceModalStudentId] = useState(null);
+  const [attendanceModalDailyTripId, setAttendanceModalDailyTripId] = useState(null);
+  const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] = useState(null);
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+
+  // Function to refresh the daily trip data and associated details
+  const refreshDailyTripData = useCallback(() => {
+    let primaryDailyTrip = null;
+
+    if (dailyTripId) {
+      const allDriverTrips = getDailyTripsForDriver(MOCK_DRIVER_ID, null);
+      primaryDailyTrip = allDriverTrips.find(dt => dt.id === dailyTripId);
+      if (!primaryDailyTrip) {
+        toast.error("Le trajet spécifié n'a pas été trouvé.");
+      }
+    } else {
+      const todayTrips = getDailyTripsForDriver(MOCK_DRIVER_ID, TODAY_DATE_STRING);
+      primaryDailyTrip = todayTrips.length > 0 ? todayTrips[0] : null;
+    }
+
+    setDailyTrip(primaryDailyTrip);
+    if (primaryDailyTrip) {
+      setStudentsInTrip(getStudentsByTrip(primaryDailyTrip.trip.id));
+      setStopsInRoute(getStopsByRoute(primaryDailyTrip.trip.route.id));
+      
+      // Get current bus position
+      const position = getLatestBusPosition(primaryDailyTrip.id);
+      setBusPosition(position);
+    } else {
+      setStudentsInTrip([]);
+      setStopsInRoute([]);
+      setBusPosition(null);
+    }
+  }, [dailyTripId]);
+
+  useEffect(() => {
+    refreshDailyTripData();
+  }, [refreshDailyTripData, demoData.incidents.length, demoData.attendances.length, demoData.dailyTrips.length]);
+
+  // Helper Functions
+  const getAttendanceStatusForStudent = useCallback((studentId) => {
+    if (!dailyTrip) return null;
+    const attendance = getAttendanceForDailyTripAndStudent(dailyTrip.id, studentId);
+    const departStatus = attendance.find(att => att.type === 'DEPART')?.status;
+    return departStatus || 'ABSENT';
+  }, [dailyTrip]);
+
+  const getAttendanceText = (status) => {
+    switch (status) {
+      case 'PRESENT': return 'Présent';
+      case 'ABSENT': return 'Absent';
+      case 'LATE': return 'En Retard';
+      default: return 'Non marqué';
+    }
+  };
+
+  const getAttendanceColor = (status) => {
+    switch (status) {
+      case 'PRESENT': return 'green';
+      case 'ABSENT': return 'red';
+      case 'LATE': return 'yellow';
+      default: return 'gray';
+    }
+  };
+
+  const getTripStatusColor = (s) => {
+    switch (s) {
+      case 'PLANNED': return 'blue';
+      case 'ONGOING': return 'yellow';
+      case 'COMPLETED': return 'green';
+      case 'CANCELED': return 'red';
+      default: return 'gray';
+    }
+  };
+
+  const getTripStatusText = (s) => {
+    switch (s) {
+      case 'PLANNED': return 'Planifié';
+      case 'ONGOING': return 'En cours';
+      case 'COMPLETED': return 'Terminé';
+      case 'CANCELED': return 'Annulé';
+      default: return 'Inconnu';
+    }
+  };
+
+  // Handlers
+  const handleUpdateTripStatus = (newStatus) => {
+    if (!dailyTrip) {
+      toast.error("Aucun trajet à mettre à jour.");
+      return;
+    }
+    
+    const updated = updateDailyTripStatus(dailyTrip.id, newStatus);
+    if (updated) {
+      refreshDailyTripData();
+      toast.success(`Statut du trajet mis à jour à "${getTripStatusText(newStatus)}"`);
+
+      if (newStatus === 'ONGOING') {
+        startSimulatedBusTracking(dailyTrip.id);
+      } else if (newStatus === 'COMPLETED' || newStatus === 'CANCELED') {
+        stopSimulatedBusTracking();
+      }
+      setCurrentDemoData({ ...demoData });
+    } else {
+      toast.error("Échec de la mise à jour du statut du trajet.");
+    }
+  };
+
+  const handleOpenAttendanceModal = (sId) => {
+    if (!dailyTrip) {
+      toast.error("Veuillez sélectionner un trajet quotidien avant de marquer la présence.");
+      return;
+    }
+    setAttendanceModalDailyTripId(dailyTrip.id);
+    setAttendanceModalStudentId(sId);
+    setAttendanceModalCurrentStatus(getAttendanceStatusForStudent(sId));
+    setIsAttendanceModalOpen(true);
+  };
+
+  const handleAttendanceMarked = () => {
+    refreshDailyTripData();
+    toast.success('Présence mise à jour!');
+    setCurrentDemoData({ ...demoData });
+  };
+
+  const handleOpenIncidentModal = () => {
+    if (!dailyTrip) {
+      toast.error("Aucun trajet à signaler un incident.");
+      return;
+    }
+    setIsIncidentModalOpen(true);
+  };
+
+  const handleIncidentReported = () => {
+    refreshDailyTripData();
+    toast.success('Incident signalé avec succès !');
+    setCurrentDemoData({ ...demoData });
+  };
+
+  const handleToggleTracking = () => {
+    if (!dailyTrip) {
+      toast.error("Veuillez sélectionner un trajet pour activer le suivi.");
+      return;
+    }
+
+    if (isTrackingActive) {
+      stopSimulatedBusTracking();
+    } else {
+      startSimulatedBusTracking(dailyTrip.id);
+    }
+  };
+
+  const startSimulatedBusTracking = (dtId) => {
+    if (busTrackingInterval) {
+      clearInterval(busTrackingInterval);
+    }
+
+    setIsTrackingActive(true);
+    const interval = setInterval(() => {
+      const currentPosition = getLatestBusPosition(dtId);
+      let newLat = currentPosition ? currentPosition.lat : 33.5898;
+      let newLng = currentPosition ? currentPosition.lng : -7.6116;
+
+      newLat += (Math.random() - 0.5) * 0.0001;
+      newLng += (Math.random() - 0.5) * 0.0001;
+
+      addBusPosition(dtId, newLat, newLng);
+      setBusPosition({ lat: newLat, lng: newLng });
+    }, 5000);
+
+    setBusTrackingInterval(interval);
+    toast.success("Suivi GPS activé !");
+  };
+
+  const stopSimulatedBusTracking = () => {
+    if (busTrackingInterval) {
+      clearInterval(busTrackingInterval);
+      setBusTrackingInterval(null);
+    }
+    setIsTrackingActive(false);
+    toast("Suivi GPS désactivé.");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (busTrackingInterval) {
+        clearInterval(busTrackingInterval);
+      }
+    };
+  }, [busTrackingInterval]);
+
+  if (!dailyTrip) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex items-center gap-4">
+          {onGoBackToDashboard && (
+            <Button onClick={onGoBackToDashboard} variant="ghost" size="icon">
+              <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+        <h1 className="text-3xl font-bold text-default-900">Mon Trajet du Jour</h1>
+            <p className="text-default-600">Détails du trajet actuel et actions.</p>
+          </div>
+        </div>
+        
+        <Card className="shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center h-[400px] text-center">
+            <Icon icon="heroicons:information-circle" className="h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">Aucun trajet assigné</h3>
+            <p className="text-gray-500">Vous n'avez pas de trajet assigné pour aujourd'hui.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { trip, displayDate, status } = dailyTrip;
+  const { name: tripName, bus, route } = trip || {};
+
+  // Determine map center for the Polyline
+  const polylinePositions = stopsInRoute.map(stop => [stop.lat, stop.lng]);
+  const mapInitialCenter = polylinePositions.length > 0 ? polylinePositions[0] : [33.5898, -7.6116];
+
+  // Calculate attendance statistics
+  const attendanceStats = studentsInTrip.reduce((stats, student) => {
+    const studentStatus = getAttendanceStatusForStudent(student.id);
+    stats[studentStatus] = (stats[studentStatus] || 0) + 1;
+    return stats;
+  }, {});
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {onGoBackToDashboard && (
+            <Button onClick={onGoBackToDashboard} variant="ghost" size="icon">
+              <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <h1 className="text-3xl font-bold text-default-900"> Mon Trajet du Jour</h1>
+            <p className="text-default-600">Gestion complète du trajet et des élèves</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={cn(
+            "text-sm font-medium",
+            status === 'ONGOING' ? 'text-green-600 border-green-600' : 
+            status === 'COMPLETED' ? 'text-blue-600 border-blue-600' :
+            status === 'CANCELED' ? 'text-red-600 border-red-600' :
+            'text-yellow-600 border-yellow-600'
+          )}>
+            <Icon icon="heroicons:signal" className="h-3 w-3 mr-1" />
+            {getTripStatusText(status)}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Icon icon="heroicons:users" className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Élèves</p>
+                <p className="text-2xl font-bold">{studentsInTrip.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Icon icon="heroicons:check-circle" className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Présents</p>
+                <p className="text-2xl font-bold">{attendanceStats.PRESENT || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Icon icon="heroicons:x-circle" className="h-5 w-5 text-red-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Absents</p>
+                <p className="text-2xl font-bold">{attendanceStats.ABSENT || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Icon icon="heroicons:map-pin" className="h-5 w-5 text-purple-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Arrêts</p>
+                <p className="text-2xl font-bold">{stopsInRoute.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <Card className="shadow-sm border border-gray-200">
+        <CardHeader className="pb-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
+                <Icon icon="heroicons:truck" className="h-6 w-6 text-blue-500" />
+                {tripName || 'N/A'}
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Date: {displayDate} | Bus: {bus?.plateNumber || 'N/A'} | Route: {route?.name || 'N/A'}
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              {status === 'PLANNED' && (
+                <Button onClick={() => handleUpdateTripStatus('ONGOING')} variant="default" size="sm">
+                  <Icon icon="heroicons:play" className="h-4 w-4 mr-2" /> Démarrer
+                </Button>
+              )}
+              {status === 'ONGOING' && (
+                <Button onClick={() => handleUpdateTripStatus('COMPLETED')} variant="default" size="sm">
+                  <Icon icon="heroicons:check" className="h-4 w-4 mr-2" /> Terminer
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+              <TabsTrigger value="students">Élèves</TabsTrigger>
+              <TabsTrigger value="route">Itinéraire</TabsTrigger>
+              <TabsTrigger value="tracking">Suivi GPS</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="p-6 space-y-6">
+              {/* Trip Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg text-default-700">Informations Bus</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
+                      <span className="text-sm font-medium">Plaque d'immatriculation</span>
+                      <span className="font-mono text-sm">{bus?.plateNumber || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
+                      <span className="text-sm font-medium">Marque</span>
+                      <span className="text-sm">{bus?.marque || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
+                      <span className="text-sm font-medium">Capacité</span>
+                      <span className="text-sm">{bus?.capacity || 'N/A'} places</span>
+            </div>
+            </div>
+          </div>
+
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg text-default-700">Informations Route</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
+                      <span className="text-sm font-medium">Nom de la route</span>
+                      <span className="text-sm">{route?.name || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
+                      <span className="text-sm font-medium">Nombre d'arrêts</span>
+                      <span className="text-sm">{stopsInRoute.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
+                      <span className="text-sm font-medium">Élèves assignés</span>
+                      <span className="text-sm">{studentsInTrip.length}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Quick Actions */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg text-default-700">Actions rapides</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <Button 
+                    onClick={handleToggleTracking} 
+                    variant={isTrackingActive ? "destructive" : "default"}
+                    className=" flex   gap-2"
+                  >
+                    <Icon icon="heroicons:map-pin" className="h-6 w-6" />
+                    {isTrackingActive ? 'Désactiver GPS' : 'Activer GPS'}
+                  </Button>
+                  <Button 
+                    onClick={handleOpenIncidentModal} 
+                    variant="outline"
+                    className="  flexb gap-2"
+                  >
+                    <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6" />
+                    Signaler Incident
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="students" className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg text-default-700">Liste des Élèves & Présence</h3>
+                  <Badge variant="outline">
+                    {studentsInTrip.length} élève{studentsInTrip.length > 1 ? 's' : ''}
+                  </Badge>
+                </div>
+                
+          {studentsInTrip.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                          <TableHead>Élève</TableHead>
+                    <TableHead>Classe</TableHead>
+                    <TableHead>Quartier</TableHead>
+                          <TableHead>Statut</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {studentsInTrip.map(student => {
+                    const studentAttendanceStatus = getAttendanceStatusForStudent(student.id);
+                    return (
+                      <TableRow key={student.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarFallback>{student.fullname.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium">{student.fullname}</span>
+                                </div>
+                              </TableCell>
+                        <TableCell>{student.class}</TableCell>
+                        <TableCell>{student.quartie}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="soft"
+                            color={getAttendanceColor(studentAttendanceStatus)}
+                            className="capitalize"
+                          >
+                            {getAttendanceText(studentAttendanceStatus)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenAttendanceModal(student.id)}
+                            className="text-primary-foreground bg-primary hover:bg-primary/90"
+                          >
+                            <Icon icon="heroicons:check-circle" className="h-4 w-4 mr-2" /> Marquer
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+                  <div className="text-center py-8">
+                    <Icon icon="heroicons:users" className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                    <p className="text-gray-500">Aucun élève assigné à ce trajet.</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="route" className="p-6">
+              <div className="space-y-6">
+                <h3 className="font-semibold text-lg text-default-700">Carte de l'Itinéraire</h3>
+                
+                {stopsInRoute.length > 0 ? (
+                  <div className="w-full h-[400px] rounded-md overflow-hidden border">
+                    <MapContainer
+                      center={mapInitialCenter}
+                      zoom={13}
+                      scrollWheelZoom={false}
+                      className="h-full w-full"
+                    >
+                      <TileLayer
+                        attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      {stopsInRoute.map((stop, index) => (
+                        <Marker key={stop.id} position={[stop.lat, stop.lng]}>
+                          <Popup>
+                            <div>
+                              <strong>Arrêt {index + 1}: {stop.name}</strong>
+                              <br />
+                              {stop.address}
+                            </div>
+                          </Popup>
+                        </Marker>
+                      ))}
+                      {polylinePositions.length > 1 && (
+                        <Polyline positions={polylinePositions} color="blue" weight={5} opacity={0.7} />
+                      )}
+                      {busPosition && (
+                        <Marker position={[busPosition.lat, busPosition.lng]} icon={new L.Icon({
+                          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                          iconSize: [25, 41],
+                          iconAnchor: [12, 41],
+                          popupAnchor: [1, -34],
+                          shadowSize: [41, 41]
+                        })}>
+                          <Popup>Position actuelle du bus</Popup>
+                        </Marker>
+                      )}
+                    </MapContainer>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Icon icon="heroicons:map" className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                    <p className="text-gray-500">Aucun arrêt pour afficher l'itinéraire.</p>
+                  </div>
+                )}
+
+                <Separator />
+
+                <h3 className="font-semibold text-lg text-default-700">Liste des Arrêts</h3>
+                {stopsInRoute.length > 0 ? (
+                  <div className="space-y-2">
+                    {stopsInRoute.map((stop, index) => (
+                      <div key={stop.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium">{stop.name}</p>
+                            <p className="text-sm text-muted-foreground">{stop.address}</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <Icon icon="heroicons:bell" className="h-4 w-4" />
+            </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Icon icon="heroicons:map-pin" className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                    <p className="text-gray-500">Aucun arrêt défini pour cette route.</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tracking" className="p-6">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg text-default-700">Suivi GPS en Temps Réel</h3>
+                  <Button 
+                    onClick={handleToggleTracking} 
+                    variant={isTrackingActive ? "destructive" : "default"}
+                    size="sm"
+                  >
+                    <Icon icon={isTrackingActive ? "heroicons:stop" : "heroicons:play"} className="h-4 w-4 mr-2" />
+                    {isTrackingActive ? 'Arrêter' : 'Démarrer'} le suivi
+            </Button>
+        </div>
+                
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon icon="heroicons:information-circle" className="h-5 w-5 text-blue-600" />
+                    <span className="font-medium text-blue-800">Statut du suivi</span>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    {isTrackingActive 
+                      ? "Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel."
+                      : "Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus."
+                    }
+                  </p>
+                </div>
+
+                {busPosition && (
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium">Latitude</p>
+                      <p className="text-lg font-mono">{busPosition.lat.toFixed(6)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Longitude</p>
+                      <p className="text-lg font-mono">{busPosition.lng.toFixed(6)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {!busPosition && (
+                  <div className="text-center py-8">
+                    <Icon icon="heroicons:map-pin" className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                    <p className="text-gray-500">Aucune position GPS disponible.</p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      {isAttendanceModalOpen && (
+        <MarkAttendanceModal
+          isOpen={isAttendanceModalOpen}
+          setIsOpen={setIsAttendanceModalOpen}
+          dailyTripId={dailyTrip.id}
+          studentId={attendanceModalStudentId}
+          currentStatus={attendanceModalCurrentStatus}
+          onAttendanceMarked={handleAttendanceMarked}
+          driverId={MOCK_DRIVER_ID}
+          initialDemoData={currentDemoData}
+        />
+      )}
+
+      {isIncidentModalOpen && (
+        <ReportIncidentModal
+          isOpen={isIncidentModalOpen}
+          setIsOpen={setIsIncidentModalOpen}
+          dailyTripId={dailyTrip?.id}
+          driverId={MOCK_DRIVER_ID}
+          onIncidentReported={handleIncidentReported}
+        />
+      )}
+    </div>
+  );
+};
+
+export default DailyTripDetailsPage;

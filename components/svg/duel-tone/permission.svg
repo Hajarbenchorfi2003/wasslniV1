@@ -1,0 +1,13 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Utilisateur -->
+  <path d="M16 16C19.3137 16 22 13.3137 22 10C22 6.68629 19.3137 4 16 4C12.6863 4 10 6.68629 10 10C10 13.3137 12.6863 16 16 16Z" 
+        fill="currentColor" opacity="0.8"/>
+  
+  <!-- Corps simplifié -->
+  <path d="M8 26C8 22.6863 11.134 20 15 20H17C20.866 20 24 22.6863 24 26V27C24 27.5523 23.5523 28 23 28H9C8.44772 28 8 27.5523 8 27V26Z" 
+        fill="currentColor" opacity="0.5"/>
+
+  <!-- Bouclier de permission -->
+  <path d="M26 12L24 13L22 12V17C22 18.6569 23.3431 20 25 20C26.6569 20 28 18.6569 28 17V12L26 13L26 12Z" 
+        fill="currentColor"/>
+</svg>

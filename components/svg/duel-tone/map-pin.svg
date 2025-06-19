@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Point de départ -->
+  <circle cx="8" cy="24" r="2" fill="currentColor"/>
+
+  <!-- Point d’arrivée -->
+  <circle cx="24" cy="8" r="2" fill="currentColor"/>
+
+  <!-- Chemin courbé -->
+  <path d="M8 24C12 16 20 16 24 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+</svg>

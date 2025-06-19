@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Toit de l'école -->
+  <path opacity="0.35" d="M16 4L4 12L6 13.5V24C6 25.1 6.9 26 8 26H24C25.1 26 26 25.1 26 24V13.5L28 12L16 4Z" fill="currentColor"/>
+
+  <!-- Bâtiment principal -->
+  <path d="M12 26V18H20V26H24C25.1 26 26 25.1 26 24V13.5L28 12L16 4L4 12L6 13.5V24C6 25.1 6.9 26 8 26H12Z" fill="currentColor"/>
+
+  <!-- Porte -->
+  <rect x="14" y="19" width="4" height="7" rx="1" fill="currentColor" opacity="0.5"/>
+</svg>

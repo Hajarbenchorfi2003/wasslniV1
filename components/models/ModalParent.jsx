@@ -1,0 +1,250 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChevronDown } from 'lucide-react';
+import Select from 'react-select';
+
+export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, parentStudents }) => {
+  const [formData, setFormData] = useState({
+    fullname: '',
+    email: '',
+    phone: '',
+    password: '',
+    cin: '',
+    isActive: true,
+    studentIds: [],
+  });
+
+  // Custom styles for react-select
+  const customStyles = {
+    control: (base, { isFocused }) => ({
+      ...base,
+      minHeight: '40px',
+      borderColor: isFocused ? 'hsl(var(--primary))' : 'hsl(var(--border))',
+      borderRadius: '0.5rem',
+      boxShadow: isFocused ? '0 0 0 1px hsl(var(--primary))' : 'none',
+      backgroundColor: 'hsl(var(--background))',
+      '&:hover': {
+        borderColor: 'hsl(var(--primary))'
+      }
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+      borderRadius: '0.5rem',
+      border: '1px solid hsl(var(--border))',
+      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+      backgroundColor: 'hsl(var(--popover))',
+      color: 'hsl(var(--popover-foreground))'
+    }),
+    option: (base, { isFocused, isSelected }) => ({
+      ...base,
+      backgroundColor: isFocused 
+        ? 'hsl(var(--accent))' 
+        : isSelected 
+          ? 'hsl(var(--primary))' 
+          : 'transparent',
+      color: isFocused 
+        ? 'hsl(var(--accent-foreground))' 
+        : isSelected 
+          ? 'hsl(var(--primary-foreground))' 
+          : 'hsl(var(--foreground))',
+      '&:active': {
+        backgroundColor: 'hsl(var(--primary))',
+        color: 'hsl(var(--primary-foreground))'
+      },
+      fontSize: '0.875rem',
+      padding: '0.375rem 0.5rem'
+    }),
+    multiValue: (base) => ({
+      ...base,
+      backgroundColor: 'hsl(var(--primary))',
+      color: 'hsl(var(--primary-foreground))',
+      borderRadius: '0.375rem'
+    }),
+    multiValueLabel: (base) => ({
+      ...base,
+      color: 'hsl(var(--primary-foreground))',
+      padding: '0.125rem 0.375rem'
+    }),
+    multiValueRemove: (base) => ({
+      ...base,
+      color: 'hsl(var(--primary-foreground))',
+      ':hover': {
+        backgroundColor: 'hsl(var(--primary)/0.8)',
+        color: 'hsl(var(--primary-foreground))'
+      }
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: 'hsl(var(--muted-foreground))'
+    }),
+    dropdownIndicator: (base) => ({
+      ...base,
+      color: 'hsl(var(--muted-foreground))',
+      padding: '0.5rem'
+    }),
+    clearIndicator: (base) => ({
+      ...base,
+      color: 'hsl(var(--muted-foreground))',
+      padding: '0.5rem'
+    }),
+    indicatorSeparator: (base) => ({
+      ...base,
+      backgroundColor: 'hsl(var(--border))'
+    }),
+    input: (base) => ({
+      ...base,
+      color: 'hsl(var(--foreground))'
+    })
+  };
+
+  useEffect(() => {
+    if (editingParent) {
+      const linkedStudentIds = parentStudents
+        .filter(ps => ps.parentId === editingParent.id)
+        .map(ps => ps.studentId);
+
+      setFormData({
+        fullname: editingParent.fullname || '',
+        email: editingParent.email || '',
+        phone: editingParent.phone || '',
+        password: '',
+        cin: editingParent.cin || '',
+        isActive: editingParent.isActive !== undefined ? editingParent.isActive : true,
+        studentIds: linkedStudentIds,
+      });
+    } else {
+      setFormData({
+        fullname: '',
+        email: '',
+        phone: '',
+        password: '',
+        cin: '',
+        isActive: true,
+        studentIds: [],
+      });
+    }
+  }, [editingParent, parentStudents]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleStudentsSelectChange = (selectedOptions) => {
+    const newStudentIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
+    setFormData(prev => ({
+      ...prev,
+      studentIds: newStudentIds
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const studentOptions = students.map(student => ({
+    value: student.id,
+    label: student.fullname,
+  }));
+
+  const selectedReactSelectOptions = studentOptions.filter(option =>
+    formData.studentIds.includes(option.value)
+  );
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader className="p-2">
+          <DialogTitle className="text-base font-medium text-default-700">
+            {editingParent ? 'Modifier le Parent' : 'Ajouter un nouveau Parent'}
+          </DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="h-[70vh] px-2">
+          <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="fullname" className="text-right">Nom Complet</Label>
+              <Input id="fullname" name="fullname" value={formData.fullname} onChange={handleChange} className="col-span-3" required />
+            </div>
+            <div>
+              <Label htmlFor="email" className="text-right">Email</Label>
+              <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} className="col-span-3" required />
+            </div>
+            <div>
+              <Label htmlFor="phone" className="text-right">Téléphone</Label>
+              <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div>
+              <Label htmlFor="cin" className="text-right">CIN</Label>
+              <Input id="cin" name="cin" value={formData.cin} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div>
+              <Label htmlFor="password" className="text-right">Mot de passe</Label>
+              <Input 
+                id="password" 
+                name="password" 
+                type="password" 
+                value={formData.password} 
+                onChange={handleChange} 
+                className="col-span-3"
+                placeholder={editingParent ? "Laisser vide pour ne pas changer" : "Saisir un mot de passe"} 
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="isActive"
+                name="isActive"
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+              />
+              <Label htmlFor="isActive">Actif</Label>
+            </div>
+
+            {/* Student Multi-Selection with react-select */}
+            {students && students.length > 0 && (
+              <div>
+                <Label className="text-right mt-2">Enfants Associés</Label>
+                <Select
+                  isMulti
+                  name="students"
+                  options={studentOptions}
+                  placeholder="Sélectionner des enfants..."
+                  noOptionsMessage={() => "Aucun enfant trouvé."}
+                  value={selectedReactSelectOptions}
+                  onChange={handleStudentsSelectChange}
+                  styles={customStyles}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  components={{
+                    DropdownIndicator: () => <ChevronDown className="h-5 w-5 stroke-default-600" />
+                  }}
+                />
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button type="submit">Sauvegarder</Button>
+            </DialogFooter>
+          </form>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+};

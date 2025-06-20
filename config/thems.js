@@ -620,8 +620,8 @@ export const themes = [
     name: "yellow",
     label: "Yellow",
     activeColor: {
-      light: "47.9 95.8% 53.1%",
-      dark: "47.9 95.8% 53.1%",
+      light: "43 65% 48%", // Bon contraste avec #fff
+      dark: "43 65% 48%",  // Même teinte pour cohérence
     },
     cssVars: {
       light: {
@@ -631,8 +631,8 @@ export const themes = [
         "card-foreground": "20 14.3% 4.1%",
         popover: "0 0% 100%",
         "popover-foreground": "20 14.3% 4.1%",
-        primary: "47.9 95.8% 53.1%",
-        "primary-foreground": "26 83.3% 14.1%",
+        primary: "43 65% 48%",
+        "primary-foreground": "0 0% 100%",
         secondary: "60 4.8% 95.9%",
         "secondary-foreground": "24 9.8% 10%",
         muted: "60 4.8% 95.9%",
@@ -643,12 +643,12 @@ export const themes = [
         "destructive-foreground": "60 9.1% 97.8%",
         border: "20 5.9% 90%",
         input: "20 5.9% 90%",
-        ring: "20 14.3% 4.1%",
+        ring: "43 65% 48%",
         radius: "0.95rem",
-        warning: "25 95% 53%",
+        warning: "43 65% 48%",
         success: "142 71% 45%",
         info: "189 94% 43%",
-        chartGird: "20 5.9% 90%",
+        chartGrid: "20 5.9% 90%",
         chartLabel: "33.3 5.5% 32.4%",
       },
       dark: {
@@ -658,8 +658,8 @@ export const themes = [
         "card-foreground": "60 9.1% 97.8%",
         popover: "20 14.3% 4.1%",
         "popover-foreground": "60 9.1% 97.8%",
-        primary: "47.9 95.8% 53.1%",
-        "primary-foreground": "26 83.3% 14.1%",
+        primary: "43 65% 48%",
+        "primary-foreground": "0 0% 100%", // corrigé pour lisibilité
         secondary: "12 6.5% 15.1%",
         "secondary-foreground": "60 9.1% 97.8%",
         muted: "12 6.5% 15.1%",
@@ -670,15 +670,16 @@ export const themes = [
         "destructive-foreground": "60 9.1% 97.8%",
         border: "12 6.5% 15.1%",
         input: "12 6.5% 15.1%",
-        ring: "35.5 91.7% 32.9%",
-        warning: "15.3, 74.6%, 27.8%",
+        ring: "43 65% 48%",
+        warning: "43 65% 48%",
         success: "143.8 61.2% 20.2%",
         info: "196.4 63.6% 23.7%",
-        chartGird: "30 6.3% 25.1%",
+        chartGrid: "30 6.3% 25.1%",
         chartLabel: "24 5.4% 63.9%",
       },
     },
-  },
+  }
+  ,
   {
     name: "violet",
     label: "Violet",

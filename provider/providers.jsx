@@ -13,21 +13,44 @@ const Providers = ({ children }) => {
   const { theme, radius } = useThemeStore();
   const location = usePathname();
 
+  if (location === "/") {
+    return (
+      <body className={cn("wasslni ", inter.className)}>
+        <ThemeProvider
+          attribute="class"
+          enableSystem={false}
+          defaultTheme="light"
+        >
+          <div className={cn("h-full  ")}>
+            {children}
+            <ReactToaster />
+          </div>
+          <Toaster />
+          <SonnToaster />
+        </ThemeProvider>
+      </body>
+    );
+  }
   return (
-    <div className={cn("wasslni", inter.className, "theme-" + theme)}>
+    <body
+      className={cn("wasslni ", inter.className, "theme-" + theme)}
+      style={{
+        "--radius": `${radius}rem`,
+      }}
+    >
       <ThemeProvider
         attribute="class"
         enableSystem={false}
         defaultTheme="light"
       >
-        <div className={cn("h-full")}>
+        <div className={cn("h-full  ")}>
           {children}
           <ReactToaster />
         </div>
         <Toaster />
         <SonnToaster />
       </ThemeProvider>
-    </div>
+    </body>
   );
 };
 

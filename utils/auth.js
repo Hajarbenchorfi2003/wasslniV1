@@ -1,18 +1,22 @@
-import axios from 'axios';
+//utils/auth.js
+ import axios from 'axios';
 
 // Récupérer l'utilisateur depuis le localStorage
 export const getUser = () => {
-  if (typeof window !== 'undefined') {
-    try {
-      const user = localStorage.getItem('user');
-      if (!user || user === 'undefined' || user === 'null') return null;
-      return JSON.parse(user);
-    } catch (err) {
-      console.error('❌ Failed to parse user from localStorage:', err);
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const userStr = localStorage.getItem('user');
+
+    if (!userStr || userStr === 'undefined' || userStr === 'null') {
       return null;
     }
+
+    return JSON.parse(userStr);
+  } catch (err) {
+    console.error('❌ Failed to parse user from localStorage:', err);
+    return null;
   }
-  return null;
 };
 
 // Sauvegarder l'utilisateur et le token dans le localStorage

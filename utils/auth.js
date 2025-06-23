@@ -1,18 +1,22 @@
+// utils/auth.js
 import axios from 'axios';
 
 // Récupérer l'utilisateur depuis le localStorage
 export const getUser = () => {
-  if (typeof window !== 'undefined') {
-    try {
-      const user = localStorage.getItem('user');
-      if (!user || user === 'undefined' || user === 'null') return null;
-      return JSON.parse(user);
-    } catch (err) {
-      console.error('❌ Failed to parse user from localStorage:', err);
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const userStr = localStorage.getItem('user');
+
+    if (!userStr || userStr === 'undefined' || userStr === 'null') {
       return null;
     }
+
+    return JSON.parse(userStr);
+  } catch (err) {
+    console.error('❌ Failed to parse user from localStorage:', err);
+    return null;
   }
-  return null;
 };
 
 // Sauvegarder l'utilisateur et le token dans le localStorage
@@ -51,7 +55,6 @@ export const getToken = () => {
 
 // Service d'authentification avec API backend
 export const authAPI = {
-  // ✅ Connexion à l'API : http://localhost:5000/api/user/login
   async login(email, password) {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_SITE_URL}/user/login`, {
@@ -108,7 +111,7 @@ export const userAPI = {
   async getProfile() {
     try {
       const token = getToken();
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SITE_URL}/api/user/voirmonprofil`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_SITE_URL}/user/voirmonprofil`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
@@ -121,7 +124,7 @@ export const userAPI = {
   async updateProfile(userData) {
     try {
       const token = getToken();
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/api/user/voirmonprofil`, userData, {
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/voirmonprofil`, userData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;

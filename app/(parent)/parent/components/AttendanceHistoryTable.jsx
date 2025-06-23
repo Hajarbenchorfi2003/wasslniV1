@@ -12,8 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-export const AttendanceHistoryTable = ({ student, attendanceHistory }) => {
-  // Determine if we are showing a consolidated view ("Tous les enfants")
+export const AttendanceHistoryTable = ({ student, attendanceHistory = [] }) => {
   const isConsolidatedView = student?.fullname === "Tous les enfants";
 
   const getAttendanceColor = (status) => {
@@ -34,8 +33,16 @@ export const AttendanceHistoryTable = ({ student, attendanceHistory }) => {
     }
   };
 
-  // Calculate colspan dynamically based on whether "Enfant" column is present
-  const colSpanValue = isConsolidatedView ? 5 : 4; // 5 columns if 'Enfant' is shown, 4 otherwise
+  const getTypeText = (type) => {
+    switch (type) {
+      case 'DECLARED_ABSENCE': return 'Absence déclarée';
+      case 'DEPART': return 'Départ';
+      case 'RETURN': return 'Retour';
+      default: return type;
+    }
+  };
+
+  const colSpanValue = isConsolidatedView ? 5 : 4;
 
   return (
     <Card className="shadow-sm h-full flex flex-col">
@@ -51,7 +58,6 @@ export const AttendanceHistoryTable = ({ student, attendanceHistory }) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {/* Conditionally render 'Enfant' TableHead */}
                   {isConsolidatedView && (
                     <TableHead className="min-w-[120px]">Enfant</TableHead>
                   )}
@@ -62,26 +68,41 @@ export const AttendanceHistoryTable = ({ student, attendanceHistory }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {attendanceHistory.length > 0 ? (
+                {Array.isArray(attendanceHistory) && attendanceHistory.length > 0 ? (
                   attendanceHistory.map(record => (
                     <TableRow key={record.id}>
-                      {/* Conditionally render 'Enfant' TableCell */}
                       {isConsolidatedView && (
-                        <TableCell className="font-medium text-default-800">{record.childName || 'N/A'}</TableCell>
+                        <TableCell className="font-medium text-default-800">
+                           {record.studentName || 'N/A'}
+                        </TableCell>
                       )}
-                      <TableCell>{record.dailyTripDate}</TableCell>
-                      <TableCell className="capitalize">{record.type === 'DEPART' ? 'Départ' : 'Retour'}</TableCell>
+                      <TableCell>
+                        {record.dailyTrip?.date ? 
+                          new Date(record.dailyTrip.date).toLocaleDateString('fr-FR') : 
+                          'Date non disponible'
+                        }
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {getTypeText(record.type)}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="soft" color={getAttendanceColor(record.status)} className="capitalize">
                           {getAttendanceText(record.status)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{record.timestampFormatted}</TableCell>
+                      <TableCell>
+                        {new Date(record.timestamp).toLocaleString('fr-FR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    {/* Use the dynamically calculated colSpanValue */}
                     <TableCell colSpan={colSpanValue} className="h-24 text-center text-muted-foreground">
                       Aucun historique de présence trouvé.
                     </TableCell>

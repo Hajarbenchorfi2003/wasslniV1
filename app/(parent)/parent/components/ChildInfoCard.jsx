@@ -1,16 +1,26 @@
-// components/parent/ChildInfoCard.jsx
+"use client";
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus, onReportAttendance }) => {
-  const { fullname, class: studentClass, quartie, address } = child;
-  const { trip, bus, route, driver, displayDate, status } = dailyTripDetails || {};
+  const { fullname, class: studentClass, quartie } = child || {};
+  console.log("dailyTripDetails:", dailyTripDetails);
+
+  // EXTRAIT LES DONNÉES DE TRIP DE dailyTripDetails
+  const trip = dailyTripDetails ?? null;
+  const status = trip?.status ?? null;
+  const bus = trip?.bus ?? null;
+  const driver = trip?.driver ?? null;
+  const route = trip?.route ?? null;
+
+  // Comme tu n'as pas de "displayDate" dans ton JSON, tu peux choisir d'afficher la date actuelle ou rien
+  // Ici, exemple d'affichage statique pour départ prévu
+  const displayDate = "À définir";
 
   const getTripStatusColor = (s) => {
     switch (s) {
@@ -33,13 +43,12 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
   };
 
   const getChildStatus = () => {
-    if (!dailyTripDetails) return { status: 'NO_TRIP', text: 'Pas de trajet', color: 'gray' };
-    
+    if (!trip) return { text: 'Pas de trajet', color: 'gray' };
     switch (status) {
-      case 'ONGOING': return { status: 'ON_BUS', text: 'Dans le bus', color: 'green' };
-      case 'COMPLETED': return { status: 'ARRIVED', text: 'Arrivé', color: 'blue' };
-      case 'PLANNED': return { status: 'WAITING', text: 'En attente', color: 'yellow' };
-      default: return { status: 'UNKNOWN', text: 'Inconnu', color: 'gray' };
+      case 'ONGOING': return { text: 'Dans le bus', color: 'green' };
+      case 'COMPLETED': return { text: 'Arrivé', color: 'blue' };
+      case 'PLANNED': return { text: 'En attente', color: 'yellow' };
+      default: return { text: 'Inconnu', color: 'gray' };
     }
   };
 
@@ -50,17 +59,17 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
       <CardHeader className="py-4 px-6">
         <div className="flex items-center justify-between">
           <div>
-        <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
+            <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {fullname.charAt(0)}
+                  {fullname?.charAt(0) || "?"}
                 </AvatarFallback>
               </Avatar>
-              {fullname}
-        </CardTitle>
+              {fullname || "Nom inconnu"}
+            </CardTitle>
             <CardDescription className="text-sm text-default-600 mt-1">
-              <span className="font-medium">Classe:</span> {studentClass} &bull; <span className="font-medium">Quartier:</span> {quartie}
-        </CardDescription>
+              <span className="font-medium">Classe:</span> {studentClass || "N/A"} &bull; <span className="font-medium">Quartier:</span> {quartie || "N/A"}
+            </CardDescription>
           </div>
           <Badge variant="soft" color={childStatus.color} className="capitalize">
             {childStatus.text}
@@ -69,7 +78,7 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
       </CardHeader>
 
       <CardContent className="p-6">
-        {dailyTripDetails ? (
+        {trip ? (
           <>
             {/* Bus and Driver Information */}
             <div className="mb-6">
@@ -83,8 +92,8 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
                   <div className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
                     <Icon icon="heroicons:truck" className="h-6 w-6 text-blue-600" />
                     <div>
-                      <p className="font-semibold text-blue-900">{trip.bus?.plateNumber || 'N/A'}</p>
-                      <p className="text-sm text-blue-700">{trip.bus?.marque || 'N/A'} - {trip.bus?.modele || 'N/A'}</p>
+                      <p className="font-semibold text-blue-900">{bus?.plateNumber || 'N/A'}</p>
+                      <p className="text-sm text-blue-700">{bus?.marque || 'N/A'} - {bus?.capacity  || 'N/A'}</p>
                     </div>
                   </div>
                   
@@ -92,12 +101,12 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
                   <div className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-green-600 text-white">
-                        {trip.driver?.fullname?.charAt(0) || 'C'}
+                        {driver?.fullname?.charAt(0) || 'C'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold text-green-900">{trip.driver?.fullname || 'N/A'}</p>
-                      <p className="text-sm text-green-700">{trip.driver?.phone || 'N/A'}</p>
+                      <p className="font-semibold text-green-900">{driver?.fullname || 'N/A'}</p>
+                      <p className="text-sm text-green-700">{driver?.email || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -108,14 +117,14 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
                     <Icon icon="heroicons:map" className="h-6 w-6 text-purple-600" />
                     <div>
                       <p className="font-semibold text-purple-900">{trip?.name || 'N/A'}</p>
-                      <p className="text-sm text-purple-700">{trip.route?.name || 'N/A'}</p>
+                      <p className="text-sm text-purple-700">{route?.name || 'N/A'}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
                     <Icon icon="heroicons:clock" className="h-6 w-6 text-orange-600" />
                     <div>
-                      <p className="font-semibold text-orange-900">{displayDate || 'N/A'}</p>
+                      <p className="font-semibold text-orange-900">{displayDate}</p>
                       <p className="text-sm text-orange-700">Départ prévu</p>
                     </div>
                   </div>
@@ -126,7 +135,7 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
             <Separator className="my-6 bg-gray-200" />
 
             {/* Route Stops */}
-            {route?.stops && route.stops.length > 0 && (
+            {route && route.stops && route.stops.length > 0 ? (
               <div className="mb-6">
                 <h3 className="font-semibold text-lg text-default-800 mb-3 flex items-center gap-2">
                   <Icon icon="heroicons:map-pin" className="h-5 w-5 text-indigo-500" />
@@ -156,6 +165,8 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
                   ))}
                 </div>
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-6">Aucun arrêt disponible pour ce trajet.</p>
             )}
 
             <Separator className="my-6 bg-gray-200" />
@@ -194,7 +205,7 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row justify-end gap-3">
               <Button 
-                onClick={() => onReportAttendance(child.id, dailyTripDetails.id)} 
+                onClick={() => onReportAttendance(child.id, trip?.id)}
                 variant="outline" 
                 className="text-orange-500 border-orange-500 hover:bg-orange-50 hover:text-orange-600"
               >

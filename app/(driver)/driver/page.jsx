@@ -1,7 +1,8 @@
 // pages/driver/DriverDashboardPage.jsx
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { driverService } from '@/services/driverService';
+import driverService  from '@/services/driverService';
+
 import { AssignedTripsList } from './AssignedTripsList';
 import { MarkAttendanceModal } from './MarkAttendanceModal';
 import { ReportIncidentModal } from './ReportIncidentModal';
@@ -40,6 +41,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x.src,
@@ -51,7 +53,6 @@ const ITEMS_PER_PAGE = 5;
 
 export default function DriverDashboardPage() {
   const [driver, setDriver] = useState(null);
- 
   const [dailyTrips, setDailyTrips] = useState([]);
   const [selectedDailyTrip, setSelectedDailyTrip] = useState(null);
   const [studentsInSelectedTrip, setStudentsInSelectedTrip] = useState([]);
@@ -77,7 +78,7 @@ export default function DriverDashboardPage() {
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] =
     useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
-
+ 
   // Load driver & trips on mount
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -88,8 +89,10 @@ export default function DriverDashboardPage() {
         if (trips.length > 0 && trips[0].trip?.driver) {
           setDriver(trips[0].trip.driver);
          }
+         const fetchedNotifications = await driverService.getNotfication();
+         setNotifications(fetchedNotifications);
       } catch (error) {
-        console.error('Erreur lors du chargement:', error);
+      
         toast.error("Impossible de charger les données");
       }
     };
@@ -120,6 +123,7 @@ export default function DriverDashboardPage() {
         );
       });
     }
+   
 
     const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
     setTotalDailyTripPages(totalPages);
@@ -141,12 +145,16 @@ export default function DriverDashboardPage() {
         const tripDetails = await driverService.getTripDetails(
           selectedDailyTrip.id
         );
-        setStudentsInSelectedTrip(tripDetails.students || []);
-        setStopsInSelectedRoute(tripDetails.route?.stops || []);
+        const students = tripDetails.trip?.tripStudents?.map(ts => ts.student) || [];
+         const attendance = tripDetails.attendances?.map(ts => ts.student) || [];
+    
+       const stops = tripDetails.trip?.route?.stops || [];
+        setStudentsInSelectedTrip(students);
+        setStopsInSelectedRoute(stops);
         setBusPosition(tripDetails.currentPosition || null);
       } catch (error) {
         toast.error("Erreur lors du chargement des détails du trajet");
-        console.error(error);
+         
       }
     };
 
@@ -210,12 +218,34 @@ export default function DriverDashboardPage() {
 
   const getAttendanceStatusForStudent = useCallback(
     (studentId) => {
-      if (!selectedDailyTrip) return null;
-      const student = studentsInSelectedTrip.find((s) => s.id === studentId);
-      return student?.attendanceStatus || 'ABSENT';
+      if (!selectedDailyTrip) return 'EN_COURS';
+      
+      const attendance = selectedDailyTrip.attendances?.find(
+        att => att.studentId === studentId && att.type === 'DEPART'
+      );
+      
+      // Return the status if found, otherwise return 'EN_COURS'
+      return attendance?.status || 'EN_COURS';
     },
-    [selectedDailyTrip, studentsInSelectedTrip]
+    [selectedDailyTrip]
   );
+  const handleOpenIncidentModal = () => {
+    if (!selectedDailyTrip) {
+      toast.error("Veuillez sélectionner un trajet.");
+      return;
+    }
+    setIsIncidentModalOpen(true);
+  };
+  const handleOpenAttendanceModal = (studentId) => {
+    if (!selectedDailyTrip) {
+      toast.error("Veuillez sélectionner un trajet.");
+      return;
+    }
+    setAttendanceModalStudentId(studentId);
+    setAttendanceModalDailyTripId(selectedDailyTrip.id);
+    setAttendanceModalCurrentStatus(getAttendanceStatusForStudent(studentId));
+    setIsAttendanceModalOpen(true);
+  };
 
   const getTripStatusColor = (status) => {
     switch (status) {
@@ -242,6 +272,35 @@ export default function DriverDashboardPage() {
         return 'Terminé';
       case 'CANCELLED':
         return 'Annulé';
+      default:
+        return 'Inconnu';
+    }
+  };
+  const getAttendanceColor = (status) => {
+    switch (status) {
+      case 'PRESENT':
+        return 'green';
+      case 'ABSENT':
+        return 'red';
+      case 'LATE':
+        return 'yellow';
+      case 'EN_COURS':
+        return 'blue';
+      default:
+        return 'gray';
+    }
+  };
+  
+  const getAttendanceText = (status) => {
+    switch (status) {
+      case 'PRESENT':
+        return 'Présent';
+      case 'ABSENT':
+        return 'Absent';
+      case 'LATE':
+        return 'En retard';
+      case 'EN_COURS':
+        return 'En cours';
       default:
         return 'Inconnu';
     }
@@ -297,7 +356,6 @@ export default function DriverDashboardPage() {
         />
         <DatePickerWithRange date={selectedDate} setDate={setSelectedDate} />
       </div>
-
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
@@ -350,7 +408,7 @@ export default function DriverDashboardPage() {
 
                   <TabsContent value="overview" className="space-y-4">
                  {/* Bus & Route Info */}
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-default-50 rounded-lg">
                   <div>
                         <h4 className="font-semibold text-sm mb-2">Informations Bus</h4>
                         <p className="text-sm"><strong>Plaque:</strong> {selectedDailyTrip.trip?.bus?.plateNumber || 'N/A'}</p>
@@ -366,7 +424,7 @@ export default function DriverDashboardPage() {
                 </div>
 
                     {/* Quick Actions */}
-                    {selectedDailyTrip.status === 'PLANNED' && (
+                    {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING')&& (
                       <div className="grid grid-cols-2 gap-4">
                        <Button 
                        onClick={handleToggleTracking} 
@@ -391,43 +449,45 @@ export default function DriverDashboardPage() {
                   </TabsContent>
 
                   <TabsContent value="students" className="space-y-4">
-                    <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Élèves & Présence</h3>
-                {studentsInSelectedTrip.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                              <TableHead>Élève</TableHead>
-                          <TableHead>Classe</TableHead>
-                          <TableHead>Quartier</TableHead>
-                              <TableHead>Statut</TableHead>
-                          <TableHead className="text-right">Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {studentsInSelectedTrip.map(student => {
-                          const studentAttendanceStatus = getAttendanceStatusForStudent(student.id);
-                          return (
-                            <TableRow key={student.id}>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <Avatar className="h-8 w-8">
-                                        <AvatarFallback>{student.fullname.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="font-medium">{student.fullname}</span>
-                                    </div>
-                                  </TableCell>
-                              <TableCell>{student.class}</TableCell>
-                              <TableCell>{student.quartie}</TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant="soft"
-                                  color={getAttendanceColor(studentAttendanceStatus)}
-                                  className="capitalize"
-                                >
-                                  {getAttendanceText(studentAttendanceStatus)}
-                                </Badge>
-                              </TableCell>
+  <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Élèves & Présence</h3>
+  {studentsInSelectedTrip.length > 0 ? (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Élève</TableHead>
+            <TableHead>Classe</TableHead>
+            <TableHead>Quartier</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {studentsInSelectedTrip.map(student => {
+            const studentAttendanceStatus = getAttendanceStatusForStudent(student.id);
+            const isStatusUndefined = !studentAttendanceStatus || studentAttendanceStatus === 'EN_COURS';
+            
+            return (
+              <TableRow key={student.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>{student.fullname.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{student.fullname}</span>
+                  </div>
+                </TableCell>
+                <TableCell>{student.class}</TableCell>
+                <TableCell>{student.quartie}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="soft"
+                    color={getAttendanceColor(studentAttendanceStatus)}
+                    className="capitalize"
+                  >
+                    {isStatusUndefined ? 'En cours' : getAttendanceText(studentAttendanceStatus)}
+                  </Badge>
+                </TableCell>
                               <TableCell className="text-right">
                                 <Button
                                   size="sm"

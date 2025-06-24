@@ -26,16 +26,23 @@ axiosInstance.interceptors.request.use(
 
 // Gestion centralisée des erreurs
 const handleApiError = (error) => {
-  if (error.response) {
-    console.error('Erreur API:', error.response.data);
-    throw error.response.data;
-  } else {
-    console.error('Erreur réseau:', error.message);
-    throw { message: 'Erreur de connexion au serveur' };
-  }
-};
+  let errorMessage = 'Erreur de connexion au serveur';
 
-export const driverService = {
+  if (error.response) {
+    // Erreur côté serveur
+    console.error('Erreur API:', error.response.data);
+    errorMessage = error.response.data.message || 'Erreur serveur';
+  } else if (error.request) {
+    // Aucune réponse reçue
+    console.error('Aucune réponse du serveur');
+  } else {
+    // Erreur avant l'envoi
+    console.error('Erreur lors de la requête:', error.message);
+  }
+
+  return new Error(errorMessage);
+};
+const driverService = {
     async getDailyTrips() {
         try {
           const response = await axiosInstance.get('/dailyTrip/today');
@@ -104,9 +111,86 @@ export const driverService = {
         } catch (error) {
           handleApiError(error);
         }
-      }
-    };
-      
- 
+      },
+       
+      async getNotfication() {
+        try {
+          const response = await axiosInstance.get('/notifications');
+          return response.data;
+        } catch (error) {
+          handleApiError(error);
+        }
+      },
+      async markNotificationAsRead(notificationId) {
+        try {
+          const response = await axiosInstance.patch(`/notifications/${notificationId}/read`);
+          return response.data;
+        } catch (error) {
+          handleApiError(error);
+        }
+      },
+      // --- Incidents ---
+  
+      async reportIncident(dailyTripId, description) {
+        try {
+           const response = await axiosInstance.post('/incidents', {
+           dailyTripId,
+           description,
+          });
+          return response.data;
+        } catch (error) {
+          handleApiError(error);
+        }
+      },
 
+  async getAllIncidents() {
+    try {
+      const response = await axiosInstance.get('/incidents');
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+   // --- presence ---
+   async markAttendance(data) {
+    try {
+      const response = await axiosInstance.post('/attendances', data);
+      return response.data;
+    } catch (error) {
+      console.error("Erreur API:", error.response?.data);
+      throw error;
+    }
+  },
+  // Récupère les statistiques des trajets
+  async getTripStatistics(establishmentId, period) {
+    try {
+      const params = {};
+      if (establishmentId) params.establishmentId = establishmentId;
+      if (period) params.period = period;
+      
+      const response = await axiosInstance.get('/trip/statistics', { params });
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Récupère tous les trajets avec pagination et filtres
+  async getAllTrips({ page = 1, limit = 20, name, driverId, routeId, establishmentId, busId }) {
+    try {
+      const params = { page, limit };
+      if (name) params.name = name;
+      if (driverId) params.driverId = driverId;
+      if (routeId) params.routeId = routeId;
+      if (establishmentId) params.establishmentId = establishmentId;
+      if (busId) params.busId = busId;
+
+      const response = await axiosInstance.get('/trip', { params });
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+};
 export default driverService;
+ 

@@ -39,7 +39,7 @@ export default function ParentProfilePage() {
       try {
         const res = await userAPI.getProfile();
         console.log(res);
-        const user = res.user; // selon ta réponse { user: { ... } }
+        const user = res.user;  
         setParent(user);
         setPersonalInfo({
           fullname: user.fullname || '',

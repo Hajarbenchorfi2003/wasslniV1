@@ -81,8 +81,8 @@ const TableEtablissement = ({ etablissements, onEditEtablissement, onDeleteEtabl
           <TableBody>
             {etablissements && etablissements.length > 0 ? (
               etablissements.map((item) => {
-                const responsible = getResponsibleDetails(item.responsableId);
-                const school = getSchoolDetails(item.schoolId);
+                const responsible = item.responsable;
+                const school = item.school;
 
                 return (
                   <Fragment key={item.id}>
@@ -211,10 +211,7 @@ const TableEtablissement = ({ etablissements, onEditEtablissement, onDeleteEtabl
                                         <Icon icon="heroicons:phone" className="w-4 h-4 opacity-50" />
                                         <span>Téléphone: {responsible.phone || 'Non renseigné'}</span>
                                       </p>
-                                      <p className="flex items-center gap-2">
-                                        <Icon icon="heroicons:identification" className="w-4 h-4 opacity-50" />
-                                        <span>CIN: {responsible.cin || 'Non renseigné'}</span>
-                                      </p>
+                                      
                                       <p className="flex items-center gap-2">
                                         <Icon icon="heroicons:check-circle" className="w-4 h-4 opacity-50" />
                                         <span>Statut: {responsible.isActive ? 'Actif' : 'Inactif'}</span>

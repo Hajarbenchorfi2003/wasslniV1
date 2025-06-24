@@ -8,6 +8,7 @@ import { Icon } from '@iconify/react';
 import toast from 'react-hot-toast';
 import { ModalRolePermission } from '@/components/models/ModalRolePermission';
 import TableRolePermissions from './TableRolePermissions'; // Import the new table component
+import {} from '@/services/rolePremission'
 
 const RolePermissionsPage = () => {
   const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);

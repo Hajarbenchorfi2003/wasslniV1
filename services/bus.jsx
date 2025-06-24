@@ -1,75 +1,89 @@
-// services/bus.jsx
+// services/buses.jsx
+
 import axios from 'axios';
+import { getUser, getToken, isAuthenticated } from '@/utils/auth';
 
-// URL de base de ton API backend (ajuste si besoin)
-const API_BASE_URL = 'http://localhost:5000/api/buses';
+const API_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
-// Récupère le token JWT depuis le localStorage ou autre stockage sécurisé
-function getAuthToken() {
-  return localStorage.getItem('token'); // ou selon ta gestion d'auth
-}
+// Instance Axios avec configuration de base
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-// Config avec l'en-tête Authorization
-function getConfig() {
-  const token = getAuthToken();
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  };
-}
-
+// Intercepteur pour inclure le token automatiquement
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    console.log("Token envoyé dans la requête :", token);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+console.log("i am in buses")
 // Récupérer tous les bus (avec permission view:Allbus)
-export async function fetchAllBuses() {
-  const response = await axios.get(API_BASE_URL, getConfig());
-  return response.data;
+export async function fetchAllBuses(filters = {}) {
+  if (!isAuthenticated()) throw new Error('Non authentifié');
+
+  try {
+    const response = await axiosInstance.get('/buses', { params: filters });
+    console.log('Données des bus reçues:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des bus:', error);
+    throw error;
+  }
 }
 
 // Récupérer tous les bus disponibles (pas besoin d'autorisation explicite)
 export async function fetchAvailableBuses() {
-  const response = await axios.get(`${API_BASE_URL}/available`, getConfig());
+  const response = await axiosInstance.post('/buses/available');
   return response.data;
 }
 
 // Récupérer les bus de l'utilisateur (mybus)
 export async function fetchMyBuses() {
-  const response = await axios.get(`${API_BASE_URL}/nosBus`, getConfig());
+  const response = await axiosInstance.get('/buses/nosBus');
   return response.data;
 }
 
 // Récupérer un bus par son ID
 export async function fetchBusById(id) {
-  const response = await axios.get(`${API_BASE_URL}/${id}`, getConfig());
+  const response = await axiosInstance.get(`/buses/${id}`);
   return response.data;
 }
 
 // Créer un nouveau bus
 export async function createBus(busData) {
-  const response = await axios.post(API_BASE_URL, busData, getConfig());
+  const response = await axiosInstance.post('/buses', busData);
   return response.data;
 }
 
 // Mettre à jour un bus
 export async function updateBus(id, updatedData) {
-  const response = await axios.put(`${API_BASE_URL}/${id}`, updatedData, getConfig());
+  const response = await axiosInstance.put(`/buses/${id}`, updatedData);
   return response.data;
 }
 
 // Supprimer un bus
 export async function deleteBus(id) {
-  const response = await axios.delete(`${API_BASE_URL}/${id}`, getConfig());
+  const response = await axiosInstance.delete(`/buses/${id}`);
   return response.data;
 }
 
 // Désaffecter un bus d'un établissement (PATCH)
 export async function detachBusFromEstablishment(id) {
-  const response = await axios.patch(`${API_BASE_URL}/${id}/detach-establishment`, {}, getConfig());
+  const response = await axiosInstance.patch(`/buses/${id}/detach-establishment`);
   return response.data;
 }
 
 // Récupérer les conducteurs disponibles (permission view:driver)
 export async function fetchAvailableDrivers() {
-  const response = await axios.get(`${API_BASE_URL}/available-drivers`, getConfig());
+  const response = await axiosInstance.get('/buses/available-drivers');
   return response.data;
 }

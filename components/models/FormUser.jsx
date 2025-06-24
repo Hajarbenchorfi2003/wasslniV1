@@ -18,7 +18,7 @@ export const userSchema = z.object({
   email: z.string().email("Email invalide"),
   phone: z.string().min(10, "Numéro trop court").regex(/^\+?\d+$/, "Numéro invalide"),
   password: z.string().min(6, "Minimum 6 caractères"),
-  cin: z.string().min(4, "CIN requis"),
+ 
   isActive: z.boolean(),
   role: z.enum(['SUPER_ADMIN', 'ADMIN', 'RESPONSIBLE', 'DRIVER', 'PARENT']), // important pour envoi
 });
@@ -45,7 +45,7 @@ export default function FormUser({
     { name: "email", label: "Email", placeholder: "Entrez l'email" },
     { name: "phone", label: "Téléphone", placeholder: "Ex: +212601010101" },
     { name: "password", label: "Mot de passe", placeholder: "Entrez le mot de passe" },
-    { name: "cin", label: "CIN", placeholder: "Entrez le CIN" },
+    
   ];
 
   return (

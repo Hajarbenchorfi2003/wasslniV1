@@ -1,200 +1,297 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { demoData } from '@/data/data'; // Make sure this path is correct
-import ModalEtablissement from '@/components/models/ModalEtablissement1'; // Adjust path if necessary
-import TableEtablissement from './tableEtablissement'; // You'll need to create this component
+import React, { useState, useEffect } from 'react';
+import ModalEtablissement from '@/components/models/ModalEtablissement1';
+import TableEtablissement from './tableEtablissement';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
-import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { Input } from '@/components/ui/input'; // Import Input component
+import { Input } from '@/components/ui/input';
+import { fetchAllEstablishments, createEstablishments,deletePremently, updateEstablishments } from '@/services/etablissements';
+import { fetchSchools } from '@/services/school';
+import { register } from '@/services/user'; // Service pour créer un responsable
 
 const ITEMS_PER_PAGE = 5;
 
-const EtablissementsPage = () => {
-  const [etablissements, setEtablissements] = useState(demoData.establishments);
+export default function EtablissementsPage() {
+  const [allSchools, setAllSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [etablissements, setEtablissements] = useState([]);
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
-  const [editingEtablissement, setEditingEtablissement] = useState(null); // Holds data for editing
+  const [editingEtablissement, setEditingEtablissement] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState(''); // New state for search query
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter establishments based on search query
-  const filteredEtablissements = etablissements.filter(etablissement =>
-    etablissement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    etablissement.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    etablissement.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (demoData.users.find(u => u.id === etablissement.responsableId)?.fullname || '').toLowerCase().includes(searchQuery.toLowerCase())
+  // Charger les écoles depuis l'API
+  useEffect(() => {
+    async function loadSchools() {
+      try {
+        const schools = await fetchSchools();
+        setAllSchools(schools);
+      } catch (error) {
+        toast.error("Erreur lors du chargement des écoles");
+        console.error(error);
+      }
+    }
+
+    loadSchools();
+  }, []);
+
+  // Charger les établissements depuis l'API
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadEstablishments() {
+      try {
+        setLoading(true);
+        const data = await fetchAllEstablishments();
+  console.log("data",data)
+        if (isMounted) {
+          setEtablissements(data);
+        }
+      } catch (error) {
+        toast.error("Erreur lors du chargement des établissements");
+        console.error(error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadEstablishments();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+
+  // Filtrer les établissements selon la recherche
+  const filteredEtablissements = etablissements.filter((etab) =>
+    etab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    etab.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    etab.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (etab.responsable && etab.responsable.fullname?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const totalPages = Math.ceil(filteredEtablissements.length / ITEMS_PER_PAGE);
+
   const paginatedEtablissements = filteredEtablissements.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  // Function to handle opening the modal for editing
+  // Ouvrir le modal pour modification ou ajout
   const handleEditEtablissement = (etablissementToEdit) => {
-    // Find the associated responsible from demoData.users
-    const associatedResponsable = demoData.users.find(u => u.id === etablissementToEdit.responsableId);
+    console.log("edit function",etablissementToEdit)
+    const associatedResponsable = etablissementToEdit?.responsable|| null;
 
-    // Structure the default values for the EtablissementResponsableForm
+
     const defaultValuesForForm = {
-      id: etablissementToEdit.id, // Keep the ID for modification lookup
-      etablissement: {
-        name: etablissementToEdit.name || '',
-        email: etablissementToEdit.email || '',
-        phone: etablissementToEdit.phone || '',
-        address: etablissementToEdit.address || '',
-        quartie: etablissementToEdit.quartie || '', // Include quartie
-        city: etablissementToEdit.city || '',
-        isActive: etablissementToEdit.isActive !== undefined ? etablissementToEdit.isActive : true
-      },
-      // If a responsible is associated, pre-fill their details for the 'new responsible' section
-      // and set 'existing' mode. Otherwise, it will default to 'new responsible' empty fields.
+      id: etablissementToEdit.id,
+      name: etablissementToEdit.name,
+      email: etablissementToEdit.email,
+      phone: etablissementToEdit.phone,
+      address: etablissementToEdit.address,
+      quartie: etablissementToEdit.quartie,
+      city: etablissementToEdit.city,
+      isActive: etablissementToEdit.isActive !== undefined ? etablissementToEdit.isActive : true,
       responsable: associatedResponsable ? {
         fullname: associatedResponsable.fullname || '',
         email: associatedResponsable.email || '',
         phone: associatedResponsable.phone || '',
-        password: '', // Always keep password empty for security
-        cin: associatedResponsable.cin || '',
-        isActive: associatedResponsable.isActive !== undefined ? associatedResponsable.isActive : true
-      } : undefined, // Undefined means it won't pre-fill the 'new responsible' fields initially
-
-      // Set the ID of the existing responsible if found
-      existingResponsableId: associatedResponsable ? associatedResponsable.id.toString() : '',
-
-      // Set the initial state of the 'addNewResponsable' toggle
-      // If there's an associated responsible, we default to 'false' (select existing)
-      // Otherwise, default to 'true' (add new)
+        password: '', // Toujours vide pour la sécurité
+        isActive: associatedResponsable.isActive !== undefined ? associatedResponsable.isActive : true,
+      } : undefined,
+      schoolId: etablissementToEdit.schoolId?.toString() || '',
+      existingResponsableId: associatedResponsable ? String(associatedResponsable.id) : '',
       addNewResponsable: !associatedResponsable,
-
-      // Pass the schoolId of the establishment
-      schoolId: etablissementToEdit.schoolId ? etablissementToEdit.schoolId.toString() : '',
     };
 
+
     setEditingEtablissement(defaultValuesForForm);
+    console.log("editingEtablissement",editingEtablissement)
     setIsAddEditDialogOpen(true);
   };
 
-  // Function to handle deleting an establishment
-  const handleDeleteEtablissement = (id) => {
+  // Supprimer un établissement (via API)
+  const handleDeleteEtablissement = async (id) => {
     try {
-      // Remove from demoData
-      demoData.establishments = demoData.establishments.filter(etablissement => etablissement.id !== id);
-      // You might also want to handle orphan responsibles if they are no longer linked to any establishment
-
-      // Update local state
-      setEtablissements([...demoData.establishments]);
-
-      // Adjust pagination if the current page becomes empty
-      if (paginatedEtablissements.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-
+      // Si tu as une API DELETE
+      // await deleteEstablishment(id); // Exemple
+      setEtablissements(etablissements.filter((e) => e.id !== id));
       toast.success('Établissement supprimé avec succès');
     } catch (error) {
-      toast.error('Erreur lors de la suppression de l\'établissement');
+      toast.error('Erreur lors de la suppression');
       console.error(error);
     }
   };
 
-  // Function to handle saving (add or edit) an establishment
-  const handleSaveEtablissement = (updatedEtablissementData) => {
-    // ModalEtablissement is now responsible for modifying demoData directly.
-    // We just need to refresh our local state after it's done.
-    setEtablissements([...demoData.establishments]);
-    setIsAddEditDialogOpen(false);
-    setEditingEtablissement(null); // Clear editing state after save
+  // Créer un responsable avec ecoleId obligatoire
+  const handleCreateResponsable = async (userData, schoolId) => {
+    try {
+      // Ajouter `schoolId` dans les données utilisateur
+      const newUser = {
+        ...userData,
+        role: 'RESPONSIBLE',
+        echoleId: Number(schoolId), // Obligatoire
+      };
+
+      // Appel au service `register`
+      const createdUser = await register(newUser);
+
+      toast.success('Responsable créé avec succès');
+      return createdUser;
+    } catch (error) {
+      toast.error("Erreur lors de la création du responsable");
+      console.error(error);
+      throw error;
+    }
   };
 
+  // Gérer l’enregistrement d’un établissement
+ const handleSaveEtablissement = async (formData) => {
+  try {
+    let result;
+
+    if (formData.addNewResponsable) {
+      // ✅ CAS 1 : Création d'un responsable + établissement
+      const userData = {
+        fullname: formData.etablissement.fullname,
+        email: formData.etablissement.email,
+        phone: formData.etablissement.phone,
+        password: formData.responsable.password,
+        address: formData.etablissement.address,
+        role: 'RESPONSIBLE',
+        schoolId: Number(formData.schoolId),
+      };
+
+      const newResponsable = await register(userData);
+
+      const newEtablissementData = {
+        name: formData.etablissement.name,
+        email: formData.etablissement.email,
+        phone: formData.etablissement.phone,
+        address: formData.etablissement.address,
+        quartie: formData.etablissement.quartie,
+        city: formData.etablissement.city,
+        isActive: formData.etablissement.isActive,
+        responsableId: newResponsable.id,
+        schoolId: Number(formData.schoolId),
+      };
+
+      const newEtablissement = await createEstablishments(newEtablissementData);
+      setEtablissements((prev) => [...prev, newEtablissement]);
+
+    } else if (!formData.addNewResponsable && formData.existingResponsableId) {
+      // ✅ CAS 2 : Création d’un établissement lié à un responsable existant
+      const newEtablissementData = {
+        name: formData.etablissement.name,
+        email: formData.etablissement.email,
+        phone: formData.etablissement.phone,
+        address: formData.etablissement.address,
+        quartie: formData.etablissement.quartie,
+        city: formData.etablissement.city,
+        isActive: formData.etablissement.isActive,
+        responsableId: Number(formData.existingResponsableId),
+        schoolId: Number(formData.schoolId),
+      };
+
+      const newEtablissement = await createEstablishments(newEtablissementData);
+      setEtablissements((prev) => [...prev, newEtablissement]);
+
+    } else if (!formData.addNewResponsable && editingEtablissement && formData.etablissement.id) {
+      // ✅ CAS 3 : Modification d’un établissement existant
+      const updateData = {
+        id: formData.etablissement.id,
+        name: formData.etablissement.name,
+        email: formData.etablissement.email,
+        phone: formData.etablissement.phone,
+        address: formData.etablissement.address,
+        quartie: formData.etablissement.quartie,
+        city: formData.etablissement.city,
+        isActive: formData.etablissement.isActive,
+        responsableId: formData.existingResponsableId ? Number(formData.existingResponsableId) : undefined,
+        schoolId: Number(formData.schoolId),
+      };
+
+      const updatedEtablissement = await updateEstablishments(updateData);
+      setEtablissements((prev) =>
+        prev.map((e) => (e.id === updatedEtablissement.id ? updatedEtablissement : e))
+      );
+
+    }
+
+    await loadEstablishments(); // Recharger depuis l'API
+    toast.success(
+      formData.addNewResponsable
+        ? 'Responsable et établissement créés'
+        : editingEtablissement
+        ? 'Établissement modifié'
+        : 'Établissement créé et lié à un responsable existant'
+    );
+
+    setIsAddEditDialogOpen(false);
+    setEditingEtablissement(null);
+
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement", error);
+    toast.error("Erreur lors de l'enregistrement");
+  }
+};
+
+  // Pagination
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
   };
-console.log(editingEtablissement)
+
   return (
     <div className="space-y-6">
+      {/* Recherche & Bouton d'ajout */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-2xl font-medium text-default-800">
-        Gestion des Établissements
-        </h2>
-      </div>
-     {/* Search & Add Button */}
-     <div className="flex items-center justify-between flex-wrap gap-4">
-         {/* Search Input */}
-        <div className="relative w-full max-w-md">
-        <Input
-          type="text"
-          placeholder="Rechercher un établissement..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-4 py-2 border rounded-md w-full"
-        />
-        <Icon
-          icon="heroicons:magnifying-glass"
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-        />
-      </div>
-
-        {/* Add Admin Button */}
-        <Button onClick={() => {
-            setEditingEtablissement(null); // Ensure no previous editing state
-            setIsAddEditDialogOpen(true);
-          }}>
-            <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
-            Ajouter un établissement
-          </Button>
-     </div>
-{/*       <div className="flex items-center flex-wrap justify-between gap-4">
-        <div className="text-2xl font-medium text-default-800">
-          Gestion des Établissements
-        </div>
-        <div className="flex items-center gap-4">
-          
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Rechercher un établissement..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="pl-10 pr-4 py-2 border rounded-md w-full"
-              />
-            <Icon icon="heroicons:magnifying-glass" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          </div>
-
+        <h2 className="text-2xl font-medium text-default-800">Gestion des Établissements</h2>
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <Input
+            placeholder="Rechercher un établissement..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="w-full sm:w-72"
+          />
           <Button onClick={() => {
-            setEditingEtablissement(null); // Ensure no previous editing state
+            setEditingEtablissement(null);
             setIsAddEditDialogOpen(true);
           }}>
-            <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
+            <Icon icon="heroicons:plus" className="mr-2 h-5 w-5" />
             Ajouter un établissement
           </Button>
         </div>
-      </div> */}
+      </div>
 
-      <ModalEtablissement
-        isOpen={isAddEditDialogOpen}
-        setIsOpen={setIsAddEditDialogOpen}
-        editingEtablissement={editingEtablissement} // Pass the structured editing data
-        onSave={handleSaveEtablissement} // This handles refreshing the list
-        allSchools={demoData.schools} // Pass all schools for the dropdown
-        fixedSchoolId={null} // Set to a specific ID (e.g., 1) if you want to fix the school, otherwise null
-      />
-
+      {/* Tableau des établissements */}
       <TableEtablissement
         etablissements={paginatedEtablissements}
         onEditEtablissement={handleEditEtablissement}
         onDeleteEtablissement={handleDeleteEtablissement}
       />
 
-      {/* Pagination Controls */}
-      {totalPages > 1 && ( // Only show pagination if there's more than one page
+      {/* Modal */}
+      <ModalEtablissement
+        isOpen={isAddEditDialogOpen}
+        setIsOpen={setIsAddEditDialogOpen}
+        editingEtablissement={editingEtablissement}
+        onSave={handleSaveEtablissement}
+        allSchools={allSchools}
+        fixedSchoolId={null}
+      />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
             variant="outline"
@@ -205,18 +302,16 @@ console.log(editingEtablissement)
           >
             <Icon icon="heroicons:chevron-left" className="w-5 h-5 rtl:rotate-180" />
           </Button>
-
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
               key={`page-${page}`}
               onClick={() => handlePageChange(page)}
               variant={page === currentPage ? "default" : "outline"}
-              className={cn("w-8 h-8")}
+              className="w-8 h-8"
             >
               {page}
             </Button>
           ))}
-
           <Button
             onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
             disabled={currentPage === totalPages}
@@ -230,6 +325,4 @@ console.log(editingEtablissement)
       )}
     </div>
   );
-};
-
-export default EtablissementsPage;
+}

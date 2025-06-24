@@ -41,7 +41,7 @@ const ModalSchool = ({
 
   // Préparer les valeurs initiales pour le formulaire
   const getInitialDefaultValues = () => {
-    console.log("edting data",editingSchool);
+    console.log("edting data", editingSchool);
     if (!editingSchool) {
       return {
         school: {
@@ -77,7 +77,8 @@ const ModalSchool = ({
           ? editingSchool.school.isActive
           : true,
     };
-     console.log("school coming",schoolDefaults)
+
+    console.log("school coming", schoolDefaults);
 
     let adminDefaults = {
       fullname: '',
@@ -109,7 +110,7 @@ const ModalSchool = ({
     }
 
     addNewAdminDefault = editingSchool.addNewAdmin;
-    console.log(addNewAdminDefault)
+    console.log(addNewAdminDefault);
 
     return {
       school: schoolDefaults,
@@ -119,37 +120,62 @@ const ModalSchool = ({
     };
   };
 
-  const handleSave = async (formData) => {
-    setLoading(true);
-     console.log("Données reçues dans handleSave:", formData);
-    try {
-      let updatedSchool;
-  console.log("edit school:",editingSchool);
-  console.log("id school",editingSchool.id)
-  
-      if (editingSchool?.id) {
-        console.log("data school update",formData.school);
-        console.log("je suis dans  modfication ")
-        // Modification d'une école existante
-        updatedSchool = await updateSchool(editingSchool.id, formData.school);
-        console.log("id",editingSchool.school.id,"data:",formData.school)
-        toast.success('École mise à jour avec succès');
-      } else {
-        console.log ("je suis dans creation ");
-        // Création d'une nouvelle école
-        updatedSchool = await createSchool(formData.school);
-        toast.success('École ajoutée avec succès');
-      }
+ const handleSave = async (formData) => {
+  setLoading(true);
+  console.log("Données reçues dans handleSave:", formData);
 
-      onSave(updatedSchool); // Met à jour l’UI
-      setIsOpen(false);
-    } catch (error) {
-      toast.error('Erreur lors de la sauvegarde');
-      console.error('Erreur:', error);
-    } finally {
-      setLoading(false);
+  try {
+    let updatedSchoolResponse;
+
+    if (editingSchool?.id) {
+      // Modification
+      updatedSchoolResponse = await updateSchool(editingSchool.id, {
+        ...formData.school,
+        ...(formData.admin && { admin: formData.admin }),
+      });
+      toast.success('École mise à jour avec succès');
+    } else {
+      // Création
+      updatedSchoolResponse = await createSchool({
+        ...formData.school,
+        ...(formData.admin && { admin: formData.admin }),
+      });
+      toast.success('École ajoutée avec succès');
     }
-  };
+
+    // ✅ Garantir que les champs nécessaires soient présents
+    const adminData = formData.admin || editingSchool?.admin || null;
+
+    const formattedData = {
+      ...updatedSchoolResponse,
+     
+      // Garantir que school ait tous les champs
+      name: formData.school.name,
+      email: formData.school.email,
+      phone: formData.school.phone,
+      address: formData.school.address,
+      city: formData.school.city,
+      isActive: formData.school.isActive,
+     
+      // Ajouter admins comme tableau
+      admins: adminData ? [adminData] : [],
+
+      // Ajouter adminName
+      adminName: adminData?.fullname || 'N/A'
+    };
+
+    console.log("Données formatées pour onSave:", formattedData);
+
+    onSave(formattedData); // Met à jour l’UI
+    setIsOpen(false);
+
+  } catch (error) {
+    toast.error('Erreur lors de la sauvegarde');
+    console.error('Erreur:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const currentDefaultValues = getInitialDefaultValues();
 

@@ -16,30 +16,44 @@ import {
 import { Input } from "@/components/ui/input"; // Assuming shadcn/ui Input
 import { Switch } from "@/components/ui/switch"; // Assuming shadcn/ui Switch
 import { Button } from '@/components/ui/button'; // Assuming shadcn/ui Button
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import toast from 'react-hot-toast'; // Assuming react-hot-toast
 
 // Define the Zod schema for validation
-const formSchema = z.object({
-  fullname: z.string().min(3, "Le nom complet est requis et doit contenir au moins 3 caractères."),
-  email: z.string().email("L'email doit être une adresse email valide."),
-  phone: z.string().regex(/^\+?[0-9\s-]+$/, "Le numéro de téléphone n'est pas valide.").min(8, "Le numéro de téléphone doit contenir au moins 8 chiffres."),
- 
-  isActive: z.boolean(),
-  password: z.string().optional() // Optional for editing, required for adding
-    .refine((val) => val === undefined || val.length === 0 || val.length >= 6, {
-      message: "Le mot de passe doit contenir au moins 6 caractères."
-    }),
-});
+const createFormSchema = (isAddingMode) =>
+  z.object({
+    fullname: z.string().min(3, "Le nom complet est requis et doit contenir au moins 3 caractères."),
+    email: z.string().email("L'email doit être une adresse email valide."),
+    phone: z.string()
+      .regex(/^\+?[0-9\s-]+$/, "Le numéro de téléphone n'est pas valide.")
+      .min(8, "Le numéro de téléphone doit contenir au moins 8 chiffres."),
+    isActive: z.boolean(),
+    password: z.string().optional()
+      .refine((val) => val === undefined || val.length === 0 || val.length >= 6, {
+        message: "Le mot de passe doit contenir au moins 6 caractères."
+      }),
+     ecoleId: isAddingMode
+      ? z.number().min(1, "Veuillez sélectionner une école.") // ✅ number au lieu de string
+      : z.number().optional(), // ✅ facultatif en mode édition
+  });
 
-export function FormUser({ initialData, onSubmit, onCancel, role }) {
+export function FormUserRes({ initialData, onSubmit, onCancel, role,schools }) {
+     const isAddingMode = !initialData;
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createFormSchema(isAddingMode)), // ✅ Schéma dynamique
     defaultValues: {
       fullname: '',
       email: '',
       phone: '',
       isActive: true,
       password: '',
+       ecoleId: null,
     },
   });
 
@@ -53,6 +67,7 @@ export function FormUser({ initialData, onSubmit, onCancel, role }) {
         phone: initialData.phone || '',
         isActive: initialData.isActive,
         password: '', // Never pre-fill password for security
+        ecoleId: initialData.ecoleId || null,
       });
     } else {
       // Reset to default values for adding a new user
@@ -62,6 +77,7 @@ export function FormUser({ initialData, onSubmit, onCancel, role }) {
         phone: '',
         isActive: true,
         password: '',
+        ecoleId:  '', 
       });
     }
   }, [initialData, form]);
@@ -142,6 +158,38 @@ export function FormUser({ initialData, onSubmit, onCancel, role }) {
             )}
           />
         )}
+        {!initialData && (
+  <FormField
+    control={form.control}
+    name="ecoleId"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>École</FormLabel>
+        <Select  key={field.value} onValueChange={field.onChange} value={field.value}>
+          <FormControl>
+            <SelectTrigger>
+              <SelectValue placeholder="Sélectionnez une école" />
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            {schools?.length > 0 ? (
+              schools.map((school) => (
+                <SelectItem key={school.id} value={school.id}>
+                  {school.name}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem disabled value="none">
+                Aucune école disponible
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+)}
 
         <FormField
           control={form.control}

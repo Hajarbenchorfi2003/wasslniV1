@@ -1,22 +1,22 @@
-// app/(super-admine)/schools/page.jsx
 'use client';
 import { useState, useEffect } from 'react';
 import ModalSchool from '@/components/models/ModalSchool1';
+import EditSchoolModal from '@/components/models/EditSchoolModal';
 import TableSchool from './tadelschool';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { Input } from '@/components/ui/input';
-import { fetchSchools,createSchool,deleteSchool,updateSchool } from '@/services/school';
+import { fetchSchools, createSchool, deleteSchool, updateSchool } from '@/services/school';
 
 const ITEMS_PER_PAGE = 5;
 
 const SchoolsPage = () => {
   const [allSchools, setAllSchools] = useState([]);
   const [schoolsToDisplay, setSchoolsToDisplay] = useState([]);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingSchool, setEditingSchool] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingSchool, setEditingSchool] = useState(null); // données de l'école à éditer
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -81,45 +81,46 @@ const SchoolsPage = () => {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
-const handleEditSchool = (school) => {
-  if (!school || !school.id) return;
+  const handleEditSchool = (school) => {
+    if (!school || !school.id) return;
 
-  // ✅ Les admins sont directement disponibles dans school.admins
-  const mainAdmin = school.admins?.[0] || null;
+    const mainAdmin = Array.isArray(school.admins) && school.admins.length > 0
+      ? school.admins[0]
+      : null;
 
-  const defaultValuesForForm = {
-    id: school.id,
-    school: {
-      name: school.name || '',
-      email: school.email || '',
-      phone: school.phone || '',
-      address: school.address || '',
-      city: school.city || '',
-      isActive: school.isActive !== undefined ? school.isActive : true,
-    },
-    admin: mainAdmin
-      ? {
-          fullname: mainAdmin.fullname || '',
-          email: mainAdmin.email || '',
-          phone: mainAdmin.phone || '',
-          password: '',
-          cin: mainAdmin.cin || '',
-          isActive: mainAdmin.isActive !== undefined ? mainAdmin.isActive : true,
-        }
-      : undefined,
-    existingAdminId: mainAdmin ? mainAdmin.id.toString() : '',
-    addNewAdmin: !mainAdmin,
+    const defaultValuesForForm = {
+      id: school.id,
+      school: {
+        name: school.name || '',
+        email: school.email || '',
+        phone: school.phone || '',
+        address: school.address || '',
+        city: school.city || '',
+        isActive: school.isActive !== undefined ? school.isActive : true,
+      },
+      admin: mainAdmin
+        ? {
+            fullname: mainAdmin.fullname || '',
+            email: mainAdmin.email || '',
+            phone: mainAdmin.phone || '',
+            password: '',
+            cin: mainAdmin.cin || '',
+            isActive: mainAdmin.isActive !== undefined ? mainAdmin.isActive : true,
+          }
+        : undefined,
+      existingAdminId: mainAdmin && mainAdmin.id ? mainAdmin.id.toString() : '',
+      addNewAdmin: !mainAdmin,
+    };
+
+    setEditingSchool(defaultValuesForForm);
+    setIsCreateModalOpen(true); // Ouvre le modal en mode édition
   };
 
-  setEditingSchool(defaultValuesForForm);
-  setIsAddDialogOpen(true);
-};
-
-   const handleDeleteSchool = async (id) => {
+  const handleDeleteSchool = async (id) => {
     try {
       await deleteSchool(id);
-      const updatedSchools = schools.filter((school) => school.id !== id);
-      setSchools(updatedSchools);
+      const updatedSchools = allSchools.filter((school) => school.id !== id);
+      setAllSchools(updatedSchools);
       toast.success('École supprimée avec succès');
     } catch (error) {
       console.error('Erreur lors de la suppression de l’école', error);
@@ -128,41 +129,41 @@ const handleEditSchool = (school) => {
   };
 
   const handleSaveSchool = (updatedData) => {
-    // Met à jour l'état global des écoles après sauvegarde
-    const updatedSchools = [...allSchools];
+    if (!updatedData || !updatedData.id) {
+      toast.error('Impossible d’enregistrer : ID manquant');
+      return;
+    }
 
+    const schoolFields = updatedData.school || updatedData;
+
+    const newSchoolData = {
+      id: updatedData.id,
+      name: schoolFields.name,
+      email: schoolFields.email,
+      phone: schoolFields.phone,
+      address: schoolFields.address,
+      city: schoolFields.city,
+      isActive: schoolFields.isActive,
+
+      admins: updatedData.admins || [],
+      adminName: updatedData.adminName || 'N/A',
+    };
+
+    const updatedSchools = [...allSchools];
     const index = updatedSchools.findIndex((s) => s.id === updatedData.id);
+
     if (index > -1) {
-      updatedSchools[index] = {
-        ...updatedSchools[index],
-        name: updatedData.school.name,
-        email: updatedData.school.email,
-        phone: updatedData.school.phone,
-        address: updatedData.school.address,
-        city: updatedData.school.city,
-        isActive: updatedData.school.isActive,
-        admins: [
-          {
-            fullname: updatedData.admin?.fullname || '',
-            email: updatedData.admin?.email || '',
-            phone: updatedData.admin?.phone || '',
-            cin: updatedData.admin?.cin || '',
-            isActive: updatedData.admin?.isActive || true,
-          },
-        ],
-      };
+      // Mise à jour
+      updatedSchools[index] = newSchoolData;
     } else {
-      updatedSchools.push({
-        id: updatedData.id,
-        ...updatedData.school,
-        admins: updatedData.admin ? [updatedData.admin] : [],
-        adminName: updatedData.admin?.fullname ?? 'N/A',
-      });
+      // Création
+      updatedSchools.push(newSchoolData);
     }
 
     setAllSchools(updatedSchools);
-    setIsAddDialogOpen(false);
+    setIsCreateModalOpen(false);
     setEditingSchool(null);
+    toast.success('École sauvegardée avec succès');
   };
 
   return (
@@ -172,7 +173,7 @@ const handleEditSchool = (school) => {
         <h2 className="text-2xl font-medium text-default-800">Gestion des Écoles</h2>
         <Button onClick={() => {
           setEditingSchool(null);
-          setIsAddDialogOpen(true);
+          setIsCreateModalOpen(true);
         }}>
           <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
           Ajouter une école
@@ -191,16 +192,25 @@ const handleEditSchool = (school) => {
         <Icon icon="heroicons:magnifying-glass" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
       </div>
 
-      {/* Modale */}
-      <ModalSchool
-        isOpen={isAddDialogOpen}
-        setIsOpen={setIsAddDialogOpen}
-        editingSchool={editingSchool}
-        onSave={handleSaveSchool}
-        schools={allSchools}
-        users={[]} // À adapter si besoin d'utilisateurs pour le formulaire
-        userSchools={[]}
-      />
+      {/* Modale conditionnée : création vs édition */}
+      {editingSchool ? (
+        <EditSchoolModal
+          isOpen={isCreateModalOpen}
+          setIsOpen={setIsCreateModalOpen}
+          editingSchool={editingSchool}
+          onSave={handleSaveSchool}
+        />
+      ) : (
+        <ModalSchool
+          isOpen={isCreateModalOpen}
+          setIsOpen={setIsCreateModalOpen}
+          editingSchool={editingSchool}
+          onSave={handleSaveSchool}
+          schools={allSchools}
+          users={[]}
+          userSchools={[]}
+        />
+      )}
 
       {/* Tableau */}
       <TableSchool

@@ -55,7 +55,7 @@ const AdminCard = ({ admin, onEditAdmin, onDeleteAdmin }) => {
               </CardTitle>
               {/* Sub-info for associated school(s) */}
               <h5 className="text-sm text-default-600 leading-tight">
-                {admin.schoolNames || 'Aucune école attribuée'}
+                {admin.schools || 'Aucune école attribuée'}
               </h5>
             </div>
           </div>
@@ -90,10 +90,7 @@ const AdminCard = ({ admin, onEditAdmin, onDeleteAdmin }) => {
             <Icon icon="heroicons:phone" className="w-4 h-4 opacity-70" />
             {admin.phone}
           </p>
-          <p className="flex items-center gap-2 text-sm text-default-600">
-            <Icon icon="heroicons:identification" className="w-4 h-4 opacity-70" />
-            {admin.cin}
-          </p>
+         
         </CardContent>
       </Card>
 

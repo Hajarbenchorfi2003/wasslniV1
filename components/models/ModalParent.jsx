@@ -216,6 +216,7 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
               />
               <Label htmlFor="isActive">Actif</Label>
             </div>
+            
 
             {/* Student Multi-Selection with react-select */}
             {students && students.length > 0 && (

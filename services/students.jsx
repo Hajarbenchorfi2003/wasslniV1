@@ -38,3 +38,23 @@ export async function fetchAllStudents(filters = {}) {
     throw error;
   }
 }
+export async function createStudent(StudentData) {
+  const response = await axiosInstance.post('/students/', StudentData);
+  return response.data;
+}
+export async function createAssignation(StudentData) {
+  const response = await axiosInstance.post('/parentstudent/', StudentData);
+  return response.data;
+}
+export async function removeAssignation(studentId, parentId) {
+  const response = await axiosInstance.delete(`/parentstudent/${studentId}/${parentId}`);
+  return response.data;
+}
+export async function updateStudent(id,StudentData) {
+  const response = await axiosInstance.put(`/students/${id}`, StudentData);
+  return response.data;
+}
+export async function deleteStudent(id) {
+  const response = await axiosInstance.delete(`/students/delete-permanently/${id}`);
+  return response.data;
+}

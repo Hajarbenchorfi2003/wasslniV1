@@ -60,7 +60,7 @@ const StudentCard = ({ student, onEditStudent, onDeleteStudent }) => {
                 {student.fullname}
               </CardTitle>
               <h5 className="text-sm text-default-600 leading-tight">
-                {student.class} - {student.establishmentName || 'Non attribué'}
+                {student.class} - {student.establishment.name || 'Non attribué'}
               </h5>
             </div>
           </div>
@@ -96,12 +96,18 @@ const StudentCard = ({ student, onEditStudent, onDeleteStudent }) => {
             <Icon icon="heroicons:map-pin" className="w-4 h-4 opacity-70" />
             Quartier: {student.quartie} ({student.address})
           </p>
-          {student.parentNames && (
-            <p className="flex items-center gap-2">
-              <Icon icon="heroicons:users" className="w-4 h-4 opacity-70" />
-              Parents: {student.parentNames}
-            </p>
-          )}
+          {student.parentLinks?.length > 0 ? (
+  <p className="flex items-center gap-2">
+    <Icon icon="heroicons:users" className="w-4 h-4 opacity-70" />
+    Parents :{' '}
+    {student.parentLinks.map((link) => link.parent.fullname).join(', ')}
+  </p>
+) : (
+  <p className="flex items-center gap-2 text-gray-500">
+    <Icon icon="heroicons:users" className="w-4 h-4 opacity-70" />
+    Aucun parent associé
+  </p>
+)}
         </CardContent>
       </Card>
       <ModalSuppression

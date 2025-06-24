@@ -9,8 +9,11 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalStudent } from '@/components/models/ModalStudent'; // Create this
 import StudentCard from './StudentCard'; // Create this
+import {fetchParents} from '@/services/user';
+import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchAllStudents,createStudent, createAssignation,updateStudent,deleteStudent,removeAssignation} from '@/services/students';
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 6;
 
 const StudentsPage = () => {
   const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
@@ -19,41 +22,70 @@ const StudentsPage = () => {
   const [editingStudent, setEditingStudent] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [establishments, setEstablishments] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    console.log("currentDemoData updated, filtering students...");
-    const allStudents = currentDemoData.students.filter(student => !student.deletedAt); // Filter out soft-deleted students
 
-    // Enrich students with establishment name and parent names
-    const enrichedStudents = allStudents.map(student => {
-      const establishment = currentDemoData.establishments.find(est => est.id === student.establishmentId);
+  let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
 
-      const parentIds = currentDemoData.parentStudents
-        .filter(ps => ps.studentId === student.id)
-        .map(ps => ps.parentId);
+  async function Establishments() {
+    if (loading || establishments.length > 0) {
+      // 🚫 Évite de recharger si déjà en cours ou déjà chargé
+      return;
+    }
 
-      const parentNames = parentIds.map(parentId => {
-        const parent = currentDemoData.users.find(user => user.id === parentId);
-        return parent ? parent.fullname : 'N/A';
+    setLoading(true);
+    try {
+      const data = await fetchAllEstablishments(); // Assurez-vous que cette fonction renvoie bien un tableau
+      console.log("Données reçues depuis l'API:", data);
+
+     
+        // Met à jour la liste des responsables
+        setEstablishments(data);
+
+       
+    } catch (error) {
+      console.error('Erreur lors du chargement des responsables', error);
+      toast.error("Impossible de charger les responsables");
+    } finally {
+      if (isMounted) {
+        setLoading(false); // 🔄 Fin du chargement
+      }
+    }
+  }
+
+  Establishments();
+
+  // Nettoyage pour éviter les mises à jour sur un composant non monté
+  return () => {
+    isMounted = false;
+  };
+}, [loading]); 
+
+
+ const loadStudents = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAllStudents({
+        page: 1,
+        limit: 100
       });
 
-      return {
-        ...student,
-        establishmentName: establishment ? establishment.name : 'Non attribué',
-        parentNames: parentNames.length > 0 ? parentNames.join(', ') : 'Aucun parent associé'
-      };
-    });
-
-    setStudents(enrichedStudents);
-
-    const newTotalPages = Math.ceil(enrichedStudents.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && enrichedStudents.length > 0) {
-      setCurrentPage(1);
-    } else if (enrichedStudents.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
+      console.log('Données reçues:', data.data);
+      setStudents(data.data || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des élèves', error);
+      toast.error("Impossible de charger les élèves");
+    } finally {
+      setLoading(false);
     }
-  }, [currentDemoData, currentPage]);
+  };
+
+  //  Charge les élèves au montage du composant
+  useEffect(() => {
+    loadStudents();
+  }, []);
 
   const totalPages = Math.ceil(students.length / ITEMS_PER_PAGE);
   const paginatedStudents = students.slice(
@@ -70,8 +102,9 @@ const StudentsPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteStudent = (id) => {
+  const handleDeleteStudent = async(id) => {
     try {
+      await deleteStudent(id);
       console.log(`Attempting to soft delete student with ID: ${id}`);
       const updatedStudents = currentDemoData.students.map(student =>
         student.id === id ? { ...student, deletedAt: new Date().toISOString() } : student
@@ -95,51 +128,70 @@ const StudentsPage = () => {
   };
 
   const handleSaveStudent = async (studentData) => {
+
     try {
       let message = '';
       let updatedStudentsArray = [...currentDemoData.students];
       let updatedParentStudentsArray = [...currentDemoData.parentStudents];
+      console.log(studentData)
 
       if (editingStudent) {
-        const index = updatedStudentsArray.findIndex(s => s.id === editingStudent.id);
-        if (index !== -1) {
-          const studentToUpdate = updatedStudentsArray[index];
-          const updatedStudent = {
-            ...studentToUpdate,
-            ...studentData,
-            id: editingStudent.id,
-            dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null, // Ensure ISO string
-          };
-          updatedStudentsArray[index] = updatedStudent;
-          message = 'Élève modifié avec succès';
-
-          // Update parent-student links
-          updatedParentStudentsArray = updatedParentStudentsArray.filter(ps => ps.studentId !== updatedStudent.id);
-          if (studentData.parentIds && studentData.parentIds.length > 0) {
-            studentData.parentIds.forEach(parentId => {
-              updatedParentStudentsArray.push({ parentId: parseInt(parentId), studentId: updatedStudent.id });
-            });
-          }
-        } else {
-          throw new Error("Élève à modifier non trouvé.");
-        }
-      } else {
-        const newId = Math.max(...currentDemoData.students.map(s => s.id), 0) + 1;
-        const newStudent = {
-          ...studentData,
-          id: newId,
-          dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null, // Ensure ISO string
-          deletedAt: null,
-        };
-        updatedStudentsArray.push(newStudent);
-        message = 'Élève ajouté avec succès';
-
-        // Add parent-student links for new student
-        if (studentData.parentIds && studentData.parentIds.length > 0) {
-          studentData.parentIds.forEach(parentId => {
-            updatedParentStudentsArray.push({ parentId: parseInt(parentId), studentId: newId });
+        const updatedStudent = await updateStudent(editingStudent.id,{
+      ...studentData,
+      dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
+    });
+        
+         toast.success('Élève modfiée avec succès', {
+         position: 'bottom-right',
           });
-        }
+        if (studentData.parentIds && Array.isArray(studentData.parentIds)) {
+             // Récupère les anciens liens parent-enfant
+              const oldParentIds = editingStudent.parentLinks.map(link => link.parent.id);
+  
+            // Trouve les IDs à ajouter et à supprimer
+                 const toAdd = studentData.parentIds.filter(id => !oldParentIds.includes(id));
+                  const toRemove = oldParentIds.filter(id => !studentData.parentIds.includes(id));
+
+  // Mets à jour les relations (tu dois implémenter ces fonctions côté API ou service)
+             if (toAdd.length > 0) {
+           for (const parentId of toAdd) {
+          await createAssignation({
+           studentId: updatedStudent.id,
+           parentId: parseInt(parentId, 10),
+         });
+           }
+          }
+
+        if (toRemove.length > 0) {
+         for (const parentId of toRemove) {
+         await removeAssignation(updatedStudent.id, parentId);
+         }
+         }
+          await loadStudents();
+      }
+      } else {
+       const newStudent = await createStudent({
+      ...studentData,
+      dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth).toISOString() : null,
+    });
+
+    toast.success('Élève ajouté avec succès', {
+  position: 'bottom-right',
+});
+
+    if (studentData.parentIds?.length > 0) {
+      for (const parentId of studentData.parentIds) {
+        await createAssignation({
+          studentId: newStudent.id,
+          parentId: parseInt(parentId, 10)
+        });
+      }
+      toast.success('Parents assignés avec succès', {
+  position: 'bottom-right',
+});
+    }
+
+    await loadStudents();
       }
 
       setCurrentDemoData(prevData => ({
@@ -152,10 +204,21 @@ const StudentsPage = () => {
       setIsModalOpen(false);
       setEditingStudent(null);
 
-    } catch (error) {
-      console.error('Error saving student:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
-    }
+    }   catch (error) {
+  let errorMessage = 'Une erreur est survenue';
+
+  if (error.response && error.response.data && error.response.data.error) {
+    errorMessage = error.response.data.error.message;
+  } else if (error.response && error.response.data) {
+    errorMessage = error.response.data;
+  } else if (error.message) {
+    errorMessage = error.message;
+  }
+
+  toast.error(`Erreur : ${errorMessage}`, {
+    position: 'bottom-right',
+  });
+}
   };
 
   const handleCloseModal = () => {
@@ -183,8 +246,8 @@ const StudentsPage = () => {
         onClose={handleCloseModal}
         editingStudent={editingStudent}
         onSave={handleSaveStudent}
-        establishments={currentDemoData.establishments}
-        parents={currentDemoData.users.filter(user => user.role === 'PARENT')} // Pass only parent users
+        establishments={establishments}
+       
         parentStudents={currentDemoData.parentStudents}
       />
 

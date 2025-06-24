@@ -9,10 +9,8 @@ import { Icon } from '@iconify/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { getUserById, updateUserData, updateUserPassword } from '@/data/data';
+import { userAPI } from '@/utils/auth'; // <-- API réel
 import toast from 'react-hot-toast';
-
-const MOCK_PARENT_ID = 5;
 
 export default function ParentProfilePage() {
   const [parent, setParent] = useState(null);
@@ -30,27 +28,30 @@ export default function ParentProfilePage() {
   });
 
   const [passwordInfo, setPasswordInfo] = useState({
-    currentPassword: '',
-    newPassword: '',
+    ancienPassword: '',
+    nouveauPassword: '',
     confirmPassword: ''
   });
 
   useEffect(() => {
-    const loadParentData = () => {
+    const loadParentData = async () => {
       setLoading(true);
-      const parentData = getUserById(MOCK_PARENT_ID);
-      
-      if (parentData) {
-        setParent(parentData);
+      try {
+        const res = await userAPI.getProfile();
+        console.log(res);
+        const user = res.user;  
+        setParent(user);
         setPersonalInfo({
-          fullname: parentData.fullname || '',
-          email: parentData.email || '',
-          phone: parentData.phone || '',
-          address: parentData.address || '',
-          cin: parentData.cin || ''
+          fullname: user.fullname || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          address: user.address || '',
         });
+      } catch (error) {
+        toast.error('Impossible de charger les informations du profil.');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     loadParentData();
@@ -73,48 +74,39 @@ export default function ParentProfilePage() {
   const handleSavePersonalInfo = async () => {
     setSaving(true);
     try {
-      const success = updateUserData(MOCK_PARENT_ID, personalInfo);
-      if (success) {
-        toast.success('Informations personnelles mises à jour avec succès !');
-        // Reload parent data
-        const updatedParent = getUserById(MOCK_PARENT_ID);
-        setParent(updatedParent);
-      } else {
-        toast.error('Erreur lors de la mise à jour des informations.');
-      }
+      await userAPI.updateProfile(personalInfo);
+      toast.success('Informations personnelles mises à jour avec succès !');
+      // rafraîchir les données
+      const res = await userAPI.getProfile();
+      setParent(res.user);
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour des informations.');
+      toast.error(error.message || 'Erreur lors de la mise à jour des informations.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleChangePassword = async () => {
-    if (passwordInfo.newPassword !== passwordInfo.confirmPassword) {
+    if (passwordInfo.nouveauPassword !== passwordInfo.confirmPassword) {
       toast.error('Les mots de passe ne correspondent pas.');
       return;
     }
 
-    if (passwordInfo.newPassword.length < 6) {
+    if (passwordInfo.nouveauPassword.length < 6) {
       toast.error('Le nouveau mot de passe doit contenir au moins 6 caractères.');
       return;
     }
 
     setChangingPassword(true);
     try {
-      const success = updateUserPassword(MOCK_PARENT_ID, passwordInfo.newPassword);
-      if (success) {
-        toast.success('Mot de passe modifié avec succès !');
-        setPasswordInfo({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        });
-      } else {
-        toast.error('Erreur lors de la modification du mot de passe.');
-      }
+      await userAPI.changePassword({
+        ancienPassword: passwordInfo.ancienPassword,
+        nouveauPassword: passwordInfo.nouveauPassword
+      });
+      toast.success('Mot de passe modifié avec succès !');
+      setPasswordInfo({ ancienPassword: '', nouveauPassword: '', confirmPassword: '' });
     } catch (error) {
-      toast.error('Erreur lors de la modification du mot de passe.');
+      toast.error(error.message || 'Erreur lors de la modification du mot de passe.');
     } finally {
       setChangingPassword(false);
     }
@@ -145,7 +137,7 @@ export default function ParentProfilePage() {
         <Avatar className="h-16 w-16">
           <AvatarImage src={parent.avatar} alt={parent.fullname} />
           <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-            {parent.fullname.charAt(0)}
+            {parent.fullname?.charAt(0) || 'P'}
           </AvatarFallback>
         </Avatar>
         <div>
@@ -206,19 +198,7 @@ export default function ParentProfilePage() {
                     placeholder="+212 6 XX XX XX XX"
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="cin">CIN</Label>
-                  <Input
-                    id="cin"
-                    value={personalInfo.cin}
-                    onChange={(e) => handlePersonalInfoChange('cin', e.target.value)}
-                    placeholder="Votre numéro CIN"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="address">Adresse</Label>
                 <Input
                   id="address"
@@ -228,11 +208,14 @@ export default function ParentProfilePage() {
                 />
               </div>
 
+              </div>
+
+
               <Separator />
 
               <div className="flex justify-end">
-                <Button 
-                  onClick={handleSavePersonalInfo} 
+                <Button
+                  onClick={handleSavePersonalInfo}
                   disabled={saving}
                   className="gap-2"
                 >
@@ -259,23 +242,23 @@ export default function ParentProfilePage() {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                  <Label htmlFor="ancienPassword">Mot de passe actuel</Label>
                   <Input
-                    id="currentPassword"
+                    id="ancienPassword"
                     type="password"
-                    value={passwordInfo.currentPassword}
-                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                    value={passwordInfo.ancienPassword}
+                    onChange={(e) => handlePasswordChange('ancienPassword', e.target.value)}
                     placeholder="Votre mot de passe actuel"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                  <Label htmlFor="nouveauPassword">Nouveau mot de passe</Label>
                   <Input
-                    id="newPassword"
+                    id="nouveauPassword"
                     type="password"
-                    value={passwordInfo.newPassword}
-                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                    value={passwordInfo.nouveauPassword}
+                    onChange={(e) => handlePasswordChange('nouveauPassword', e.target.value)}
                     placeholder="Nouveau mot de passe"
                   />
                 </div>
@@ -295,8 +278,8 @@ export default function ParentProfilePage() {
               <Separator />
 
               <div className="flex justify-end">
-                <Button 
-                  onClick={handleChangePassword} 
+                <Button
+                  onClick={handleChangePassword}
                   disabled={changingPassword}
                   variant="destructive"
                   className="gap-2"
@@ -313,6 +296,6 @@ export default function ParentProfilePage() {
           </Card>
         </TabsContent>
       </Tabs>
-        </div>
-    );
-} 
+    </div>
+  );
+}

@@ -109,7 +109,7 @@ export const ParentNotificationsList = ({ notifications, onMarkAsRead }) => {
                   key={notification.id} 
                   className={`
                     p-4 border-b last:border-b-0 flex items-start justify-between transition-colors
-                    ${!notification.read ? 'bg-default-50 border-l-4 border-l-blue-500' : 'bg-white'}
+                    ${!notification.read ? 'bg-default-50 border-l-4 border-l-blue-500' : 'bg-default'}
                     ${getPriorityLevel(notification.type) === 'high' ? 'border-l-red-500 bg-red-50' : ''}
                     ${getPriorityLevel(notification.type) === 'medium' ? 'border-l-yellow-500 bg-yellow-50' : ''}
                   `}

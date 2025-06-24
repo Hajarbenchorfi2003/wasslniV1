@@ -1,5 +1,5 @@
 'use client';
-
+// model/schoolAdminForm.jsx
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -107,6 +107,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
   }, [addNewAdmin, form, defaultValues]); // Add defaultValues to dependency array
 
   const handleSubmit = (data) => {
+    console.log("form sumbit ",data)
     onSubmit({
       school: data.school,
       admin: addNewAdmin ? { ...data.admin, role: 'ADMIN' } : null,

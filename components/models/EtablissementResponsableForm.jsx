@@ -128,6 +128,10 @@ export default function EtablissementResponsableForm({
 
 
   const handleSubmit = (data) => {
+    const errors = form.formState.errors;
+  if (Object.keys(errors).length > 0) {
+    console.error("Erreurs de validation", errors); // ✅ Affiche les erreurs
+  }
     onSubmit({
       etablissement: data.etablissement,
       responsable: addNewResponsable ? { ...data.responsable, role: 'RESPONSIBLE' } : null,
@@ -136,6 +140,7 @@ export default function EtablissementResponsableForm({
       // Pass the schoolId from the form's data, or the fixedSchoolId if available
       schoolId: fixedSchoolId ? fixedSchoolId : (data.schoolId ? parseInt(data.schoolId) : null),
     });
+    console.log(data);
   };
 
   const etablissementFields = [

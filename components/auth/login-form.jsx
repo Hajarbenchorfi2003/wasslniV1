@@ -72,6 +72,9 @@ const LogInForm = () => {
       if (!res.ok) {
         throw new Error(result.message || 'Une erreur est survenue');
       }
+        
+
+    toast.success("Connexion réussie");
 
       // Sauvegarder l'utilisateur dans le localStorage
       localStorage.setItem("user", JSON.stringify(result.user));
@@ -115,6 +118,10 @@ const LogInForm = () => {
       setIsLoading(false);
     }
   };
+
+
+  
+
 
   return (
     <div className="w-full py-10">

@@ -1,8 +1,6 @@
 'use client';
 
-import { notFound } from 'next/navigation';
-// Directly import demoData and getSchoolEstablishments
-import { demoData, getSchoolEstablishments } from '@/data/data';
+import { Fragment, useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -14,87 +12,75 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Fragment, useState, useEffect } from 'react';
-import { useRouter, usePathname, useParams } from 'next/navigation'; // Combined imports
+import { useRouter, useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Icon } from '@iconify/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ModalEtablissement from '@/components/models/ModalEtablissement1';
 import ModalSuppression from '@/components/models/ModalSuppression';
 import toast from 'react-hot-toast';
-import { Input } from '@/components/ui/input'; // Import the Input component
+import { Input } from '@/components/ui/input';
 
-export default function SchoolDetailsPage({ params }) {
-  const { id } = params;
-  const schoolId = parseInt(id);
+// Service API
+import { getSchool } from '@/services/school';
+
+const ITEMS_PER_PAGE = 5;
+
+export default function SchoolDetailsPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const paramsr = useParams(); // Using useParams for 'lang'
-  const locale = paramsr.lang;
+  const params = useParams();
+  const schoolId = parseInt(params.id);
 
-  // Find the school directly from demoData.schools
-  const school = demoData.schools.find((s) => s.id === schoolId);
-
-  if (!school) return notFound();
-
-  const ITEMS_PER_PAGE = 5;
+  // États locaux
+  const [schoolData, setSchoolData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [establishments, setEstablishments] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [collapsedRows, setCollapsedRows] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentEstablishmentDataForModal, setCurrentEstablishmentDataForModal] = useState(null);
   const [establishmentToDelete, setEstablishmentToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // New state for search query
 
-  // Use useEffect to keep establishments state in sync with demoData and apply filter
+  // Charger les données depuis l'API
   useEffect(() => {
-    // Get all establishments for this school
-    const allSchoolEstablishments = getSchoolEstablishments(schoolId);
-
-    // Apply search filter
-    const filteredEstablishments = allSchoolEstablishments.filter(etab => {
-      const lowerCaseSearchQuery = searchQuery.toLowerCase();
-      const responsable = demoData.users.find(u => u.id === etab.responsableId);
-      const responsableFullName = responsable ? responsable.fullname.toLowerCase() : '';
-
-      return (
-        etab.name.toLowerCase().includes(lowerCaseSearchQuery) ||
-        etab.email.toLowerCase().includes(lowerCaseSearchQuery) ||
-        (etab.phone && etab.phone.toLowerCase().includes(lowerCaseSearchQuery)) ||
-        etab.address.toLowerCase().includes(lowerCaseSearchQuery) ||
-        etab.quartie.toLowerCase().includes(lowerCaseSearchQuery) ||
-        etab.city.toLowerCase().includes(lowerCaseSearchQuery) ||
-        responsableFullName.includes(lowerCaseSearchQuery) // Filter by responsible's full name
-      );
-    });
-
-    setEstablishments(filteredEstablishments || []); // Set filtered establishments
-
-    // Reset page to 1 if the current page no longer exists after data refresh or filter
-    const newTotalPages = Math.ceil(filteredEstablishments.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && filteredEstablishments.length > 0) {
-      setCurrentPage(1);
-    } else if (filteredEstablishments.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
+    async function loadSchool() {
+      try {
+        const data = await getSchool(schoolId);
+        setSchoolData(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement de l’école', error);
+        notFound();
+      } finally {
+        setLoading(false);
+      }
     }
-    setCollapsedRows([]); // Collapse all rows on data refresh/filter change
-  }, [schoolId, demoData.establishments, demoData.users, searchQuery, currentPage]); // Added demoData.users and searchQuery to dependencies
 
-  const totalPages = Math.ceil(establishments.length / ITEMS_PER_PAGE);
-  const paginatedEstablishments = establishments.slice(
+    loadSchool();
+  }, [schoolId]);
+
+  // Filtrer les établissements en fonction de la recherche
+  const filteredEstablishments = schoolData?.establishments?.filter(etab => {
+    const lowerCaseSearchQuery = searchQuery.toLowerCase();
+    const responsableFullName = etab.responsable?.fullname?.toLowerCase() || '';
+    return (
+      etab.name.toLowerCase().includes(lowerCaseSearchQuery) ||
+      etab.email.toLowerCase().includes(lowerCaseSearchQuery) ||
+      (etab.phone && etab.phone.toLowerCase().includes(lowerCaseSearchQuery)) ||
+      etab.address.toLowerCase().includes(lowerCaseSearchQuery) ||
+      etab.quartie.toLowerCase().includes(lowerCaseSearchQuery) ||
+      etab.city.toLowerCase().includes(lowerCaseSearchQuery) ||
+      responsableFullName.includes(lowerCaseSearchQuery)
+    );
+  }) || [];
+
+  const totalPages = Math.ceil(filteredEstablishments.length / ITEMS_PER_PAGE);
+  const paginatedEstablishments = filteredEstablishments.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  const toggleRow = (id) => {
-    setCollapsedRows((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
-    );
-  };
-
+  // Pagination handler
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -102,53 +88,21 @@ export default function SchoolDetailsPage({ params }) {
     }
   };
 
-  const handleSaveEstablishment = (updatedDataFromModal) => {
-    // Force a re-sync of the establishments state with the global demoData
-    // The ModalEtablissement is expected to update demoData.establishments directly
-    const schoolEstablishments = getSchoolEstablishments(schoolId);
-    setEstablishments(schoolEstablishments || []); // Re-set based on updated demoData
-    // We also need to trigger the useEffect if demoData.users changes (e.g., if a new responsible is created)
-    // A simple way to do this is to update a dummy state or ensure demoData is deeply reactive (which it is here)
-    // Forcing a full demoData re-render in parent if necessary
-    // setCurrentDemoData({ ...demoData }); // If this page had its own demoData state
-
-    setIsEditModalOpen(false);
-    setCurrentEstablishmentDataForModal(null);
-    toast.success("Établissement enregistré avec succès!");
+  // Gestion des lignes étendues
+  const toggleRow = (id) => {
+    setCollapsedRows((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+    );
   };
 
-  const handleDeleteEstablishment = () => {
-    if (establishmentToDelete !== null) {
-      // Perform the actual deletion in demoData
-      demoData.establishments = demoData.establishments.filter(
-        (e) => e.id !== establishmentToDelete
-      );
-      // Also, if any responsable was tied *only* to this establishment and is now orphaned, handle that.
-      // For simplicity here, we just remove the establishment.
-
-      // Re-sync local state from updated demoData
-      const schoolEstablishments = getSchoolEstablishments(schoolId);
-      setEstablishments(schoolEstablishments || []);
-
-      // Adjust current page if needed after deletion
-      const newTotalAfterDelete = schoolEstablishments.length;
-      const newTotalPagesAfterDelete = Math.ceil(newTotalAfterDelete / ITEMS_PER_PAGE);
-
-      if (currentPage > newTotalPagesAfterDelete && newTotalPagesAfterDelete > 0) {
-        setCurrentPage(newTotalPagesAfterDelete);
-      } else if (newTotalPagesAfterDelete === 0) {
-        setCurrentPage(1); // Reset to page 1 if all items are deleted
-      }
-
-      toast.success('Établissement supprimé avec succès!');
-    }
-    setIsDeleteModalOpen(false);
-    setEstablishmentToDelete(null);
+  // Ouvrir modal création/modification établissement
+  const handleAddEstablishment = () => {
+    setCurrentEstablishmentDataForModal(null);
+    setIsEditModalOpen(true);
   };
 
   const handleEditEstablishment = (etablissementToEdit) => {
-    const associatedResponsable = demoData.users.find(u => u.id === etablissementToEdit.responsableId);
-
+    const associatedResponsable = etablissementToEdit.responsable || null;
     const defaultValuesForForm = {
       id: etablissementToEdit.id,
       etablissement: {
@@ -176,32 +130,38 @@ export default function SchoolDetailsPage({ params }) {
     setIsEditModalOpen(true);
   };
 
-  const handleAddEstablishment = () => {
-    setCurrentEstablishmentDataForModal(null);
-    setIsEditModalOpen(true);
-  };
-
   const openDeleteEstablishmentModal = (id) => {
     setEstablishmentToDelete(id);
     setIsDeleteModalOpen(true);
   };
 
-  // Helper to get responsible details
-  const getResponsibleDetails = (etablissementId) => {
-    const etablissement = demoData.establishments.find(
-      (etab) => etab.id === etablissementId
-    );
-    if (!etablissement || !etablissement.responsableId) return null;
-
-    const responsible = demoData.users.find(
-      (user) => user.id === etablissement.responsableId
-    );
-    return responsible || null;
+  // Gérer suppression établissement (à adapter selon ton API)
+  const handleDeleteEstablishment = () => {
+    toast.success("Établissement supprimé avec succès !");
+    setIsDeleteModalOpen(false);
+    setEstablishmentToDelete(null);
   };
+
+  // Gérer sauvegarde établissement
+  const handleSaveEstablishment = () => {
+    toast.success("Établissement enregistré !");
+    setIsEditModalOpen(false);
+    setCurrentEstablishmentDataForModal(null);
+  };
+
+  if (loading) {
+    return <p>Chargement en cours...</p>;
+  }
+
+  if (!schoolData) {
+    return notFound();
+  }
+
+  const { school, admins, establishmentCount, establishments } = schoolData;
 
   return (
     <div className="space-y-6">
-      {/* Header and Back Button */}
+      {/* Header */}
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-medium text-default-800 mb-2">
@@ -211,12 +171,12 @@ export default function SchoolDetailsPage({ params }) {
             Téléphone : {school.phone} — Email : {school.email}
           </p>
         </div>
-        <Link href={`/${locale}/super-admin/schools`}>
+        <Link href={`/super-admin/schools`}>
           <Button variant="outline">← Retour</Button>
         </Link>
       </div>
 
-      {/* Search Input and Add Establishment Button */}
+      {/* Recherche + Bouton ajout */}
       <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
         <div className="relative w-full max-w-md">
           <Input
@@ -234,8 +194,8 @@ export default function SchoolDetailsPage({ params }) {
         </Button>
       </div>
 
-
-      {establishments.length > 0 ? (
+      {/* Tableau */}
+      {paginatedEstablishments.length > 0 ? (
         <>
           <Table>
             <TableHeader>
@@ -248,7 +208,7 @@ export default function SchoolDetailsPage({ params }) {
             </TableHeader>
             <TableBody>
               {paginatedEstablishments.map((item) => {
-                const directeur = getResponsibleDetails(item.id);
+                const responsable = item.responsable || null;
                 return (
                   <Fragment key={item.id}>
                     <TableRow>
@@ -308,7 +268,7 @@ export default function SchoolDetailsPage({ params }) {
                           <Icon icon="heroicons:trash" className="h-5 w-5" />
                         </Button>
                         <Button
-                          onClick={() => router.push(`/${locale}/super-admin/etablissements/${item.id}`)}
+                          onClick={() => router.push(`/fr/super-admin/etablissements/${item.id}`)}
                           size="icon"
                           variant="outline"
                           className="h-7 w-7 border-none"
@@ -317,7 +277,6 @@ export default function SchoolDetailsPage({ params }) {
                         </Button>
                       </TableCell>
                     </TableRow>
-
                     {collapsedRows.includes(item.id) && (
                       <TableRow className="bg-muted/50">
                         <TableCell colSpan={5}>
@@ -325,24 +284,20 @@ export default function SchoolDetailsPage({ params }) {
                             <p className="flex items-center gap-2">
                               <Icon icon="heroicons:user" className="w-4 h-4 opacity-50" />
                               <span>
-                                Directeur : {directeur?.fullname || "Non renseigné"}
+                                Directeur : {responsable?.fullname || "Non renseigné"}
                               </span>
                             </p>
                             <p className="flex items-center gap-2">
                               <Icon icon="heroicons:at-symbol" className="w-4 h-4 opacity-50" />
                               <span>
-                                Email Directeur : {directeur?.email || "Non renseigné"}
+                                Email Directeur : {responsable?.email || "Non renseigné"}
                               </span>
                             </p>
                             <p className="flex items-center gap-2">
                               <Icon icon="heroicons:phone" className="w-4 h-4 opacity-50" />
-                              <span>Téléphone Directeur : {directeur?.phone || "Non renseigné"}</span>
+                              <span>Téléphone Directeur : {responsable?.phone || "Non renseigné"}</span>
                             </p>
-                            <p className="flex items-center gap-2">
-                              {/* You'll need to calculate number of buses per establishment */}
-                              <Icon icon="heroicons:truck" className="w-4 h-4 opacity-50" />
-                              <span>Nombre de bus : {demoData.buses.filter(bus => bus.establishmentId === item.id).length || 0}</span>
-                            </p>
+                           
                           </div>
                         </TableCell>
                       </TableRow>
@@ -353,7 +308,7 @@ export default function SchoolDetailsPage({ params }) {
             </TableBody>
           </Table>
 
-          {/* Pagination Controls */}
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 items-center mt-4">
               <Button
@@ -365,7 +320,6 @@ export default function SchoolDetailsPage({ params }) {
               >
                 <Icon icon="heroicons:chevron-left" className="w-5 h-5 rtl:rotate-180" />
               </Button>
-
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <Button
                   key={`page-${page}`}
@@ -376,7 +330,6 @@ export default function SchoolDetailsPage({ params }) {
                   {page}
                 </Button>
               ))}
-
               <Button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
@@ -393,20 +346,20 @@ export default function SchoolDetailsPage({ params }) {
         <p className="text-muted-foreground">Aucun établissement trouvé pour cette école.</p>
       )}
 
-      {/* Modal for adding/editing establishments */}
+      {/* Modale établissement */}
       <ModalEtablissement
         isOpen={isEditModalOpen}
         setIsOpen={setIsEditModalOpen}
         onSave={handleSaveEstablishment}
         editingEtablissement={currentEstablishmentDataForModal}
-        schoolId={schoolId.toString()}
+        schoolId={school.id.toString()}
         school={school}
-        allSchools={demoData.schools}
-        users={demoData.users} // Pass users for responsible selection/creation
-        establishments={demoData.establishments} // Pass establishments to modal for checking uniqueness or other needs
+        allSchools={[school]} // Peut être utilisé pour liste déroulante si nécessaire
+        users={[]} // À remplir si besoin de sélectionner des responsables existants
+        establishments={establishments}
       />
 
-      {/* Modal for confirming deletion */}
+      {/* Modale suppression */}
       <ModalSuppression
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}

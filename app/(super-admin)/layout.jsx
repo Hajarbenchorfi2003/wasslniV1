@@ -5,6 +5,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashBoardLayoutProvider from "@/provider/dashboard.layout.provider";
 import { menuSuperAdminConfig } from "@/config/menus";
+import { getUser, getToken, isAuthenticated } from '@/utils/auth';
+console.log("Raw user:", localStorage.getItem("user"));
+console.log("Parsed user:", getUser());
+console.log("Token:", getToken());
+// Exemple
+if (isAuthenticated()) {
+  const user = getUser();
+  console.log('Utilisateur connecté :', user.fullname);
+  console.log('Role :', user.role);
+}
 
 
 const Layout = ({ children }) => {

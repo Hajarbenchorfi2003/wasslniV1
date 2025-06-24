@@ -1,5 +1,6 @@
-// utils/auth.js
-import axios from 'axios';
+
+
+ import axios from 'axios';
 
 // Récupérer l'utilisateur depuis le localStorage
 export const getUser = () => {

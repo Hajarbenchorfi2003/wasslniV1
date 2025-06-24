@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { demoData as initialDemoData } from '@/data/data'; // No need for getSchoolAdmins import here
+ // No need for getSchoolAdmins import here
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
@@ -9,19 +9,51 @@ import toast from 'react-hot-toast';
 import { ModalUser } from '@/components/models/ModalUser';
 import AdminCard from './AdminCard';
 import { Input } from '@/components/ui/input'; // Import Input component
+import {fetchAdmins,register,updateUser,deleteUser} from '@/services/user.jsx';
 
 const ITEMS_PER_PAGE = 3;
 
 const AdminsPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
+  const [currentDemoData, setCurrentDemoData] = useState({
+  users: [],
+  schools: [],
+  userSchools: [],
+});
   const [admins, setAdmins] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState(''); // New state for search query
   const [filteredAndPaginatedAdmins, setFilteredAndPaginatedAdmins] = useState([]);
+useEffect(() => {
+  console.log("i am in fetching")
+  async function loadAdmins() {
+    try {
+      const data = await fetchAdmins(); // Supposons que cela renvoie simplement un tableau d'admins
+      console.log("Données reçues depuis l'API:", data);
 
+      // ✅ Mettez à jour avec les données venant de l'API
+      const enrichedAdmins = data.map(admin => ({
+        ...admin,
+        schoolNames: admin.schools?.join(', ') || 'Aucune école'
+      }));
 
+      setAdmins(enrichedAdmins);
+      setCurrentDemoData({
+        users: data,
+        schools: [], // À remplir si nécessaire
+        userSchools: [] // À remplir si nécessaire
+      });
+
+    } catch (error) {
+      console.error('Erreur lors du chargement des admins', error);
+      toast.error("Impossible de charger les administrateurs");
+    }
+  }
+
+  loadAdmins();
+}, []);
+ console.log( "data",currentDemoData);
   // Effect to filter and set admins whenever currentDemoData or searchQuery changes
   useEffect(() => {
     console.log("currentDemoData or searchQuery updated, filtering admins...");
@@ -86,15 +118,20 @@ const AdminsPage = () => {
   };
 
   const handleEditAdmin = (admin) => {
+
+    console.log("edit admin",admin);
     setEditingUser(admin);
     setIsModalOpen(true);
   };
 
-  const handleDeleteAdmin = (id) => {
+  const handleDeleteAdmin  = async (id) => { 
     try {
       console.log(`Attempting to delete user with ID: ${id}`);
+      const response = await deleteUser(id); 
       const updatedUsers = currentDemoData.users.filter(user => user.id !== id);
-
+       toast.success('Admin supprimé avec succès', {
+    position: "bottom-right",
+  });
       const updatedEstablishments = currentDemoData.establishments.map(est => {
         if (est.responsableId === id) {
           return { ...est, responsableId: null };
@@ -113,19 +150,30 @@ const AdminsPage = () => {
 
       toast.success('Admin supprimé avec succès');
       console.log("User deleted successfully, updated demoData:", { users: updatedUsers, establishments: updatedEstablishments, userSchools: updatedUserSchools });
-    } catch (error) {
-      console.error('Error deleting admin:', error);
-      toast.error('Erreur lors de la suppression de l\'Admin');
-    }
+    }  catch (error) {
+    console.error('Error deleting admin:', error);
+    
+    // Gestion fine de l'erreur pour affichage utilisateur
+    const errorMessage = error.response?.data?.message 
+      || error.message 
+      || 'Erreur lors de la suppression de l\'Admin';
+
+    toast.error(`Erreur : ${errorMessage}`, {
+    position: "bottom-right",
+  });
+  }
   };
 
   const handleSaveUser = async (userData) => {
     try {
+      console.log( "DATA WANT TO ADD",userData)
+       
       let message = '';
       let updatedUsersArray = [...currentDemoData.users];
       let updatedUserSchoolsArray = [...currentDemoData.userSchools];
 
       if (editingUser) {
+        const response=await updateUser(editingUser.id,userData)
         const index = updatedUsersArray.findIndex(u => u.id === editingUser.id);
         if (index !== -1) {
           const userToUpdate = updatedUsersArray[index];
@@ -154,13 +202,29 @@ const AdminsPage = () => {
           throw new Error("Utilisateur à modifier non trouvé.");
         }
       } else {
+        // Vérification des champs obligatoires
+    const requiredFields = ['email', 'password', 'fullname', 'phone'];
+    const missingFields = requiredFields.filter(field => !userData[field]);
+
+    if (missingFields.length > 0) {
+      throw new Error(`Les champs suivants sont manquants : ${missingFields.join(', ')}`);
+    }
+        const dataToSend = {
+          ...userData,
+         role: 'ADMIN'
+         };
+
+       console.log("Data being sent to register:",(dataToSend) );
+
+       const response = await register(dataToSend);
+       console.log(response);
         const newId = Math.max(...currentDemoData.users.map(u => u.id), 0) + 1;
         const newUser = {
-          ...userData,
+          ...dataToSend,
           id: newId,
           createdAt: new Date().toISOString(),
           role: 'ADMIN',
-          isActive: true,
+          
         };
         updatedUsersArray.push(newUser);
         message = 'Admin ajouté avec succès';
@@ -176,17 +240,28 @@ const AdminsPage = () => {
         ...prevData,
         users: updatedUsersArray,
         userSchools: updatedUserSchoolsArray,
-      }));
+      }));toast.success(message, {
+       position: "bottom-right",
+    });
 
-      toast.success(message);
       console.log("Save operation successful. Final users array after save:", updatedUsersArray);
-      setIsModalOpen(false);
-      setEditingUser(null);
+    setIsModalOpen(false);
+    setEditingUser(null);
 
-    } catch (error) {
-      console.error('Error saving user:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
-    }
+}  catch (error) {
+  let errorMessage = 'Erreur inconnue. Vérifiez les données ou réessayez plus tard.';
+
+  if (error.response?.data?.message) {
+    errorMessage = error.response.data.message;
+  } else if (error.message) {
+    errorMessage = error.message;
+  }
+
+  console.error('Error saving user:', error);
+  toast.error(`Erreur : ${errorMessage}`, {
+    position: "bottom-right",
+  });
+}
   };
 
   const handleCloseModal = () => {

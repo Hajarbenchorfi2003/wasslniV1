@@ -15,7 +15,6 @@ const PersonalDetails = ({ user, onUpdate }) => {
     fullname: '',
     email: '',
     phone: '',
-    cin: '',
     isActive: true,
     notificationEnabled: true,
   });
@@ -31,7 +30,6 @@ const PersonalDetails = ({ user, onUpdate }) => {
         fullname: u.fullname || '',
         email: u.email || '',
         phone: u.phone || '',
-        cin: u.cin || '',
         isActive: u.isActive !== undefined ? u.isActive : true,
         notificationEnabled: u.notificationEnabled !== undefined ? u.notificationEnabled : true,
       });
@@ -117,18 +115,7 @@ const PersonalDetails = ({ user, onUpdate }) => {
               disabled={!isEditing || loading}
               placeholder="Entrez votre numéro de téléphone"
             />
-          </div>
-          <div className="col-span-12 md:col-span-6">
-            <Label htmlFor="cin">CIN</Label>
-            <Input
-              id="cin"
-              name="cin"
-              value={formData.cin}
-              onChange={handleChange}
-              disabled={!isEditing || loading}
-              placeholder="Entrez votre CIN"
-            />
-          </div>
+          </div> 
         </div>
 
         <div className="flex items-center justify-between mt-4">

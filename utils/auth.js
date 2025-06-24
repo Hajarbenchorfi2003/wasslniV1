@@ -137,13 +137,21 @@ export const userAPI = {
   async changePassword(passwordData) {
     try {
       const token = getToken();
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/modifier-mot-de-passe`, passwordData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/user/modifier-mot-de-passe`,
+        {
+          ancienPassword: passwordData.currentPassword,
+          nouveauPassword: passwordData.newPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('❌ Failed to change password:', error);
       throw error.response?.data || { message: 'Erreur lors du changement de mot de passe' };
     }
   }
+  
 };

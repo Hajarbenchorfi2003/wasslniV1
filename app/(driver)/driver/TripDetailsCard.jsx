@@ -60,29 +60,38 @@ export const TripDetailsCard = ({
 
   return (
     <Card className="shadow-sm h-full flex flex-col">
-      <CardHeader className="pb-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl font-medium text-default-800 flex items-center gap-2">
-              <Button onClick={onGoBack} variant="ghost" size="icon" className="mr-2">
-                <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
-              </Button>
-              Détails du Trajet Quotidien: {tripName || 'N/A'}
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Date: {displayDate} <Badge className={cn("ml-2 capitalize")} color={getStatusColor(status)} variant="soft">{getStatusText(status)}</Badge>
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onViewRouteOnMap} size="sm">
-              <Icon icon="heroicons:map" className="h-4 w-4 mr-2" /> Voir Itinéraire
-            </Button>
-            <Button variant="outline" onClick={onReportIncident} size="sm" className="text-red-500 border-red-500 hover:text-red-600 hover:border-red-600">
-              <Icon icon="heroicons:exclamation-triangle" className="h-4 w-4 mr-2" /> Incident
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
+     <CardHeader className="pb-4">
+  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+    <div>
+      <CardTitle className="text-xl font-medium text-default-800 flex items-center gap-2">
+        <Button onClick={onGoBack} variant="ghost" size="icon" className="mr-2">
+          <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
+        </Button>
+        Détails du Trajet Quotidien: {tripName || 'N/A'}
+      </CardTitle>
+      <CardDescription className="mt-1">
+        Date: {displayDate}{' '}
+        <Badge className={cn("ml-2 capitalize")} color={getStatusColor(status)} variant="soft">
+          {getStatusText(status)}
+        </Badge>
+      </CardDescription>
+    </div>
+
+    <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+      <Button variant="outline" onClick={onViewRouteOnMap} size="sm">
+        <Icon icon="heroicons:map" className="h-4 w-4 mr-2" /> Voir Itinéraire
+      </Button>
+      <Button
+        variant="outline"
+        onClick={onReportIncident}
+        size="sm"
+        className="text-red-500 border-red-500 hover:text-red-600 hover:border-red-600"
+      >
+        <Icon icon="heroicons:exclamation-triangle" className="h-4 w-4 mr-2" /> Incident
+      </Button>
+    </div>
+  </div>
+</CardHeader>
 
       <CardContent className="flex-grow overflow-y-auto">
         <h3 className="font-semibold text-lg mb-2 text-default-700">Informations Bus & Route</h3>
@@ -99,7 +108,7 @@ export const TripDetailsCard = ({
         <Separator className="my-4" />
 
         <h3 className="font-semibold text-lg mb-2 text-default-700">Arrêts du Trajet</h3>
-        {stopsInRoute.length > 0 ? (
+        {(stopsInRoute?.length ?? 0) > 0 ? (
           <ol className="list-decimal list-inside space-y-1 mb-6 text-sm text-muted-foreground">
             {stopsInRoute.map(stop => (
               <li key={stop.id}>
@@ -114,7 +123,7 @@ export const TripDetailsCard = ({
         <Separator className="my-4" />
 
         <h3 className="font-semibold text-lg mb-2 text-default-700">Élèves Assignés & Présence</h3>
-        {studentsInTrip.length > 0 ? (
+         {(studentsInTrip?.length ?? 0) > 0 ? (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

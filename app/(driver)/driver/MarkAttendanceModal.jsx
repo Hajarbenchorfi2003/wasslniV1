@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import toast from 'react-hot-toast';
-import { saveAttendance, getUserById } from '@/data/data';
+import driverService from '@/services/driverService';
 import { Icon } from '@iconify/react';
 
 export const MarkAttendanceModal = ({
@@ -26,55 +26,64 @@ export const MarkAttendanceModal = ({
   studentId,
   currentStatus,
   onAttendanceMarked,
-  driverId,
-  initialDemoData,
 }) => {
   const [status, setStatus] = useState(currentStatus || 'ABSENT');
-  const [studentName, setStudentName] = useState('Chargement...');
-  const [student, setStudent] = useState(null);
-  const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Charger les infos de l'élève quand le modal s'ouvre
   useEffect(() => {
-    setStatus(currentStatus || 'ABSENT');
-    setNote('');
-    setIsSubmitting(false);
-
-    if (studentId && initialDemoData) {
-      const studentData = initialDemoData.students.find(s => s.id === studentId);
-      setStudent(studentData);
-      setStudentName(studentData ? studentData.fullname : 'Élève Inconnu');
+    if (isOpen && studentId) {
+      // Simuler le chargement des données élève (tu peux remplacer ça par un appel API si nécessaire)
+      setStatus(currentStatus || 'ABSENT');
+      setIsSubmitting(false);
     }
-  }, [isOpen, studentId, currentStatus, initialDemoData]);
+  }, [isOpen, studentId, currentStatus]);
+
+   
 
   const handleSaveAttendance = async () => {
     if (!status) {
       toast.error("Veuillez sélectionner un statut de présence.");
       return;
     }
-
+  
+    if (!dailyTripId || !studentId) {
+      toast.error("Données manquantes pour enregistrer la présence.");
+      return;
+    }
+  
     setIsSubmitting(true);
-
+  
     try {
-      const result = saveAttendance({
-        dailyTripId: dailyTripId,
-        studentId: studentId,
-        type: 'DEPART',
-        status: status,
-        markedById: driverId,
-        note: note.trim() || null,
+      const result = await driverService.markAttendance({
+        dailyTripId,
+        studentId,
+        type: 'DEPART', // ou 'RETURN' selon votre logique
+        status
       });
-
-      if (result) {
-        toast.success(`Présence de ${studentName} marquée comme '${getStatusText(status)}'`);
-        onAttendanceMarked(dailyTripId, studentId, status);
-      setIsOpen(false);
-      } else {
-        toast.error("Impossible d'enregistrer la présence. Veuillez réessayer.");
+  
+      toast.success(`Présence de   marquée comme '${getStatusText(status)}'`);
+      
+      if (onAttendanceMarked) {
+        onAttendanceMarked(result);
       }
+  
+      setIsOpen(false);
     } catch (error) {
-      console.error("Erreur lors de l'enregistrement de la présence:", error);
-      toast.error("Une erreur est survenue lors de l'enregistrement de la présence.");
+      console.error("Erreur API:", error.response?.data);
+     
+      if (error.response?.status === 403) {
+        toast.error("Impossible de marquer la présence : le trajet  est pas en cours");
+      }  else if(error.response?.data?.error) {
+        toast.error(error.response.data.error);
+      }else if (typeof error.response?.data === 'string') {
+        const match = error.response.data.match(/Error:\s(.+?)<br>/);
+        const message = match ? match[1] : defaultMessage;
+        toast.error(message);
+      } 
+      else {
+        toast.error(defaultMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -127,122 +136,32 @@ export const MarkAttendanceModal = ({
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          {/* Student Info */}
-          {student && (
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="text-lg">{student.fullname.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-lg">{student.fullname}</p>
-                <p className="text-sm text-muted-foreground">
-                  Classe: {student.class} | Quartier: {student.quartie}
-                </p>
-              </div>
-            </div>
-          )}
+          
 
-          {/* Status Selection */}
+          {/* Statut de présence */}
           <div className="space-y-3">
             <Label className="font-medium">Statut de présence *</Label>
             <RadioGroup 
-              value={status} 
-              onValueChange={setStatus} 
-              className="grid grid-cols-3 gap-3"
-              disabled={isSubmitting}
-            >
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="PRESENT" id="present" />
-                <Label htmlFor="present" className="flex items-center gap-2 cursor-pointer">
-                  <Icon icon="heroicons:check-circle" className="h-5 w-5 text-green-600" />
-                  Présent
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <RadioGroupItem value="ABSENT" id="absent" />
-                <Label htmlFor="absent" className="flex items-center gap-2 cursor-pointer">
-                  <Icon icon="heroicons:x-circle" className="h-5 w-5 text-red-600" />
-                  Absent
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <RadioGroupItem value="LATE" id="late" />
-                <Label htmlFor="late" className="flex items-center gap-2 cursor-pointer">
-                  <Icon icon="heroicons:clock" className="h-5 w-5 text-yellow-600" />
-                  En Retard
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Note */}
-          <div className="space-y-2">
-            <Label htmlFor="note" className="font-medium">
-              Note (Optionnel)
-            </Label>
-            <Textarea
-              id="note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Ex: Élève malade, retard justifié, comportement..."
-              rows={3}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          {/* Quick Actions */}
-          <div className="space-y-2">
-            <Label className="font-medium">Actions rapides</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setStatus('PRESENT');
-                  setNote('');
-                }}
-                disabled={isSubmitting}
-              >
-                <Icon icon="heroicons:check-circle" className="h-4 w-4 mr-2" />
-                Présent
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setStatus('ABSENT');
-                  setNote('Absence non justifiée');
-                }}
-                disabled={isSubmitting}
-              >
-                <Icon icon="heroicons:x-circle" className="h-4 w-4 mr-2" />
-                Absent
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setStatus('LATE');
-                  setNote('Retard dû au trafic');
-                }}
-                disabled={isSubmitting}
-              >
-                <Icon icon="heroicons:clock" className="h-4 w-4 mr-2" />
-                En retard
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setStatus('ABSENT');
-                  setNote('Élève malade');
-                }}
-                disabled={isSubmitting}
-              >
-                <Icon icon="heroicons:heart" className="h-4 w-4 mr-2" />
-                Maladie
-              </Button>
-            </div>
+  value={status} 
+  onValueChange={setStatus} 
+  className="grid grid-cols-2 gap-3" // Changé de 3 à 2 colonnes
+  disabled={isSubmitting}
+>
+  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+    <RadioGroupItem value="PRESENT" id="present" />
+    <Label htmlFor="present" className="flex items-center gap-2 cursor-pointer">
+      <Icon icon="heroicons:check-circle" className="h-5 w-5 text-green-600" />
+      Présent
+    </Label>
+  </div>
+  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+    <RadioGroupItem value="ABSENT" id="absent" />
+    <Label htmlFor="absent" className="flex items-center gap-2 cursor-pointer">
+      <Icon icon="heroicons:x-circle" className="h-5 w-5 text-red-600" />
+      Absent
+    </Label>
+  </div>
+</RadioGroup>
           </div>
         </div>
         
@@ -267,7 +186,7 @@ export const MarkAttendanceModal = ({
             ) : (
               <>
                 <Icon icon={getStatusIcon(status)} className="h-4 w-4" />
-                Marquer {getStatusText(status)}
+                Marquer comme {getStatusText(status)}
               </>
             )}
           </Button>

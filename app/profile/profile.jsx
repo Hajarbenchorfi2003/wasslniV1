@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Icon } from '@iconify/react';
 import toast from 'react-hot-toast';
-import { getUserById, updateUserData } from '@/data/data';
+import { userAPI } from '@/utils/auth'; 
 import PersonalDetails from "./settings/personal-details";
 import ChangePassword from "./settings/change-password";
-const PageProfilUtilisateur = ({ userId = 1 }) => {
+
+const PageProfilUtilisateur = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,28 +30,28 @@ const PageProfilUtilisateur = ({ userId = 1 }) => {
     const chargerDonneesUtilisateur = async () => {
       setLoading(true);
       try {
-        const utilisateur = getUserById(userId);
-        if (utilisateur) {
-          setUser(utilisateur);
-        } else {
-          toast.error('Utilisateur non trouvé !');
-        }
+        const userData = await userAPI.getProfile();
+        console.log("Données utilisateur reçues:", userData); // <-- Ajoutez cette ligne
+        setUser(userData);
       } catch (error) {
-        toast.error('Erreur lors du chargement des données');
+        toast.error(error.message || 'Erreur lors du chargement des données');
       } finally {
         setLoading(false);
       }
     };
-
     chargerDonneesUtilisateur();
-  }, [userId]);
-
-  const supprimerCompte = () => {
+  }, []);
+  const supprimerCompte = async () => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) {
-      // Dans une vraie application, vous appelleriez une API ici
-      toast.success('Compte supprimé avec succès !');
-      // Redirection après suppression
-      // router.push('/logout');
+      try {
+        // You would need to implement this endpoint in your API
+        // await userAPI.deleteAccount();
+        toast.success('Compte supprimé avec succès !');
+        // Redirect after deletion
+        // router.push('/logout');
+      } catch (error) {
+        toast.error(error.message || 'Erreur lors de la suppression du compte');
+      }
     }
   };
 
@@ -88,11 +89,11 @@ const PageProfilUtilisateur = ({ userId = 1 }) => {
         </TabsList>
 
         <TabsContent value="personal" className="mt-6">
-          <PersonalDetails userId={userId} />
+          <PersonalDetails user={user} onUpdate={setUser} />
         </TabsContent>
 
         <TabsContent value="password" className="mt-6">
-          <ChangePassword userId={userId} />
+          <ChangePassword />
         </TabsContent>
       </Tabs>
 

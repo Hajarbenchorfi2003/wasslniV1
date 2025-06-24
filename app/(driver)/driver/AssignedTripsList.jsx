@@ -20,8 +20,7 @@ export const AssignedTripsList = ({
   selectedDailyTripId,
   currentPage,
   totalPages,
-  onPageChange,
-  onViewDetails,          // This prop is used for the "details" button
+  onPageChange,        // This prop is used for the "details" button
 }) => {
 
   const getStatusColor = (status) => {
@@ -54,12 +53,10 @@ export const AssignedTripsList = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-[120px]">Date & Heure</TableHead>
                 <TableHead className="min-w-[180px]">Trajet Principal</TableHead>
                 <TableHead className="min-w-[150px]">Bus</TableHead>
                 <TableHead className="min-w-[150px]">Chauffeur</TableHead>
                 <TableHead className="min-w-[120px]">Statut</TableHead>
-                <TableHead className="text-right min-w-[80px]">Détails</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -74,9 +71,6 @@ export const AssignedTripsList = ({
                     // CORRECTED LINE: Make row click conditional on onSelectDailyTrip being provided
                     onClick={onSelectDailyTrip ? () => onSelectDailyTrip(dTrip) : undefined}
                   >
-                    <TableCell>
-                      <div className="font-medium text-default-800">{dTrip.displayDate}</div>
-                    </TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="font-medium text-default-800">{dTrip.trip?.name || 'N/A'}</div>
@@ -109,19 +103,6 @@ export const AssignedTripsList = ({
                       >
                         {getStatusText(dTrip.status)}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {/* CORRECTED LINE: Make button click conditional on onViewDetails being provided */}
-                      {onViewDetails && (
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="h-7 w-7 border-none text-blue-500 hover:text-blue-600"
-                          onClick={(e) => { e.stopPropagation(); onViewDetails(dTrip); }}
-                        >
-                          <Icon icon="heroicons:arrow-right" className="h-4 w-4" />
-                        </Button>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))

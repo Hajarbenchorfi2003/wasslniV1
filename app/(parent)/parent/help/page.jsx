@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import parentService from '@/services/parentService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Icon } from '@iconify/react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -14,7 +15,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import toast from 'react-hot-toast';
-import { demoData, getChildrenOfParent, addConcernOrFeedback } from '@/data/data';
 
 export const ParentHelpPage = () => {
   const [childrenStudents, setChildrenStudents] = useState([]);
@@ -28,76 +28,84 @@ export const ParentHelpPage = () => {
     priority: 'NORMAL'
   });
 
-  const parentId = 5;
+  const parentId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
 
   useEffect(() => {
-    if (parentId) {
-      const children = getChildrenOfParent(parentId);
-      setChildrenStudents(children);
+    const fetchData = async () => {
+      try {
+        const childrenLinks = await parentService.getChildren();
+        const students = childrenLinks.map(link => link.student);
+        setChildrenStudents(students);
 
-      const schoolIds = new Set();
-      const establishmentsMap = {};
+        const establishmentsMap = {};
+        const schoolIdsSet = new Set();
 
-      children.forEach(student => {
-        const establishment = demoData.establishments.find(e => e.id === student.establishmentId);
-        if (establishment) {
-          schoolIds.add(establishment.schoolId);
-          establishmentsMap[establishment.id] = establishment;
+        for (const student of children) {
+          const est = await parentService.getEstablishmentById(student.establishmentId);
+          if (est) {
+            establishmentsMap[est.id] = est;
+            schoolIdsSet.add(est.schoolId);
+          }
         }
-      });
 
-      const schools = Array.from(schoolIds).map(id => demoData.schools.find(s => s.id === id));
-      setAssociatedSchools(schools.filter(Boolean));
-      setAssociatedEstablishments(establishmentsMap);
+        const schools = await Promise.all(
+          Array.from(schoolIdsSet).map((schoolId) => parentService.getSchoolById(schoolId))
+        );
+
+        setAssociatedSchools(schools.filter(Boolean));
+        setAssociatedEstablishments(establishmentsMap);
+      } catch (error) {
+        console.error('Erreur de chargement des données', error);
+        toast.error("Erreur lors du chargement des données.");
+      }
+    };
+
+    if (parentId) {
+      fetchData();
     }
   }, [parentId]);
 
   const handleContactSubmit = async () => {
     if (!contactForm.subject.trim() || !contactForm.message.trim()) {
-      toast.error("Veuillez remplir tous les champs obligatoires.");
-      return;
+      return toast.error("Veuillez remplir tous les champs obligatoires.");
     }
 
     if (contactForm.message.trim().length < 10) {
-      toast.error("Le message doit contenir au moins 10 caractères.");
-      return;
+      return toast.error("Le message doit contenir au moins 10 caractères.");
     }
 
     try {
-    let targetResponsibleId = null;
-    if (childrenStudents.length > 0) {
-        const firstChildEstablishment = demoData.establishments.find(e => e.id === childrenStudents[0].establishmentId);
-        if (firstChildEstablishment && firstChildEstablishment.responsableId) {
-            targetResponsibleId = firstChildEstablishment.responsableId;
-        }
-    }
-      
-    if (!targetResponsibleId) {
-        targetResponsibleId = demoData.users.find(u => u.role === 'ADMIN')?.id;
-    }
+      const child = childrenStudents[0];
+      let targetResponsibleId = null;
 
-    if (targetResponsibleId) {
-        const result = addConcernOrFeedback({
-            parentId: parentId,
+      if (child) {
+        const est = await parentService.getEstablishmentById(child.establishmentId);
+        targetResponsibleId = est?.responsableId;
+      }
+
+      if (!targetResponsibleId) {
+        const admin = await parentService.getDefaultAdmin(); // API qui retourne un admin
+        targetResponsibleId = admin?.id;
+      }
+
+      if (targetResponsibleId) {
+        await parentService.sendConcern({
+          parentId,
           type: contactForm.priority,
           title: contactForm.subject.trim(),
           message: contactForm.message.trim(),
-            recipientUserId: targetResponsibleId
+          recipientUserId: targetResponsibleId,
         });
 
-        if (result) {
-          toast.success("Votre message a été envoyé avec succès !");
-          setIsContactModalOpen(false);
-          setContactForm({ subject: '', message: '', priority: 'NORMAL' });
-        } else {
-          toast.error("Impossible d'envoyer le message. Veuillez réessayer.");
-        }
-    } else {
-        toast.error("Aucun responsable disponible pour recevoir votre message.");
+        toast.success("Votre message a été envoyé avec succès !");
+        setIsContactModalOpen(false);
+        setContactForm({ subject: '', message: '', priority: 'NORMAL' });
+      } else {
+        toast.error("Aucun responsable disponible pour recevoir le message.");
       }
     } catch (error) {
       console.error("Erreur lors de l'envoi du message:", error);
-      toast.error("Une erreur est survenue lors de l'envoi du message.");
+      toast.error("Une erreur est survenue lors de l'envoi.");
     }
   };
 

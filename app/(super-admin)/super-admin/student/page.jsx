@@ -46,8 +46,8 @@ const StudentsPage = () => {
 
        
     } catch (error) {
-      console.error('Erreur lors du chargement des responsables', error);
-      toast.error("Impossible de charger les responsables");
+      console.error('Erreur lors du chargement des etablisment', error);
+      toast.error("Impossible de charger les etablisments");
     } finally {
       if (isMounted) {
         setLoading(false); // 🔄 Fin du chargement
@@ -106,21 +106,9 @@ const StudentsPage = () => {
     try {
       await deleteStudent(id);
       console.log(`Attempting to soft delete student with ID: ${id}`);
-      const updatedStudents = currentDemoData.students.map(student =>
-        student.id === id ? { ...student, deletedAt: new Date().toISOString() } : student
-      );
-      // Remove student from parentStudents and tripStudents
-      const updatedParentStudents = currentDemoData.parentStudents.filter(ps => ps.studentId !== id);
-      const updatedTripStudents = currentDemoData.tripStudents.filter(ts => ts.studentId !== id);
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        students: updatedStudents,
-        parentStudents: updatedParentStudents,
-        tripStudents: updatedTripStudents,
-      }));
-
+     
       toast.success('Élève supprimé (marqué comme inactif) avec succès');
+      await loadStudents();
     } catch (error) {
       console.error('Error deleting student:', error);
       toast.error('Erreur lors de la suppression de l\'élève');

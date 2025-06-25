@@ -9,7 +9,8 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalParent } from '@/components/models/ModalParent'; // Create this
 import ParentCard from './ParentCard'; // Create this
-
+import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchParents} from '@/services/user';
 const ITEMS_PER_PAGE = 3;
 
 const ParentsPage = () => {
@@ -18,39 +19,64 @@ const ParentsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParent, setEditingParent] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    console.log("currentDemoData updated, filtering parents...");
-    const allParents = currentDemoData.users.filter(user => user.role === 'PARENT');
-
-    // Enrich parents with student names they are associated with
-    const enrichedParents = allParents.map(parent => {
-      const associatedStudentIds = currentDemoData.parentStudents
-        .filter(ps => ps.parentId === parent.id)
-        .map(ps => ps.studentId);
-
-      const studentNames = associatedStudentIds.map(studentId => {
-        const student = currentDemoData.students.find(s => s.id === studentId);
-        return student ? student.fullname : 'N/A';
-      });
-
-      return {
-        ...parent,
-        studentNames: studentNames.length > 0 ? studentNames.join(', ') : 'Aucun enfant associé'
-      };
-    });
-
-    setParents(enrichedParents);
-
-    const newTotalPages = Math.ceil(enrichedParents.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && enrichedParents.length > 0) {
-      setCurrentPage(1);
-    } else if (enrichedParents.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
+   const [establishments, setEstablishments] = useState([]);
+    const [loading, setLoading] = useState(false);
+  
+    useEffect(() => {
+  
+    let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
+  
+    async function Establishments() {
+      if (loading || establishments.length > 0) {
+        // 🚫 Évite de recharger si déjà en cours ou déjà chargé
+        return;
+      }
+  
+      setLoading(true);
+      try {
+        const data = await fetchAllEstablishments(); // Assurez-vous que cette fonction renvoie bien un tableau
+        console.log("Données reçues depuis l'API:", data);
+  
+       
+          // Met à jour la liste des responsables
+          setEstablishments(data);
+  
+         
+      } catch (error) {
+        console.error('Erreur lors du chargement des etablisments', error);
+        toast.error("Impossible de charger les etablisments");
+      } finally {
+        if (isMounted) {
+          setLoading(false); // 🔄 Fin du chargement
+        }
+      }
     }
-  }, [currentDemoData, currentPage]);
+  
+    Establishments();
+  
+    // Nettoyage pour éviter les mises à jour sur un composant non monté
+    return () => {
+      isMounted = false;
+    };
+  }, [loading]); 
+
+useEffect(() => {
+  const loadParents = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchParents(); // Récupère les données depuis l'API
+      setParents(data || []); // Met à jour l'état local
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les parents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadParents();
+}, []);
 
   const totalPages = Math.ceil(parents.length / ITEMS_PER_PAGE);
   const paginatedParents = parents.slice(
@@ -179,6 +205,7 @@ const ParentsPage = () => {
         onSave={handleSaveParent}
         students={currentDemoData.students} // Pass students for selection
         parentStudents={currentDemoData.parentStudents} // Pass current links to pre-select
+        establishments={establishments}
       />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

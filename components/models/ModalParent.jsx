@@ -14,9 +14,16 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronDown } from 'lucide-react';
-import Select from 'react-select';
+// import Select from 'react-select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, parentStudents }) => {
+export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, parentStudents,establishments }) => {
   const [formData, setFormData] = useState({
     fullname: '',
     email: '',
@@ -154,6 +161,12 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
       studentIds: newStudentIds
     }));
   };
+  const handleSelectChange = (name, value) => {
+  setFormData(prev => ({
+    ...prev,
+    [name]: name === 'establishmentId' ? parseInt(value, 10) : value
+  }));
+};
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -168,6 +181,7 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
   const selectedReactSelectOptions = studentOptions.filter(option =>
     formData.studentIds.includes(option.value)
   );
+  console.log("data fourni",establishments)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -216,7 +230,24 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
               />
               <Label htmlFor="isActive">Actif</Label>
             </div>
-            
+             {/* Establishment Selection */}
+                      {establishments && establishments.length > 0 && (
+                        <div>
+                          <Label htmlFor="establishment" className="text-right">Établissement</Label>
+                          <Select onValueChange={(value) => handleSelectChange('establishmentId', value)} value={formData.establishmentId ? String(formData.establishmentId) : ''}>
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Sélectionner un établissement" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {establishments.map(est => (
+                                <SelectItem key={est.id} value={String(est.id)}>
+                                  {est.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
             {/* Student Multi-Selection with react-select */}
             {students && students.length > 0 && (

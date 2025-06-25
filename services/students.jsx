@@ -55,6 +55,6 @@ export async function updateStudent(id,StudentData) {
   return response.data;
 }
 export async function deleteStudent(id) {
-  const response = await axiosInstance.delete(`/students/delete-permanently/${id}`);
+  const response = await axiosInstance.delete(`/students/${id}/delete-permanently/`);
   return response.data;
 }

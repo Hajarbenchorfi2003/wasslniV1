@@ -119,8 +119,7 @@ const StudentsPage = () => {
 
     try {
       let message = '';
-      let updatedStudentsArray = [...currentDemoData.students];
-      let updatedParentStudentsArray = [...currentDemoData.parentStudents];
+     
       console.log(studentData)
 
       if (editingStudent) {
@@ -164,8 +163,8 @@ const StudentsPage = () => {
     });
 
     toast.success('Élève ajouté avec succès', {
-  position: 'bottom-right',
-});
+     position: 'bottom-right',
+     });
 
     if (studentData.parentIds?.length > 0) {
       for (const parentId of studentData.parentIds) {
@@ -175,38 +174,62 @@ const StudentsPage = () => {
         });
       }
       toast.success('Parents assignés avec succès', {
-  position: 'bottom-right',
-});
+      position: 'bottom-right',
+       });
     }
 
     await loadStudents();
       }
 
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        students: updatedStudentsArray,
-        parentStudents: updatedParentStudentsArray,
-      }));
+     
 
       toast.success(message);
       setIsModalOpen(false);
       setEditingStudent(null);
 
-    }   catch (error) {
+    }  catch (error) {
   let errorMessage = 'Une erreur est survenue';
 
-  if (error.response && error.response.data && error.response.data.error) {
-    errorMessage = error.response.data.error.message;
-  } else if (error.response && error.response.data) {
-    errorMessage = error.response.data;
+  if (error.response && error.response.data) {
+    const data = error.response.data;
+
+    // Cas : erreurs de validation multiples
+    if (data.errors && typeof data.errors === 'object') {
+      const allMessages = Object.entries(data.errors)
+        .flatMap(([field, messages]) => messages.map(msg => `${field} : ${msg}`));
+
+      allMessages.forEach(msg => {
+        toast.error(msg, { position: 'bottom-right' });
+      });
+
+      return;
+    }
+
+    // ✅ Cas : data.error est un simple message string (ex: "Cet élève a déjà un parent assigné")
+    if (typeof data.error === 'string') {
+      errorMessage = data.error;
+    }
+
+    // Cas : data.error.message (ex: { error: { message: "..." } })
+    else if (data.error?.message) {
+      errorMessage = data.error.message;
+    }
+
+    // Cas : data est directement une string
+    else if (typeof data === 'string') {
+      errorMessage = data;
+    }
   } else if (error.message) {
     errorMessage = error.message;
   }
 
+  // ✅ Affiche l'erreur
   toast.error(`Erreur : ${errorMessage}`, {
     position: 'bottom-right',
   });
 }
+
+
   };
 
   const handleCloseModal = () => {

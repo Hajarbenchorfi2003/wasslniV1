@@ -23,15 +23,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, parentStudents,establishments }) => {
+export const ModalParent = ({ isOpen, onClose, editingParent, onSave,establishments }) => {
   const [formData, setFormData] = useState({
     fullname: '',
     email: '',
     phone: '',
     password: '',
-    cin: '',
+    role:'PARENT',
     isActive: true,
-    studentIds: [],
+    establishmentId:null,
   });
 
   // Custom styles for react-select
@@ -120,18 +120,19 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
 
   useEffect(() => {
     if (editingParent) {
-      const linkedStudentIds = parentStudents
-        .filter(ps => ps.parentId === editingParent.id)
-        .map(ps => ps.studentId);
+      console.log("edit student",editingParent)
+     
+
 
       setFormData({
         fullname: editingParent.fullname || '',
         email: editingParent.email || '',
         phone: editingParent.phone || '',
         password: '',
-        cin: editingParent.cin || '',
+         role:'PARENT',
         isActive: editingParent.isActive !== undefined ? editingParent.isActive : true,
-        studentIds: linkedStudentIds,
+      
+        
       });
     } else {
       setFormData({
@@ -139,12 +140,13 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
         email: '',
         phone: '',
         password: '',
-        cin: '',
+         role:'PARENT',
         isActive: true,
-        studentIds: [],
+        
+        establishmentId:null
       });
     }
-  }, [editingParent, parentStudents]);
+  }, [editingParent]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -154,13 +156,7 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
     }));
   };
 
-  const handleStudentsSelectChange = (selectedOptions) => {
-    const newStudentIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
-    setFormData(prev => ({
-      ...prev,
-      studentIds: newStudentIds
-    }));
-  };
+  
   const handleSelectChange = (name, value) => {
   setFormData(prev => ({
     ...prev,
@@ -173,14 +169,9 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
     onSave(formData);
   };
 
-  const studentOptions = students.map(student => ({
-    value: student.id,
-    label: student.fullname,
-  }));
+ 
 
-  const selectedReactSelectOptions = studentOptions.filter(option =>
-    formData.studentIds.includes(option.value)
-  );
+
   console.log("data fourni",establishments)
 
   return (
@@ -205,10 +196,7 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
               <Label htmlFor="phone" className="text-right">Téléphone</Label>
               <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} className="col-span-3" />
             </div>
-            <div>
-              <Label htmlFor="cin" className="text-right">CIN</Label>
-              <Input id="cin" name="cin" value={formData.cin} onChange={handleChange} className="col-span-3" />
-            </div>
+           
             <div>
               <Label htmlFor="password" className="text-right">Mot de passe</Label>
               <Input 
@@ -231,7 +219,7 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
               <Label htmlFor="isActive">Actif</Label>
             </div>
              {/* Establishment Selection */}
-                      {establishments && establishments.length > 0 && (
+                      {!editingParent && establishments && establishments.length > 0 && (
                         <div>
                           <Label htmlFor="establishment" className="text-right">Établissement</Label>
                           <Select onValueChange={(value) => handleSelectChange('establishmentId', value)} value={formData.establishmentId ? String(formData.establishmentId) : ''}>
@@ -249,27 +237,7 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave, students, 
                         </div>
                       )}
 
-            {/* Student Multi-Selection with react-select */}
-            {students && students.length > 0 && (
-              <div>
-                <Label className="text-right mt-2">Enfants Associés</Label>
-                <Select
-                  isMulti
-                  name="students"
-                  options={studentOptions}
-                  placeholder="Sélectionner des enfants..."
-                  noOptionsMessage={() => "Aucun enfant trouvé."}
-                  value={selectedReactSelectOptions}
-                  onChange={handleStudentsSelectChange}
-                  styles={customStyles}
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                  components={{
-                    DropdownIndicator: () => <ChevronDown className="h-5 w-5 stroke-default-600" />
-                  }}
-                />
-              </div>
-            )}
+           
 
             <DialogFooter>
               <Button type="submit">Sauvegarder</Button>

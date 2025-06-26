@@ -10,8 +10,8 @@ import toast from 'react-hot-toast';
 import { ModalParent } from '@/components/models/ModalParent'; // Create this
 import ParentCard from './ParentCard'; // Create this
 import {fetchAllEstablishments} from '@/services/etablissements';
-import {fetchParents} from '@/services/user';
-const ITEMS_PER_PAGE = 3;
+import {fetchParents,register,updateUser,deleteUser} from '@/services/user';
+const ITEMS_PER_PAGE = 9;
 
 const ParentsPage = () => {
   const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
@@ -21,47 +21,42 @@ const ParentsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
    const [establishments, setEstablishments] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
   
-    useEffect(() => {
-  
-    let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
-  
-    async function Establishments() {
-      if (loading || establishments.length > 0) {
-        // 🚫 Évite de recharger si déjà en cours ou déjà chargé
-        return;
+ useEffect(() => {
+  let isMounted = true;
+
+  async function loadEstablishments() {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchAllEstablishments();
+      console.log("Établissements reçus :", data);
+
+      if (isMounted && data && Array.isArray(data)) {
+        setEstablishments(data);
       }
-  
-      setLoading(true);
-      try {
-        const data = await fetchAllEstablishments(); // Assurez-vous que cette fonction renvoie bien un tableau
-        console.log("Données reçues depuis l'API:", data);
-  
-       
-          // Met à jour la liste des responsables
-          setEstablishments(data);
-  
-         
-      } catch (error) {
-        console.error('Erreur lors du chargement des etablisments', error);
-        toast.error("Impossible de charger les etablisments");
-      } finally {
-        if (isMounted) {
-          setLoading(false); // 🔄 Fin du chargement
-        }
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      if (isMounted) {
+        setEstablishmentsLoading(false);
       }
     }
-  
-    Establishments();
-  
-    // Nettoyage pour éviter les mises à jour sur un composant non monté
-    return () => {
-      isMounted = false;
-    };
-  }, [loading]); 
+  }
 
-useEffect(() => {
-  const loadParents = async () => {
+  // Charger seulement si non encore chargés
+  if (establishments.length === 0) {
+    loadEstablishments();
+  }
+
+  return () => {
+    isMounted = false;
+  };
+}, []); // ✅ seulement au montage du composant
+// 👈 pas `loading` global ici
+console.log("etablisment",establishments)
+ const loadParents = async () => {
     setLoading(true);
     try {
       const data = await fetchParents(); // Récupère les données depuis l'API
@@ -74,7 +69,7 @@ useEffect(() => {
       setLoading(false);
     }
   };
-
+useEffect(() => {
   loadParents();
 }, []);
 
@@ -93,90 +88,67 @@ useEffect(() => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteParent = (id) => {
+  const handleDeleteParent =async (id) => {
     try {
       console.log(`Attempting to delete parent with ID: ${id}`);
-      const updatedUsers = currentDemoData.users.filter(user => user.id !== id);
-      const updatedParentStudents = currentDemoData.parentStudents.filter(ps => ps.parentId !== id);
+     await deleteUser(id);
 
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        users: updatedUsers,
-        parentStudents: updatedParentStudents,
-      }));
+      await loadParents();
+      
 
       toast.success('Parent supprimé avec succès');
     } catch (error) {
       console.error('Error deleting parent:', error);
       toast.error('Erreur lors de la suppression du parent');
+       const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      'Erreur inconnue, veuillez réessayer.';
+
+       toast.error(`Erreur : ${errorMessage}`, {
+       position: 'bottom-right',
+       });
+
     }
   };
 
-  const handleSaveParent = async (parentData) => {
-    try {
-      let message = '';
-      let updatedUsersArray = [...currentDemoData.users];
-      let updatedParentStudentsArray = [...currentDemoData.parentStudents];
-
-      if (editingParent) {
-        const index = updatedUsersArray.findIndex(u => u.id === editingParent.id);
-        if (index !== -1) {
-          const userToUpdate = updatedUsersArray[index];
-          const updatedUser = {
-            ...userToUpdate,
-            ...parentData,
-            id: editingParent.id,
-            role: 'PARENT',
-            password: parentData.password && parentData.password.trim() !== '' ? parentData.password : userToUpdate.password
-          };
-          updatedUsersArray[index] = updatedUser;
-          message = 'Parent modifié avec succès';
-
-          // Update parent-student links
-          updatedParentStudentsArray = updatedParentStudentsArray.filter(ps => ps.parentId !== updatedUser.id);
-          if (parentData.studentIds && parentData.studentIds.length > 0) {
-            parentData.studentIds.forEach(studentId => {
-              updatedParentStudentsArray.push({ parentId: updatedUser.id, studentId: parseInt(studentId) });
-            });
-          }
-        } else {
-          throw new Error("Parent à modifier non trouvé.");
-        }
-      } else {
-        const newId = Math.max(...currentDemoData.users.map(u => u.id), 0) + 1;
-        const newUser = {
-          ...parentData,
-          id: newId,
-          createdAt: new Date().toISOString(),
-          role: 'PARENT',
-          isActive: true,
-        };
-        updatedUsersArray.push(newUser);
-        message = 'Parent ajouté avec succès';
-
-        // Add parent-student links for new parent
-        if (parentData.studentIds && parentData.studentIds.length > 0) {
-          parentData.studentIds.forEach(studentId => {
-            updatedParentStudentsArray.push({ parentId: newId, studentId: parseInt(studentId) });
-          });
-        }
-      }
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        users: updatedUsersArray,
-        parentStudents: updatedParentStudentsArray,
-      }));
-
-      toast.success(message);
-      setIsModalOpen(false);
-      setEditingParent(null);
-
-    } catch (error) {
-      console.error('Error saving parent:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+ const handleSaveParent = async (parentData) => {
+  try {
+    let message = '';
+    
+    if (editingParent) {
+      await updateUser(editingParent.id, parentData);
+      message = 'Parent modifié avec succès';
+    } else {
+      console.log("Data to register:", parentData);
+      await register(parentData);
+      message = 'Parent ajouté avec succès';
     }
-  };
+
+    // ✅ Recharge les parents depuis l'API
+    await loadParents();
+
+    // ✅ Ferme la modal et remet à zéro
+    toast.success(message);
+    setIsModalOpen(false);
+    setEditingParent(null);
+
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde du parent:', error);
+
+    // ✅ Gestion intelligente du message d’erreur
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      'Erreur inconnue, veuillez réessayer.';
+
+    toast.error(`Erreur : ${errorMessage}`, {
+  position: 'bottom-right',
+});
+
+  }
+};
+
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import NotificationInbox from '@/app/[lang]/notfication/NotificationInbox';
+import NotificationInbox from '@/app/notfication/NotificationInbox';
 
 export default function AdminNotificationsPage({ params }) {
     // Pour les admins, on peut passer null pour managerEstablishmentId 

@@ -5,10 +5,28 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Assuming shadcn/ui Dialog components
 import { FormUser } from './UserForm'; // Assuming FormUser is in the same directory or adjust path
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useEffect } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-export function ModalUser({ isOpen, onClose, editingUser, onSave, role }) {
+export function ModalUser({ isOpen, onClose, editingUser, onSave, role ,establishments}) {
+  const [editdrive, setEditdrive] = useState(false);
   const title = editingUser ? "Modifier le responsable" : "Ajouter un nouveau responsable";
+  useEffect(() => {
+  if (role === "DRIVER" && editingUser) {
+    setEditdrive(true);
+  } else {
+    setEditdrive(false);
+  }
+}, [role, editingUser]);
 
+
+ console.log("data in modal",establishments)
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className=" max-w-2xl">
@@ -21,7 +39,10 @@ export function ModalUser({ isOpen, onClose, editingUser, onSave, role }) {
           onSubmit={onSave}
           onCancel={onClose}
           role={role}
+          editdrive={editdrive}
+          establishments={establishments}
         />
+         
         </ScrollArea>
       </DialogContent>
     </Dialog>

@@ -8,6 +8,11 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalTrip } from '@/components/models/ModalTrip';
 import TripCard from './TripCard';
+import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchAllBuses} from '@/services/bus.jsx';
+import {fetchroute}  from '@/services/route';
+import {fetchDrivers} from '@/services/user';
+import {fetchAlltrip,createtrip,createtripStudents,updatetrip,removeStudentFromTrip,deleteTrip} from '@/services/trips';
 
 // Import shadcn/ui Select components
 import {
@@ -18,83 +23,165 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 9;
+
 
 const TripsPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
+  const [currentDemoData, setCurrentDemoData] = useState([]);
   const [trips, setTrips] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  // New states for filters
-  const [filterRouteId, setFilterRouteId] = useState('all');
-  const [filterBusId, setFilterBusId] = useState('all');
-  const [filterDriverId, setFilterDriverId] = useState('all');
-  const [filterEstablishmentId, setFilterEstablishmentId] = useState('all');
-
+  const [establishments, setEstablishments] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+    const [routes, setRoutes] = useState([]);
+    const [buses, setBuses] = useState([]);
+   const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
+  const [loadingbus, setLoadingbus] = useState(false);
+  const [loadingroute, setLoadingroute] = useState(false);
+  const [loadingdriver, setLoadindriver] = useState(false);
+ 
+    
+   useEffect(() => {
+    let isMounted = true;
+  
+    async function loadEstablishments() {
+      setEstablishmentsLoading(true);
+      try {
+        const data = await fetchAllEstablishments();
+        console.log("Établissements reçus :", data);
+  
+        if (isMounted && data && Array.isArray(data)) {
+          setEstablishments(data);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des établissements', error);
+        toast.error("Impossible de charger les établissements");
+      } finally {
+        if (isMounted) {
+          setEstablishmentsLoading(false);
+        }
+      }
+    }
+  
+    // Charger seulement si non encore chargés
+    if (establishments.length === 0) {
+      loadEstablishments();
+    }
+  
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+  const loadBuses = async (filters) => {
+    try {
+      setLoadingbus(true);
+      
+      const data = await fetchAllBuses(filters);
+      console.log("Données reçues depuis l'API:", data);
+     
+      setBuses(data);
+    } catch (err) {
+      console.error("Erreur lors du chargement des bus :", err);
+      
+      toast.error("Erreur lors du chargement des buses");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Charge les bus au montage du composant
   useEffect(() => {
-    console.log("currentDemoData or filters updated, filtering trips...");
-    let processedTrips = currentDemoData.trips;
-
-    // Enrich trips with route name, bus plate, driver name, establishment name, and student count
-    let enrichedTrips = processedTrips.map(trip => {
-      const route = currentDemoData.routes.find(r => r.id === trip.routeId);
-      const bus = currentDemoData.buses.find(b => b.id === trip.busId);
-      const driver = currentDemoData.users.find(u => u.id === trip.driverId && u.role === 'DRIVER');
-      const establishment = currentDemoData.establishments.find(est => est.id === trip.establishmentId);
-      const studentCount = currentDemoData.tripStudents.filter(ts => ts.tripId === trip.id).length;
-
-      return {
-        ...trip,
-        routeName: route ? route.name : 'N/A',
-        busPlate: bus ? bus.plateNumber : 'N/A',
-        driverName: driver ? driver.fullname : 'N/A',
-        establishmentName: establishment ? establishment.name : 'N/A',
-        studentCount: studentCount,
-      };
-    });
-
-    // --- Apply Filters ---
-    if (filterRouteId !== 'all') {
-      enrichedTrips = enrichedTrips.filter(trip =>
-        trip.routeId === parseInt(filterRouteId)
-      );
+    loadBuses();
+  }, []);
+   const loadRoute = async () => {
+      setLoadingroute(true);
+      try {
+        const data = await fetchroute(); // Récupère les données depuis l'API
+        setRoutes(data || []); // Met à jour l'état local
+        
+        console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+      } catch (error) {
+        console.error('Erreur lors du chargement des parents', error);
+        toast.error("Impossible de charger les routes");
+      } finally {
+        setLoadingroute(false);
+      }
+    };
+  useEffect(() => {
+    loadRoute();
+  }, []);
+ const loadDriver = async () => {
+    setLoadindriver(true);
+    try {
+      const data = await fetchDrivers(); // Récupère les données depuis l'API
+      setDrivers(data || []); // Met à jour l'état local
+      
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les parents");
+    } finally {
+      setLoadindriver(false);
     }
-    if (filterBusId !== 'all') {
-      enrichedTrips = enrichedTrips.filter(trip =>
-        trip.busId === parseInt(filterBusId)
-      );
-    }
-    if (filterDriverId !== 'all') {
-      enrichedTrips = enrichedTrips.filter(trip =>
-        trip.driverId === parseInt(filterDriverId)
-      );
-    }
-    if (filterEstablishmentId !== 'all') {
-      enrichedTrips = enrichedTrips.filter(trip =>
-        trip.establishmentId === parseInt(filterEstablishmentId)
-      );
-    }
+  };
+useEffect(() => {
+  loadDriver();
+}, []);
 
-    setTrips(enrichedTrips);
+ 
+const [error, setError] = useState(null);
 
-    // Adjust current page if the number of pages changes after filtering
-    const newTotalPages = Math.ceil(enrichedTrips.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (enrichedTrips.length === 0 && currentPage !== 1) {
-      setCurrentPage(1); // Go to page 1 if no items, to avoid empty page
-    } else if (newTotalPages === 0 && enrichedTrips.length > 0) {
-      setCurrentPage(1); // If suddenly there are items, but totalPages was 0
+// New states for filters
+const [filterRouteId, setFilterRouteId] = useState('all');
+const [filterBusId, setFilterBusId] = useState('all');
+const [filterDriverId, setFilterDriverId] = useState('all');
+const [filterEstablishmentId, setFilterEstablishmentId] = useState('all');
+
+
+
+ const fetchTripsWithFilters = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const filters = {};
+
+      if (filterRouteId !== 'all') filters.routeId = parseInt(filterRouteId);
+      if (filterBusId !== 'all') filters.busId = parseInt(filterBusId);
+      if (filterDriverId !== 'all') filters.driverId = parseInt(filterDriverId);
+      if (filterEstablishmentId !== 'all') filters.establishmentId = parseInt(filterEstablishmentId);
+
+      // Appel vers le backend
+      const data = await fetchAlltrip(filters);
+      console.log("data api",data)
+      
+      setTrips(data.data); // On stocke les trajets reçus du backend
+      setCurrentPage(1); // Réinitialise à la première page après filtrage
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Erreur : ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [currentDemoData, currentPage, filterRouteId, filterBusId, filterDriverId, filterEstablishmentId]); // Add all filter states to dependencies
+  };
+useEffect(() => {  fetchTripsWithFilters();
+}, [
+  filterRouteId,
+  filterBusId,
+  filterDriverId,
+  filterEstablishmentId,
+]);
+console.log("trips",trips)
 
-  const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE);
-  const paginatedTrips = trips.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE);
+const paginatedTrips = trips.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+);
+
+
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -105,98 +192,109 @@ const TripsPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTrip = (id) => {
+  const handleDeleteTrip =async (id) => {
     try {
-      console.log(`Attempting to delete trip with ID: ${id}`);
-      const updatedTrips = currentDemoData.trips.filter(trip => trip.id !== id);
-
-      const dailyTripsToDelete = currentDemoData.dailyTrips.filter(dt => dt.tripId === id).map(dt => dt.id);
-      const updatedDailyTrips = currentDemoData.dailyTrips.filter(dt => dt.tripId !== id);
-      const updatedTripStudents = currentDemoData.tripStudents.filter(ts => ts.tripId !== id);
-      const updatedAttendances = currentDemoData.attendances.filter(att => !dailyTripsToDelete.includes(att.dailyTripId));
-      const updatedPositions = currentDemoData.positions.filter(pos => !dailyTripsToDelete.includes(pos.dailyTripId));
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        trips: updatedTrips,
-        dailyTrips: updatedDailyTrips,
-        tripStudents: updatedTripStudents,
-        attendances: updatedAttendances,
-        positions: updatedPositions,
-      }));
+      await deleteTrip(id);
+      await fetchTripsWithFilters();
 
       toast.success('Trajet supprimé avec succès');
     } catch (error) {
-      console.error('Error deleting trip:', error);
-      toast.error('Erreur lors de la suppression du trajet');
+       let errorMessage = 'Erreur inconnue';
+
+    // Récupère le message d'erreur depuis le backend si disponible
+    if (error.response) {
+      // Erreur HTTP (ex: 400, 500)
+      errorMessage = error.response.data?.error || error.response.data?.message || 'Erreur serveur';
+    } else if (error.request) {
+      // Aucune réponse reçue (problème réseau)
+      errorMessage = 'Impossible de joindre le serveur. Vérifiez votre connexion.';
+    } else {
+      // Erreur côté client
+      errorMessage = error.message || 'Erreur lors de la suppression';
+    }
+
+    console.error('Erreur lors de la suppression du trajet :', errorMessage);
+
+    // Affiche l'erreur en bas à droite
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right"});
     }
   };
+const [initialStudentIds, setInitialStudentIds] = useState([]);
 
+useEffect(() => {
+  if (editingTrip && editingTrip.tripStudents) {
+    const ids = editingTrip.tripStudents.map(ts => ts.studentId);
+    setInitialStudentIds(ids);
+  }
+}, [editingTrip]);
   const handleSaveTrip = async (tripData) => {
     try {
       let message = '';
-      let updatedTripsArray = [...currentDemoData.trips];
-      let updatedTripStudentsArray = [...currentDemoData.tripStudents];
 
       if (editingTrip) {
-        const index = updatedTripsArray.findIndex(t => t.id === editingTrip.id);
-        if (index !== -1) {
-          const tripToUpdate = updatedTripsArray[index];
-          const updatedTrip = {
-            ...tripToUpdate,
-            ...tripData,
-            id: editingTrip.id,
-            busId: parseInt(tripData.busId),
-            driverId: parseInt(tripData.driverId),
-            routeId: parseInt(tripData.routeId),
-            establishmentId: parseInt(tripData.establishmentId),
-          };
-          updatedTripsArray[index] = updatedTrip;
-          message = 'Trajet modifié avec succès';
+           await updatetrip(editingTrip.id, tripData);
+          const currentStudentIds = tripData.studentIds;
+             // 🟢Ajouter les nouveaux élèves
+         const studentsToAdd = currentStudentIds.filter(id => !initialStudentIds.includes(id));
+         const data={studentIds:studentsToAdd};
+            if (studentsToAdd.length > 0) {
+            await createtripStudents(editingTrip.id, data);
+           }
 
-          updatedTripStudentsArray = updatedTripStudentsArray.filter(ts => ts.tripId !== updatedTrip.id);
-          if (tripData.studentIds && tripData.studentIds.length > 0) {
-            tripData.studentIds.forEach(studentId => {
-              updatedTripStudentsArray.push({ tripId: updatedTrip.id, studentId: parseInt(studentId) });
-            });
-          }
-        } else {
-          throw new Error("Trajet à modifier non trouvé.");
-        }
+    // Supprimer les élèves retirés
+          const studentsToRemove = initialStudentIds.filter(id => !currentStudentIds.includes(id));
+         for (const studentId of studentsToRemove) {
+           await removeStudentFromTrip(editingTrip.id, studentId);
+           }
+           message = 'Trajet modfié avec succès';
       } else {
-        const newId = Math.max(...currentDemoData.trips.map(t => t.id), 0) + 1;
-        const newTrip = {
-          ...tripData,
-          id: newId,
-          busId: parseInt(tripData.busId),
+         const dataAdd={ ...tripData, busId: parseInt(tripData.busId),
           driverId: parseInt(tripData.driverId),
           routeId: parseInt(tripData.routeId),
-          establishmentId: parseInt(tripData.establishmentId),
-        };
-        updatedTripsArray.push(newTrip);
+          establishmentId: parseInt(tripData.establishmentId),};
+         const tripAdd=await createtrip(dataAdd);
+         
+          if (Array.isArray(tripData.studentIds) && tripData.studentIds.length > 0) {
+            const data={studentIds:tripData.studentIds};
+             await createtripStudents(tripAdd.id,data);
+           console.log("Élèves assignés avec succès");
+            } else {
+           console.warn("Aucun élève sélectionné ou format incorrect");
+           }
+
         message = 'Trajet ajouté avec succès';
 
-        if (tripData.studentIds && tripData.studentIds.length > 0) {
-          tripData.studentIds.forEach(studentId => {
-            updatedTripStudentsArray.push({ tripId: newId, studentId: parseInt(studentId) });
-          });
-        }
+       
       }
 
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        trips: updatedTripsArray,
-        tripStudents: updatedTripStudentsArray,
-      }));
+      await fetchTripsWithFilters();
 
       toast.success(message);
       setIsModalOpen(false);
       setEditingTrip(null);
 
     } catch (error) {
-      console.error('Error saving trip:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+     let errorMessage = 'Erreur inconnue';
+
+    if (error.response) {
+      // Erreur côté serveur (ex: 400, 500)
+      errorMessage = error.response.data?.error || error.response.data?.message || 'Erreur serveur';
+    } else if (error.request) {
+      // Aucune réponse reçue
+      errorMessage = 'Impossible de joindre le serveur';
+    } else {
+      // Erreur locale
+      errorMessage = error.message;
     }
+
+    // Affichage de l'erreur en bas à droite
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right"
+    });
+
+    console.error('Error saving trip:', error);
+  }
   };
 
   const handleCloseModal = () => {
@@ -205,10 +303,10 @@ const TripsPage = () => {
   };
 
   // Helper arrays for Select options
-  const allRoutes = currentDemoData.routes;
-  const allBuses = currentDemoData.buses;
-  const allDrivers = currentDemoData.users.filter(user => user.role === 'DRIVER');
-  const allEstablishments = currentDemoData.establishments;
+  const allRoutes =routes;
+  const allBuses = buses;
+  const allDrivers = drivers;
+  const allEstablishments = establishments;
 
   return (
     <div className="space-y-6">
@@ -295,11 +393,10 @@ const TripsPage = () => {
         onClose={handleCloseModal}
         editingTrip={editingTrip}
         onSave={handleSaveTrip}
-        routes={currentDemoData.routes}
-        buses={currentDemoData.buses}
-        drivers={currentDemoData.users.filter(user => user.role === 'DRIVER')}
-        establishments={currentDemoData.establishments}
-        students={currentDemoData.students.filter(student => !student.deletedAt)}
+        routes={routes}
+        buses={buses}
+        drivers={drivers}
+        establishments={establishments}
         tripStudents={currentDemoData.tripStudents}
       />
 

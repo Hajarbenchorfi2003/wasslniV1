@@ -29,9 +29,10 @@ const formSchema = z.object({
     .refine((val) => val === undefined || val.length === 0 || val.length >= 6, {
       message: "Le mot de passe doit contenir au moins 6 caractères."
     }),
+    establishmentId: z.union([z.string(), z.null()]).optional(),
 });
 
-export function FormUser({ initialData, onSubmit, onCancel, role }) {
+export function FormUser({ initialData, onSubmit, onCancel, role , establishments,editdrive}) {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,6 +41,8 @@ export function FormUser({ initialData, onSubmit, onCancel, role }) {
       phone: '',
       isActive: true,
       password: '',
+      role:role,
+      establishmentId:null,
     },
   });
 
@@ -53,6 +56,7 @@ export function FormUser({ initialData, onSubmit, onCancel, role }) {
         phone: initialData.phone || '',
         isActive: initialData.isActive,
         password: '', // Never pre-fill password for security
+        role:role,
       });
     } else {
       // Reset to default values for adding a new user
@@ -60,8 +64,10 @@ export function FormUser({ initialData, onSubmit, onCancel, role }) {
         fullname: '',
         email: '',
         phone: '',
+        role:role,
         isActive: true,
         password: '',
+        establishmentId:null,
       });
     }
   }, [initialData, form]);
@@ -163,6 +169,33 @@ export function FormUser({ initialData, onSubmit, onCancel, role }) {
             </FormItem>
           )}
         />
+        {!editdrive && establishments && establishments.length > 0 && (
+  <FormField
+    control={form.control}
+    name="establishmentId"
+    render={({ field }) => (
+      <FormItem className='pr-4'>
+        <FormLabel>Établissement</FormLabel>
+        <FormControl>
+          <select
+            className="w-full border rounded px-3 py-2"
+            value={field.value ?? ''}
+            onChange={field.onChange}
+          >
+            <option value="">Sélectionner un établissement</option>
+            {establishments.map((est) => (
+              <option key={est.id} value={est.id}>
+                {est.name}
+              </option>
+            ))}
+          </select>
+        </FormControl>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+)}
+
         <div className="flex justify-end space-x-2 mt-6  pr-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Annuler

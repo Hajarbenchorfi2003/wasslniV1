@@ -41,35 +41,33 @@ export async function fetchAllStudents(filters = {}) {
   }
 }
 
-/**
- * 🔹 Créer un étudiant
- */
-export const createStudent = async (studentData) => {
-  if (!isAuthenticated()) throw new Error('Non authentifié');
+export async function createStudent(StudentData) {
+  const response = await axiosInstance.post('/students/', StudentData);
+  return response.data;
+}
+export async function createAssignation(StudentData) {
+  const response = await axiosInstance.post('/parentstudent/', StudentData);
+  return response.data;
+}
+export async function removeAssignation(studentId, parentId) {
+  const response = await axiosInstance.delete(`/parentstudent/${studentId}/${parentId}`);
+  return response.data;
+}
+export async function updateStudent(id,StudentData) {
+  const response = await axiosInstance.put(`/students/${id}`, StudentData);
+  return response.data;
+}
+export async function deleteStudent(id) {
+  const response = await axiosInstance.delete(`/students/${id}/delete-permanently/`);
+  return response.data;
+}
 
-  try {
-    const response = await studentApi.post('/', studentData);
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors de la création de l’étudiant:', error.response?.data || error.message);
-    throw error;
-  }
-};
+export async function studentbyetablishment(establishmentId ) {
+  const response = await axiosInstance.get(`/students/${establishmentId}/students`);
+  return response.data;
+}
 
-/**
- * 🔍 Lister tous les étudiants (avec pagination)
- */
-export const getAllStudents = async (filters = {}) => {
-  if (!isAuthenticated()) throw new Error('Non authentifié');
 
-  try {
-    const response = await studentApi.get('/students', { params: filters });
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des étudiants:', error.response?.data || error.message);
-    throw error;
-  }
-};
 
 /**
  * 🔐 Obtenir les étudiants accessibles à l'utilisateur connecté
@@ -116,20 +114,7 @@ export const getStudentDetailsById = async (studentId) => {
   }
 };
 
-/**
- * 🖊️ Mettre à jour un étudiant
- */
-export const updateStudent = async (studentId, updateData) => {
-  if (!isAuthenticated()) throw new Error('Non authentifié');
 
-  try {
-    const response = await studentApi.put(`/${studentId}`, updateData);
-    return response.data;
-  } catch (error) {
-    console.error(`Erreur lors de la mise à jour de l’étudiant ${studentId}:`, error.response?.data || error.message);
-    throw error;
-  }
-};
 
 /**
  * 🗑️ Supprimer doucement un étudiant (soft delete)
@@ -161,20 +146,7 @@ export const restoreStudent = async (studentId) => {
   }
 };
 
-/**
- * 💣 Supprimer définitivement un étudiant (et toutes ses données associées)
- */
-export const deleteStudentPermanently = async (studentId) => {
-  if (!isAuthenticated()) throw new Error('Non authentifié');
 
-  try {
-    const response = await studentApi.delete(`/${studentId}/delete-permanently`);
-    return response.data;
-  } catch (error) {
-    console.error(`Erreur lors de la suppression permanente de l’étudiant ${studentId}:`, error.response?.data || error.message);
-    throw error;
-  }
-};
 
 /**
  * 🚨 Envoyer une demande de suppression d'un étudiant à un administrateur
@@ -237,3 +209,4 @@ export const getStudentStats = async (studentId, tripId) => {
     throw error;
   }
 };
+

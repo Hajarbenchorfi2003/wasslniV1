@@ -55,3 +55,7 @@ export async function detailsEstablishments(id) {
   const response = await axiosInstance.get(`/establishments/${id}`);
   return response.data;
 }
+ export async function getparentsEtablismente(establishmentId) {
+  const response = await axiosInstance.get(`/establishments/${establishmentId}/parents`);
+  return response.data;
+}

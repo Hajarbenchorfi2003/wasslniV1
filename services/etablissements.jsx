@@ -31,6 +31,10 @@ export async function fetchAllEstablishments() {
   const response = await axiosInstance.get('/establishments/Allestablishment');
   return response.data;
 }
+export async function fetchUserEstablishments() {
+  const response = await axiosInstance.get('/establishments');
+  return response.data;
+}
 
 export async function createEstablishments(establishment) {
   const response = await axiosInstance.get('/establishments',establishment);

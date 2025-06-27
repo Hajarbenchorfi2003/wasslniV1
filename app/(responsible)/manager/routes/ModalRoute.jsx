@@ -22,40 +22,53 @@ import {
 } from "@/components/ui/select";
 import toast from 'react-hot-toast';
 
-export const ModalRoute = ({ isOpen, onClose, editingRoute, onSave, establishments, fixedEstablishmentId }) => {
-  // États locaux pour les champs du formulaire de route
+export const ModalRoute = ({ 
+  isOpen, 
+  onClose, 
+  editingRoute, 
+  onSave, 
+  establishments, 
+  fixedEstablishmentId 
+}) => {
   const [name, setName] = useState('');
   const [establishmentId, setEstablishmentId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Effet pour pré-remplir le formulaire si on est en mode édition
   useEffect(() => {
     if (editingRoute) {
       setName(editingRoute.name || '');
       setEstablishmentId(String(editingRoute.establishmentId) || '');
     } else {
-      // Réinitialiser le formulaire pour l'ajout
       setName('');
-      // Si fixedEstablishmentId est fourni, pré-sélectionnez-le
       setEstablishmentId(fixedEstablishmentId ? String(fixedEstablishmentId) : '');
     }
-  }, [editingRoute, isOpen, fixedEstablishmentId]); // Dépend de editingRoute, isOpen, fixedEstablishmentId
+  }, [editingRoute, isOpen, fixedEstablishmentId]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    // Validation des champs
     if (!name || !establishmentId) {
       toast.error("Veuillez remplir tous les champs obligatoires.");
+      setIsSubmitting(false);
       return;
     }
 
-    // Préparer les données pour la sauvegarde
-    const routeData = {
-      name,
-      establishmentId: parseInt(establishmentId),
-    };
+    try {
+      const routeData = {
+        name,
+        establishmentId: parseInt(establishmentId),
+        // Include ID when editing
+        ...(editingRoute && { id: editingRoute.id })
+      };
 
-    onSave(routeData); // Appelle la fonction onSave passée par le parent (RoutesPage)
+      await onSave(routeData);
+    } catch (error) {
+      console.error('Error in form submission:', error);
+      toast.error("Une erreur est survenue lors de la sauvegarde");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -70,19 +83,25 @@ export const ModalRoute = ({ isOpen, onClose, editingRoute, onSave, establishmen
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className=" items-center gap-4">
+          <div className="items-center gap-4">
             <Label htmlFor="name" className="text-right mb-2">Nom</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required />
+            <Input 
+              id="name" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              className="col-span-3" 
+              required 
+            />
           </div>
 
-          <div className="  items-center gap-4">
+          <div className="items-center gap-4">
             <Label htmlFor="establishmentId" className="text-right mb-2">Établissement</Label>
             <Select
               value={establishmentId}
               onValueChange={setEstablishmentId}
               className="col-span-3"
               required
-              disabled={!!fixedEstablishmentId} // Désactive le select si l'établissement est fixe
+              disabled={!!fixedEstablishmentId}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Sélectionnez un établissement" />
@@ -102,8 +121,12 @@ export const ModalRoute = ({ isOpen, onClose, editingRoute, onSave, establishmen
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={onClose}>Annuler</Button>
-            <Button type="submit">{editingRoute ? 'Modifier' : 'Ajouter'}</Button>
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Enregistrement...' : editingRoute ? 'Modifier' : 'Ajouter'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

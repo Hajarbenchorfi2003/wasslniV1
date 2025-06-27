@@ -56,6 +56,10 @@ export async function updateUser(id,userData) {
   const response = await axiosInstance.patch(`/users/${id}`, userData);
   return response.data;
 }
+export async function getUserE(id,userData) {
+  const response = await axiosInstance.get(`/users/${id}`);
+  return response.data;
+}
 //router.delete('/:id', verifyToken,authorize("delete:user"),userController.deleteUser);
 export async function deleteUser(id) {
   const response = await axiosInstance.delete(`/users/${id}`);

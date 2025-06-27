@@ -1,239 +1,182 @@
 // pages/manager/StudentsPage.jsx
 'use client';
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { demoData as initialDemoData, getStudentsByEstablishment, getUserById } from '@/data/data';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { ModalUser } from '@/components/models/ModalUser'; // Assuming a generic ModalUser or ModalStudent
-import StudentCard from './StudentCard'; // Le nouveau composant StudentCard
-
-// Composants Shadcn/ui pour les filtres et le layout
+import { ModalStudent } from '@/components/models/ModalStudent';
+import StudentCard from './StudentCard';
+import {
+  getStudentsByUser,
+  deleteStudentPermanently,
+  createStudent,
+  updateStudent
+} from '@/services/students';
+import { fetchUserEstablishments } from '@/services/etablissements';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
-const ITEMS_PER_PAGE = 6; // Affichera 6 étudiants par page (ex: 2 lignes de 3 cartes)
+const ITEMS_PER_PAGE = 6;
 
-// Ce composant est conçu pour être utilisé par un gestionnaire d'établissement,
-// il attend donc `managerEstablishmentId` comme prop.
-export const StudentsPage = ({ managerEstablishmentId }) => {
-  const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
-  const [students, setStudents] = useState([]); // Liste des étudiants après enrichissement et filtrage initial par établissement
-  const [filteredStudents, setFilteredStudents] = useState([]); // Liste des étudiants après application du filtre de recherche
-  const [isModalOpen, setIsModalOpen] = useState(false); // État de visibilité de la modale d'ajout/modification
-  const [editingUser, setEditingUser] = useState(null); // Utilisateur en cours d'édition (null si ajout)
-  const [currentPage, setCurrentPage] = useState(1); // Page actuelle pour la pagination
-  const [searchTerm, setSearchTerm] = useState(''); // Terme de recherche
+export const StudentsPage = () => {
+  const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [userEstablishmentId, setuserEstablishmentId] = useState(null);
+  // Récupère l'établissement de l'utilisateur
+  const [error, setError] = useState(null);
 
-  // Utilise l'ID de l'établissement du gestionnaire. Si non fourni, simule avec l'ID 1.
-  const effectiveManagerEstablishmentId = managerEstablishmentId || 1;
-  const establishmentName = currentDemoData.establishments.find(e => e.id === effectiveManagerEstablishmentId)?.name || 'Votre Établissement';
+useEffect(() => {
+  const fetchEstablishment = async () => {
+    try {
+      const establishments = await fetchUserEstablishments();
+      console.log(establishments)
+      console.log(establishments[0])
+      console.log(establishments[0].id)
+      if (!establishments) {
+        setError('Aucun établissement trouvé.');
+        setLoading(false);
+        return;
+      }
+      setuserEstablishmentId(establishments[0].id);
+    } catch (err) {
+      console.error('Échec du chargement des établissements', err);
+      setError('Impossible de charger les établissements.');
+      toast.error("Erreur lors du chargement des établissements");
+    }
+  };
 
+  fetchEstablishment();
+}, []);
+  
+useEffect(() => {
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+      const response = await getStudentsByUser({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE
+      });
 
-  // Effet pour enrichir les étudiants et les filtrer par établissement
+      if (response.success) {
+        const data = response.data || [];
+        setStudents(data);
+        setFilteredStudents(data);
+        setTotalPages(response.pagination.totalPages || 1);
+      } else {
+        throw new Error('Erreur serveur ou réponse invalide');
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des étudiants:', error);
+      toast.error("Impossible de charger les étudiants.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadStudents();
+}, [currentPage]);
+
+  // Appliquer le filtre de recherche
   useEffect(() => {
-    if (!effectiveManagerEstablishmentId) {
-      setStudents([]); // Pas d'ID d'établissement, pas d'étudiants
+    if (!searchTerm.trim()) {
+      setFilteredStudents(students);
       return;
     }
 
-    const fetchedStudents = currentDemoData.students.filter(student =>
-        student.establishmentId === effectiveManagerEstablishmentId // Filtre initial par établissement
+    const lowerSearch = searchTerm.toLowerCase();
+    const filtered = students.filter(student =>
+      student.fullname?.toLowerCase().includes(lowerSearch) ||
+      student.class?.toLowerCase().includes(lowerSearch) ||
+      student.quartie?.toLowerCase().includes(lowerSearch) ||
+      student.address?.toLowerCase().includes(lowerSearch) ||
+      student.parentLinks?.some(link =>
+        link.parent?.fullname?.toLowerCase().includes(lowerSearch)
+      )
     );
-
-    let enrichedStudents = fetchedStudents.map(student => {
-      // Enrichir avec le nom des parents
-      const parentLinks = currentDemoData.parentStudents.filter(ps => ps.studentId === student.id);
-      const parentNames = parentLinks.map(pl => {
-          const parent = getUserById(pl.parentId);
-          return parent ? parent.fullname : '';
-      }).filter(Boolean).join(', ') || 'N/A'; // Join multiple parent names
-
-      return {
-        ...student,
-        parentNames: parentNames, // Multiple parent names
-      };
-    });
-
-    setStudents(enrichedStudents); // Store the fully enriched and establishment-filtered list
-    setCurrentPage(1); // Reset pagination on data change
-  }, [currentDemoData, effectiveManagerEstablishmentId]);
-
-  // Effet pour appliquer le filtre de recherche et gérer la pagination.
-  useEffect(() => {
-    let tempFilteredStudents = [...students]; // Commence avec la liste déjà filtrée par établissement
-
-    // Applique le filtre de recherche (par nom, classe, quartier, adresse, parent name)
-    if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      tempFilteredStudents = tempFilteredStudents.filter(student =>
-        student.fullname.toLowerCase().includes(lowerCaseSearchTerm) ||
-        student.class.toLowerCase().includes(lowerCaseSearchTerm) ||
-        student.quartie.toLowerCase().includes(lowerCaseSearchTerm) ||
-        student.address.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (student.parentNames && student.parentNames.toLowerCase().includes(lowerCaseSearchTerm))
-      );
-    }
-
-    setFilteredStudents(tempFilteredStudents); // Met à jour la liste filtrée finale
-
-    const newTotalPages = Math.ceil(tempFilteredStudents.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && tempFilteredStudents.length > 0) {
-      setCurrentPage(1);
-    } else if (tempFilteredStudents.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  }, [students, searchTerm, currentPage]); // Dépendencies
-
-  const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
-  const paginatedStudents = filteredStudents.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+    setFilteredStudents(filtered);
+    setCurrentPage(1); // Réinitialiser la pagination
+  }, [searchTerm, students]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
   const handleEditStudent = (student) => {
-    // Note: You might need to refine the data structure passed to ModalUser if it's generic
-    // or create a specific ModalStudent component for student-specific fields.
-    setEditingUser(student);
+    setEditingStudent(student);
     setIsModalOpen(true);
   };
 
-  const handleDeleteStudent = (id) => {
+  const handleDeleteStudent = async (id) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet élève définitivement ?")) return;
+
     try {
-      const studentToDelete = currentDemoData.students.find(s => s.id === id);
-      if (!studentToDelete) {
-        toast.error("Étudiant non trouvé pour suppression.");
-        return;
-      }
-
-      // Instead of hard delete, maybe soft delete (set deletedAt property)
-      const updatedStudents = currentDemoData.students.map(s =>
-        s.id === id ? { ...s, deletedAt: new Date().toISOString() } : s
-      );
-
-      // Disassociate from trips and attendances if needed (logical cleanup)
-      // For demo, we'll mark as deleted, actual disassociation might be more complex
-      const updatedTripStudents = currentDemoData.tripStudents.filter(ts => ts.studentId !== id);
-      const updatedAttendances = currentDemoData.attendances.filter(att => att.studentId !== id);
-
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        students: updatedStudents,
-        tripStudents: updatedTripStudents,
-        attendances: updatedAttendances,
-      }));
-
-      toast.success(`Étudiant ${studentToDelete.fullname} marqué comme supprimé (inactif).`);
+      await deleteStudentPermanently(id);
+      toast.success("Étudiant supprimé avec succès");
+      fetchStudents(); // Recharger après suppression
     } catch (error) {
-      console.error('Error deleting student:', error);
-      toast.error('Erreur lors de la suppression de l\'étudiant');
+      console.error("Erreur lors de la suppression:", error);
+      toast.error("Erreur lors de la suppression de l'étudiant.");
     }
   };
 
-  const handleSaveStudent = async (userData) => {
+  const handleSaveStudent = async (studentData) => {
     try {
       let message = '';
-      let updatedStudentsArray = [...currentDemoData.students];
-      let updatedParentStudentsArray = [...currentDemoData.parentStudents]; // For linking parents
+      const dataWithEstablishment = {
+        ...studentData,
+        establishmentId: userEstablishmentId // Toujours lier à l'établissement de l'utilisateur
+      };
 
-      if (editingUser) { // Mode édition
-        const index = updatedStudentsArray.findIndex(s => s.id === editingUser.id);
-        if (index !== -1) {
-          const studentToUpdate = updatedStudentsArray[index];
-          const updatedStudent = {
-            ...studentToUpdate,
-            ...userData,
-            id: editingUser.id,
-            // Ensure establishmentId is preserved
-            establishmentId: studentToUpdate.establishmentId, // Preserve original establishment
-            deletedAt: null, // Ensure active if re-enrolled
-          };
-          updatedStudentsArray[index] = updatedStudent;
-          message = 'Étudiant modifié avec succès';
-
-          // Update parent-student link: assuming userData.parentIds is an array of selected parent IDs
-          updatedParentStudentsArray = updatedParentStudentsArray.filter(ps => ps.studentId !== updatedStudent.id);
-          if (userData.parentIds && Array.isArray(userData.parentIds)) {
-              userData.parentIds.forEach(parentId => {
-                  updatedParentStudentsArray.push({ studentId: updatedStudent.id, parentId: parseInt(parentId) });
-              });
-          }
-
-        } else {
-          throw new Error("Étudiant à modifier non trouvé.");
-        }
-      } else { // Mode ajout
-        const newId = Math.max(...currentDemoData.students.map(s => s.id), 0) + 1;
-        const newStudent = {
-          ...userData,
-          id: newId,
-          createdAt: new Date().toISOString(),
-          establishmentId: effectiveManagerEstablishmentId, // Assign to manager's establishment
-          deletedAt: null,
-        };
-        updatedStudentsArray.push(newStudent);
-        message = 'Étudiant ajouté avec succès';
-
-        // Add parent-student link for new student
-        if (userData.parentIds && Array.isArray(userData.parentIds)) {
-            userData.parentIds.forEach(parentId => {
-                updatedParentStudentsArray.push({ studentId: newId, parentId: parseInt(parentId) });
-            });
-        }
+      if (editingStudent) {
+        await updateStudent(editingStudent.id, dataWithEstablishment);
+        message = "Étudiant mis à jour avec succès";
+      } else {
+        await createStudent(dataWithEstablishment);
+        message = "Étudiant ajouté avec succès";
       }
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        students: updatedStudentsArray,
-        parentStudents: updatedParentStudentsArray, // Update parent-student relations
-      }));
 
       toast.success(message);
       setIsModalOpen(false);
-      setEditingUser(null);
-
+      setEditingStudent(null);
+      fetchStudents(); // Recharger après modification
     } catch (error) {
-      console.error('Error saving student:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+      console.error("Erreur lors de l'enregistrement:", error);
+      toast.error(`Erreur: ${error.message}`);
     }
   };
 
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setEditingUser(null);
+    setEditingStudent(null);
   };
 
-  // Helper for ModalUser to filter roles (if it's generic user modal)
-  const allParents = currentDemoData.users.filter(user => user.role === 'PARENT');
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <p>Chargement des étudiants...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-medium text-default-800">
-          Gestion des Étudiants de {establishmentName}
+          Gestion des Étudiants
         </h2>
-        {/* Add Student Button */}
-        <Button onClick={() => {
-          setEditingUser(null); // Ensure no previous editing state
-          setIsModalOpen(true);
-        }}>
+        <Button onClick={() => setIsModalOpen(true)}>
           <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
           Ajouter un Étudiant
         </Button>
       </div>
 
       <div className="flex items-center justify-between flex-wrap gap-4">
-        {/* Search Input */}
         <div className="relative w-full max-w-sm">
           <Input
             type="text"
@@ -242,55 +185,39 @@ export const StudentsPage = ({ managerEstablishmentId }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 pr-4 py-2 border rounded-md w-full"
           />
-          <Icon icon="heroicons:magnifying-glass" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Icon
+            icon="heroicons:magnifying-glass"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+          />
         </div>
-        {/* No establishment filter needed as it's scope to manager's establishment */}
       </div>
 
-      {/* Modal for adding/editing a student. You might need a specific ModalStudent component */}
-      {/* For now, assuming ModalUser can be adapted or you'll create ModalStudent later */}
-      <ModalUser
+      <ModalStudent
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        editingUser={editingUser}
+        editingStudent={editingStudent}
         onSave={handleSaveStudent}
-        role="STUDENT" // Specify role
-        establishments={[]} // Not directly used for student's establishment, it's fixed
-        parents={allParents} // Pass parents for selection if student form includes parent linking
-        fixedEstablishmentId={effectiveManagerEstablishmentId} // Force new/edited students to manager's establishment
+        establishmentId={userEstablishmentId}
       />
 
+      <div className="border shadow-sm p-6 rounded-lg">
+        {filteredStudents.length > 0 ? (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {filteredStudents.map((student) => (
+              <StudentCard
+                key={student.id}
+                student={student}
+                onEditStudent={handleEditStudent}
+                onDeleteStudent={handleDeleteStudent}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-gray-500 py-10">Aucun étudiant trouvé.</p>
+        )}
+      </div>
 
-      {/* Main content area: Grid of Student Cards */}
-      <Card className="shadow-sm border border-gray-200">
-        <CardHeader className="py-4 px-6 border-b border-gray-200">
-          <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
-            <Icon icon="heroicons:user-group" className="h-6 w-6 text-primary" />
-            Liste des Étudiants
-          </CardTitle>
-          <CardDescription>
-            Nombre total d'élèves filtrés: {filteredStudents.length}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          {paginatedStudents.length > 0 ? (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {paginatedStudents.map((student) => (
-                <StudentCard
-                  key={student.id}
-                  student={student}
-                  onEditStudent={handleEditStudent}
-                  onDeleteStudent={handleDeleteStudent}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="col-span-full text-center text-gray-500 py-10">Aucun Étudiant trouvé.</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pagination Controls */}
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
@@ -302,18 +229,16 @@ export const StudentsPage = ({ managerEstablishmentId }) => {
           >
             <Icon icon="heroicons:chevron-left" className="w-5 h-5 rtl:rotate-180" />
           </Button>
-
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
               key={`page-${page}`}
               onClick={() => handlePageChange(page)}
               variant={page === currentPage ? "default" : "outline"}
-              className={cn("w-8 h-8")}
+              className="w-8 h-8"
             >
               {page}
             </Button>
           ))}
-
           <Button
             onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
             disabled={currentPage === totalPages}

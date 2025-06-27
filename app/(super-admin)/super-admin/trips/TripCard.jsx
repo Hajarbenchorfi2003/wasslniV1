@@ -57,25 +57,25 @@ const TripCard = ({ trip, onEditTrip, onDeleteTrip }) => {
         <CardContent className="p-4 pt-0 space-y-2 text-sm  text-default-600">
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:globe-americas" className="w-4 h-4 opacity-70" />
-            Route: {trip.routeName}
+            Route: {trip.route.name}
           </p>
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:truck" className="w-4 h-4 opacity-70" />
-            Bus: {trip.busPlate}
+            Bus: {trip.bus.plateNumber}
           </p>
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:user" className="w-4 h-4 opacity-70" />
-            Chauffeur: {trip.driverName}
+            Chauffeur: {trip.driver.fullname}
           </p>
-          {trip.establishmentName && (
+          {trip.establishment && (
             <p className="flex items-center gap-2">
               <Icon icon="heroicons:building-office-2" className="w-4 h-4 opacity-70" />
-              Établissement: {trip.establishmentName}
+              Établissement: {trip.establishment.name}
             </p>
           )}
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:users" className="w-4 h-4 opacity-70" />
-            Élèves: {trip.studentCount}
+            Élèves: { trip.tripStudents ? trip.tripStudents.length : 0}
           </p>
         </CardContent>
       </Card>

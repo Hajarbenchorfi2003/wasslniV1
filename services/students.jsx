@@ -58,3 +58,8 @@ export async function deleteStudent(id) {
   const response = await axiosInstance.delete(`/students/${id}/delete-permanently/`);
   return response.data;
 }
+
+export async function studentbyetablishment(establishmentId ) {
+  const response = await axiosInstance.get(`/students/${establishmentId}/students`);
+  return response.data;
+}

@@ -20,8 +20,9 @@ const ParentsPage = () => {
   const [editingParent, setEditingParent] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
    const [establishments, setEstablishments] = useState([]);
+   const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
     const [loading, setLoading] = useState(false);
-    const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+    
   
  useEffect(() => {
   let isMounted = true;

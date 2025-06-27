@@ -55,15 +55,15 @@ const RouteCard = ({ route, onEditRoute, onDeleteRoute }) => {
           </DropdownMenu>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-2 text-sm  text-default-600">
-          {route.establishmentName && (
-            <p className="flex items-center gap-2">
-              <Icon icon="heroicons:building-office-2" className="w-4 h-4 opacity-70" />
-              Établissement: {route.establishmentName}
-            </p>
+          {route.establishment && (
+          <p className="flex items-center gap-2">
+          <Icon icon="heroicons:building-office-2" className="w-4 h-4 opacity-70" />
+             Établissement : {route.establishment.name}
+          </p>
           )}
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:map-pin" className="w-4 h-4 opacity-70" />
-            Nombre d'arrêts: {route.stopsCount}
+            Nombre d'arrêts: {route.stops ? route.stops.length : 0}
           </p>
         </CardContent>
       </Card>

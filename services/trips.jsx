@@ -31,7 +31,7 @@ export async function fetchAlltrip(filters = {}) {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await axiosInstance.get('/trips', { params: filters });
+    const response = await axiosInstance.get('/trip', { params: filters });
     console.log('Données des trajets reçues:', response.data);
     return response.data;
   } catch (error) {
@@ -49,4 +49,25 @@ export async function fetchAlltrip(filters = {}) {
     console.error('Erreur récupérée dans fetchAlltrip:', errorMessage);
     throw new Error(errorMessage); // on relance une erreur propre
   }
+}
+export async function createtrip(tripData) {
+  const response = await axiosInstance.post('/trip/', tripData);
+  return response.data;
+}
+export async function createtripStudents(tripId,studentIds) {
+  const response = await axiosInstance.post(`/trip/${tripId}/assign-students/`,studentIds);
+  return response.data;
+}
+export async function updatetrip(id,tripData) {
+  const response = await axiosInstance.put(`/trip/${id}/`,tripData);
+  return response.data;
+}
+
+export async function removeStudentFromTrip(id,studentId,tripData) {
+  const response = await axiosInstance.delete(`/trip/${id}/students/${studentId}/`,tripData);
+  return response.data;
+}
+export async function deleteTrip(id) {
+  const response = await axiosInstance.delete(`/trip/${id}/`);
+  return response.data;
 }

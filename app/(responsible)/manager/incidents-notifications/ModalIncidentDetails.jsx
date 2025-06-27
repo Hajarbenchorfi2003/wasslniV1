@@ -17,10 +17,10 @@ import { cn } from '@/lib/utils'; // Assuming cn is available
 
 export const ModalIncidentDetails = ({ isOpen, setIsOpen, incidentDetails }) => {
   if (!incidentDetails) {
-    return null; // Don't render if no incident details are provided
+    return null; // Ne rien afficher si pas d'incident
   }
 
-  // Helper for Incident status display (can be shared or defined here)
+  // Fonction pour afficher le statut
   const getIncidentStatusColor = (status) => {
     switch (status) {
       case 'NEW': return 'red';
@@ -39,23 +39,39 @@ export const ModalIncidentDetails = ({ isOpen, setIsOpen, incidentDetails }) => 
     }
   };
 
+  // Formatage de date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? 'Date invalide' : date.toLocaleString();
+  };
+
+  // Extraction des données avec sécurité
+  const tripName = incidentDetails.dailyTrip?.trip?.name || 'N/A';
+  const establishmentName = incidentDetails.dailyTrip?.trip?.establishment?.name || 'N/A';
+  const reportedByName = incidentDetails.reportedBy?.fullname || 'Inconnu';
+  const incidentDate = incidentDetails.dailyTrip?.date ? new Date(incidentDetails.dailyTrip.date).toLocaleDateString() : 'N/A';
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6 text-red-500" />
-            Détails de l'Incident
+            Détails de l'Incident #{incidentDetails.id}
           </DialogTitle>
           <DialogDescription>
-            Informations détaillées concernant l'incident #{incidentDetails.id}.
+            Informations détaillées concernant l'incident signalé.
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4 space-y-4 text-sm text-default-600">
+          {/* Description */}
           <p>
-            <strong>Description:</strong> {incidentDetails.description}
+            <strong>Description:</strong> {incidentDetails.description || 'Aucune description fournie'}
           </p>
+
+          {/* Statut */}
           <p className="flex items-center gap-2">
             <strong>Statut:</strong>
             <Badge variant="soft" color={getIncidentStatusColor(incidentDetails.status)} className="capitalize">
@@ -65,24 +81,34 @@ export const ModalIncidentDetails = ({ isOpen, setIsOpen, incidentDetails }) => 
 
           <Separator className="my-3" />
 
+          {/* Trajet Quotidien */}
           <p>
-            <strong>Trajet Quotidien:</strong> {incidentDetails.dailyTripName || 'N/A'} (ID: {incidentDetails.dailyTripId})
-          </p>
-          <p>
-            <strong>Date du Trajet:</strong> {incidentDetails.dailyTripDate || 'N/A'}
-          </p>
-          <p>
-            <strong>Rapporté par:</strong> {incidentDetails.reportedByName || 'N/A'} (ID: {incidentDetails.reportedById})
-          </p>
-          <p>
-            <strong>Date/Heure Signalement:</strong> {incidentDetails.timestampFormatted || 'N/A'}
+            <strong>Trajet:</strong> {tripName}
           </p>
 
-          {/* You can add more fields here like incident type, photos, resolution notes, etc. */}
+          {/* Établissement */}
+          <p>
+            <strong>Établissement:</strong> {establishmentName}
+          </p>
+
+          {/* Date du trajet */}
+          <p>
+            <strong>Date du Trajet:</strong> {incidentDate}
+          </p>
+
+          {/* Rapporté par */}
+          <p>
+            <strong>Rapporté par:</strong> {reportedByName}
+          </p>
+
+          {/* Date de signalement */}
+          <p>
+            <strong>Date/Heure Signalement:</strong> {formatDate(incidentDetails.timestamp)}
+          </p>
         </div>
 
-        {/* Optional: Actions for manager (e.g., Mark as Acknowledged/Resolved) */}
-        {/*
+        {/* Actions optionnelles (à implémenter côté backend) */}
+        {/* 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline">Marquer comme Reconnu</Button>
           <Button variant="default">Marquer comme Résolu</Button>

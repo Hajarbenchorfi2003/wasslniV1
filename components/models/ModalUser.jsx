@@ -33,7 +33,7 @@ export function ModalUser({ isOpen, onClose, editingUser, onSave, role ,establis
         <DialogHeader  >
           <DialogTitle className="text-base font-medium text-default-700">{title}</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[70vh]">
+        <ScrollArea className="h-[60vh]">
         <FormUser
           initialData={editingUser}
           onSubmit={onSave}

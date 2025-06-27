@@ -40,7 +40,9 @@ const DriverCard = ({ driver, onEditDriver, onDeleteDriver }) => {
                 <Avatar>
                   <AvatarFallback>
                     {/* Generates initials from fullname */}
-                    {driver.fullname.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    {driver?.fullname
+                     ? driver.fullname.split(' ').map(n => n[0]).join('').toUpperCase()
+                    : ''}
                   </AvatarFallback>
                 </Avatar>
                 {/* Status badge for active/inactive */}
@@ -53,10 +55,6 @@ const DriverCard = ({ driver, onEditDriver, onDeleteDriver }) => {
               <CardTitle className="text-base font-semibold text-default-900 leading-tight">
                 {driver.fullname}
               </CardTitle>
-              {/* Sub-info for associated establishment(s) - adapted for drivers */}
-              <h5 className="text-sm text-default-600 leading-tight">
-                {driver.establishmentNames || 'Aucun établissement attribué'}
-              </h5>
             </div>
           </div>
 
@@ -89,10 +87,6 @@ const DriverCard = ({ driver, onEditDriver, onDeleteDriver }) => {
           <p className="flex items-center gap-2 text-sm  text-default-600">
             <Icon icon="heroicons:phone" className="w-4 h-4 opacity-70" />
             {driver.phone}
-          </p>
-          <p className="flex items-center gap-2 text-sm  text-default-600">
-            <Icon icon="heroicons:identification" className="w-4 h-4 opacity-70" />
-            {driver.cin}
           </p>
         </CardContent>
       </Card>

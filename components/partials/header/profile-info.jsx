@@ -47,7 +47,7 @@ const ProfileInfo = () => {
   };
 
   const href = getHrefBasedOnRole();
-
+  const profile = `${href}/profile`;
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -89,7 +89,7 @@ const ProfileInfo = () => {
             {
               name: "profile",
               icon: "heroicons:user",
-              href: "/user-profile"
+              href:  profile,
             },
             {
               name: "Billing",

@@ -35,7 +35,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
    const [students, setStudents] = useState([]);
      const [loadingStudents, setLoadingStudents] = useState(false);
      const[filteredRoutes,setFilteredRoute] = useState([]);
- const[filteredBuses,setFiilteredBuses] = useState([]);
+     const[filteredBuses,setFiilteredBuses] = useState([]);
     const[filteredDrivers,setFilteredDrivers] = useState([]);
        console.log("drivers",drivers)
 

@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 6;
 
 
 const TripsPage = () => {
@@ -326,7 +326,7 @@ useEffect(() => {
 
 
 {/* --- Filters Section --- */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
   {/* Filter by Route */}
   <Select onValueChange={setFilterRouteId} value={filterRouteId}>
     <SelectTrigger className="w-full">
@@ -373,7 +373,7 @@ useEffect(() => {
   </Select>
 
   {/* Filter by Establishment */}
-  <Select onValueChange={setFilterEstablishmentId} value={filterEstablishmentId}>
+ {/*  <Select onValueChange={setFilterEstablishmentId} value={filterEstablishmentId}>
     <SelectTrigger className="w-full">
       <SelectValue placeholder="Filtrer par Établissement" />
     </SelectTrigger>
@@ -385,7 +385,7 @@ useEffect(() => {
         </SelectItem>
       ))}
     </SelectContent>
-  </Select>
+  </Select> */}
 </div>
 
 

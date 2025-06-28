@@ -1,81 +1,108 @@
-// pages/DriversPage.jsx
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { ModalUser } from '@/components/models/ModalUser'; 
-
+import { ModalUser } from '@/components/models/ModalUser';
 import DriverCard from './DriverCard';
-import { fetchDrivers, deleteUser, updateUser, register } from '@/services/user';
-
-// Import shadcn/ui components
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-
+import {fetchUserEstablishments} from '@/services/etablissements';
+import {fetchDrivers,register,updateUser,deleteUser} from '@/services/user';
 const ITEMS_PER_PAGE = 6;
 
-export const DriversPage = () => {
+const DriversPage = () => {
+  const [currentDemoData, setCurrentDemoData] = useState([]);
   const [drivers, setDrivers] = useState([]);
-  const [filteredDrivers, setFilteredDrivers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  // New state for filtering by establishment
+  const [filterEstablishmentId, setFilterEstablishmentId] = useState('all'); // 'all' for no filter
+ const [establishments, setEstablishments] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+ const [filteredDrivers, setFilteredDrivers] = useState([]); // Chauffeurs filtrés
+const [searchQuery, setSearchQuery] = useState('');
 
-  // Effect to fetch drivers from API based on connected user's role
-  useEffect(() => {
-    const loadDrivers = async () => {
-      try {
-        setIsLoading(true);
-        const apiDrivers = await fetchDrivers();
-        setDrivers(apiDrivers);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error loading drivers:', error);
-        toast.error('Erreur lors du chargement des chauffeurs');
-        setIsLoading(false);
+ useEffect(() => {
+  let isMounted = true;
+
+  async function loadEstablishments() {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchUserEstablishments();
+      console.log("Établissements reçus :", data);
+
+      if (isMounted && data && Array.isArray(data)) {
+        setEstablishments(data);
       }
-    };
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      if (isMounted) {
+        setEstablishmentsLoading(false);
+      }
+    }
+  }
 
-    loadDrivers();
-  }, []);
+  // Charger seulement si non encore chargés
+  if (establishments.length === 0) {
+    loadEstablishments();
+  }
 
-  // Effect to apply search term filter and handle pagination
+  return () => {
+    isMounted = false;
+  };
+}, []); // ✅ seulement au montage du composant
+// 👈 pas `loading` global ici
+console.log("etablisment",establishments)
+ const loadDriver = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchDrivers(); // Récupère les données depuis l'API
+      setDrivers(data || []); // Met à jour l'état local
+      setCurrentDemoData(data || []);
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les parents");
+    } finally {
+      setLoading(false);
+    }
+  };
+useEffect(() => {
+  loadDriver();
+}, []);
+console.log("drivers",drivers)
+  // Effect to filter and set Drivers whenever currentDemoData or filterEstablishmentId changes
   useEffect(() => {
-    let tempFilteredDrivers = [...drivers];
-
-    // Apply search term filter
-    if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      tempFilteredDrivers = tempFilteredDrivers.filter(driver =>
-        driver.fullname?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        driver.email?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (driver.phone && driver.phone.toLowerCase().includes(lowerCaseSearchTerm)) ||
-        (driver.cin && driver.cin.toLowerCase().includes(lowerCaseSearchTerm))
-      );
+    if (!searchQuery.trim()) {
+      setFilteredDrivers(drivers);
+      return;
     }
-
-    setFilteredDrivers(tempFilteredDrivers);
-
-    const newTotalPages = Math.ceil(tempFilteredDrivers.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && tempFilteredDrivers.length > 0) {
-      setCurrentPage(1);
-    } else if (tempFilteredDrivers.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
+  
+    const result = drivers.filter((driver) =>
+      driver.fullname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      driver.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  
+    setFilteredDrivers(result);
+  
+    const totalPages = Math.ceil(result.length / ITEMS_PER_PAGE);
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
     }
-  }, [drivers, searchTerm, currentPage]);
-
+  }, [searchQuery, drivers]);
+  
   const totalPages = Math.ceil(filteredDrivers.length / ITEMS_PER_PAGE);
-  const paginatedDrivers = filteredDrivers.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+const paginatedDrivers = filteredDrivers.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+);
+
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -86,58 +113,63 @@ export const DriversPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteDriver = async (id) => {
+  const handleDeleteDriver =async (id) => {
     try {
       await deleteUser(id);
-      setDrivers(prevDrivers => prevDrivers.filter(driver => driver.id !== id));
+      console.log(`Attempting to delete user with ID: ${id}`);
+    
+
       toast.success('Chauffeur supprimé avec succès');
-    }catch (error) {
-        console.error('Error deleting driver:', error);
-        const errorMsg = error.response?.data?.message || 'Erreur lors de la suppression du chauffeur';
-        toast.error(errorMsg);
-      }
+       await loadDriver();
+      
+    } catch (error) {
+      console.error('Error deleting driver:', error);
+      
+      toast.error(
+      `Erreur lors de la sauvegarde: ${error.response?.data?.message || error.message || 'Vérifiez les données.'}`,
+      { position: 'bottom-right' }
+    );
+    }
   };
 
   const handleSaveUser = async (userData) => {
-    try {
-      let message = '';
-      let updatedUser;
+  try {
+    let message = '';
 
-      if (editingUser) {
-        // Update existing driver
-        updatedUser = await updateUser(editingUser.id, {
-          ...userData,
-          role: 'DRIVER'
-        });
-        message = 'Chauffeur modifié avec succès';
-      } else {
-        // Create new driver
-        updatedUser = await register({
-          ...userData,
-          role: 'DRIVER'
-        });
-        message = 'Chauffeur ajouté avec succès';
-      }
+    if (editingUser) {
+      await updateUser(editingUser.id,userData);
+      message = 'Chauffeur mis à jour avec succès';
+    } else {
+      const newUser = {
+        ...userData,
+        role: 'DRIVER',
+      };
 
-      // Update local state
-      if (editingUser) {
-        setDrivers(prevDrivers => 
-          prevDrivers.map(driver => 
-            driver.id === editingUser.id ? updatedUser : driver
-          )
-        );
-      } else {
-        setDrivers(prevDrivers => [...prevDrivers, updatedUser]);
-      }
-
-      toast.success(message);
-      setIsModalOpen(false);
-      setEditingUser(null);
-    } catch (error) {
-      console.error('Error saving user:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+      await register(newUser);
+      message = 'Chauffeur ajouté avec succès';
+      console.log("New driver added:", newUser);
     }
-  };
+
+    // 🔄 Charger les données uniquement après succès
+    await loadDriver();
+
+    // ✅ Message de succès en bas à droite
+    toast.success(message, { position: 'bottom-right' });
+
+    setIsModalOpen(false);
+    setEditingUser(null);
+
+  } catch (error) {
+    console.error('Error saving user:', error);
+
+    // ✅ Message d'erreur clair en bas à droite
+    toast.error(
+      `Erreur lors de la sauvegarde: ${error.response?.data?.message || error.message || 'Vérifiez les données.'}`,
+      { position: 'bottom-right' }
+    );
+  }
+};
+
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -148,32 +180,30 @@ export const DriversPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-medium text-default-800">
-          Gestion des Chauffeurs
+        Gestion des drivers
         </h2>
-      </div>
-
+      </div>  
       <div className="flex items-center justify-between flex-wrap gap-4">
-        {/* Search Input */}
-        <div className="relative w-full max-w-sm">
-          <Input
-            type="text"
-            placeholder="Rechercher par nom, email, téléphone ou CIN..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 border rounded-md w-full"
-          />
-          <Icon icon="heroicons:magnifying-glass" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        </div>
+      <div className="relative w-full max-w-md">
+  <input
+    type="text"
+    placeholder="Rechercher par nom ou email..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+  />
+  <Icon icon="heroicons:magnifying-glass" className="absolute right-3 top-2.5 h-5 w-5 text-gray-500" />
+</div>
 
-        {/* Add Driver Button */}
-        <Button onClick={() => {
-          setEditingUser(null);
-          setIsModalOpen(true);
-        }}>
-          <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
-          Ajouter un Chauffeur
-        </Button>
-      </div>
+          <Button onClick={() => {
+            setEditingUser(null);
+            setIsModalOpen(true);
+          }}>
+            <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
+            Ajouter un Driver
+          </Button>
+        </div>
+ 
 
       <ModalUser
         isOpen={isModalOpen}
@@ -181,40 +211,23 @@ export const DriversPage = () => {
         editingUser={editingUser}
         onSave={handleSaveUser}
         role="DRIVER"
+        establishments={establishments}
       />
 
-      {/* Main content area: Grid of Driver Cards */}
-      <Card className="shadow-sm border border-gray-200">
-        <CardHeader className="py-4 px-6 border-b border-gray-200">
-          <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
-            <Icon icon="heroicons:users" className="h-6 w-6 text-primary" />
-            Liste des Chauffeurs
-          </CardTitle>
-          <CardDescription>
-            Nombre total de Chauffeurs filtrés: {filteredDrivers.length}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          {isLoading ? (
-            <p className="col-span-full text-center text-gray-500 py-10">Chargement des chauffeurs...</p>
-          ) : paginatedDrivers.length > 0 ? (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {paginatedDrivers.map((driver) => (
-                <DriverCard
-                  key={driver.id}
-                  driver={driver}
-                  onEditDriver={handleEditDriver}
-                  onDeleteDriver={handleDeleteDriver}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="col-span-full text-center text-gray-500 py-10">
-              {searchTerm ? 'Aucun chauffeur trouvé avec ce critère de recherche' : 'Aucun chauffeur trouvé'}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {paginatedDrivers.length > 0 ? (
+          paginatedDrivers.map((driver) => (
+            <DriverCard
+              key={driver.id}
+              driver={driver}
+              onEditDriver={handleEditDriver}
+              onDeleteDriver={handleDeleteDriver}
+            />
+          ))
+        ) : (
+          <p className="col-span-full text-center text-gray-500">Aucun Driver trouvé.</p>
+        )}
+      </div>
 
       {totalPages > 1 && (
         <div className="flex gap-2 items-center mt-4 justify-center">

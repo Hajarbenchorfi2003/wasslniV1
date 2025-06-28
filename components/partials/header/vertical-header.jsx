@@ -68,7 +68,7 @@ const VerticalHeader = ({ handleOpenSearch }) => {
       <SiteLogo className="h-7 w-7" />
     </Link>
   );
-  const SearchButton = (
+  /* const SearchButton = (
     <div>
       <button
         className=" inline-flex  gap-2 items-center text-default-600 text-sm"
@@ -80,7 +80,7 @@ const VerticalHeader = ({ handleOpenSearch }) => {
         <span className=" md:block hidden"> Search...</span>
       </button>
     </div>
-  );
+  ); */
   if (layout === "semibox" && !isDesktop) {
     LogoContent = MainLogo;
   }
@@ -113,18 +113,18 @@ const VerticalHeader = ({ handleOpenSearch }) => {
   if (subMenu && isDesktop) {
     menuBarContent = null;
   }
-  if (sidebarType === "module" && isMobile) {
+/*   if (sidebarType === "module" && isMobile) {
     searchButtonContent = SearchButton;
   }
   if (sidebarType === "classic" || sidebarType === "popover") {
     searchButtonContent = SearchButton;
-  }
+  } */
   return (
     <>
       <div className="flex items-center md:gap-6 gap-3">
         {LogoContent}
         {menuBarContent}
-        {searchButtonContent}
+       {/*  {searchButtonContent} */}
       </div>
     </>
   );

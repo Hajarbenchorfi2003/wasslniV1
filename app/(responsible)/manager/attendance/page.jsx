@@ -18,8 +18,10 @@ import { Badge } from "@/components/ui/badge";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import axios from 'axios';
+import { getStudentsByUser} from '@/services/students';
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 const ITEMS_PER_PAGE = 15;
 
@@ -84,7 +86,7 @@ export const AttendancePage = ({ managerEstablishmentId = 1 }) => {
 
     const fetchStudents = useCallback(async () => {
         try {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_SITE_URL}/api/students/by-establishment/${managerEstablishmentId}`);
+            const res = await  getStudentsByUser();
             setStudents(res.data);
         } catch (error) {
             toast.error("Erreur chargement des élèves");
@@ -152,11 +154,15 @@ export const AttendancePage = ({ managerEstablishmentId = 1 }) => {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Tous les élèves</SelectItem>
+                        <ScrollArea className="h-[250px]">
                         {students.map(student => (
+                           
                             <SelectItem key={student.id} value={String(student.id)}>
                                 {student.fullname}
                             </SelectItem>
+                         
                         ))}
+                        </ScrollArea>
                     </SelectContent>
                 </Select>
 

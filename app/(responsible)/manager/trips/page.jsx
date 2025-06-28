@@ -1,15 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { demoData as initialDemoData } from '@/data/data';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { ModalTrip } from './ModalTrip';
+import { ModalTrip } from '@/components/models/ModalTrip';
 import TripCard from './TripCard';
-import tripService from '@/services/tripService';
+import {fetchUserEstablishments} from '@/services/etablissements';
+import {fetchMyBuses} from '@/services/bus.jsx';
+import {getUserRoutes}  from '@/services/route';
+import {fetchDrivers} from '@/services/user';
+import {fetchAlltrip,createtrip,createtripStudents,updatetrip,removeStudentFromTrip,deleteTrip} from '@/services/trips';
 
-// Components for filters and layout
+// Import shadcn/ui Select components
 import {
   Select,
   SelectContent,
@@ -17,164 +22,167 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 9;
 
-export const TripsPage = () => {
-  const [tripsData, setTripsData] = useState({
-    trips: [],
-    pagination: { total: 0 }
-  });
-  const [filteredTrips, setFilteredTrips] = useState([]);
+
+const TripsPage = () => {
+  const [currentDemoData, setCurrentDemoData] = useState([]);
+  const [trips, setTrips] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [routes, setRoutes] = useState([]);
-  const [buses, setBuses] = useState([]);
-  const [drivers, setDrivers] = useState([]);
-  const [students, setStudents] = useState([]);
   const [establishments, setEstablishments] = useState([]);
-   
-
-  // Filter states
-  const [filters, setFilters] = useState({
-    routeId: '',
-    busId: '',
-    driverId: '',
-    establishmentId: '',
-    search: ''
-  });
-
-  // Fetch trips with pagination and filters
-  const fetchTrips = async (page = 1) => {
-    try {
-      setIsLoading(true);
-      
-      // Prepare filters object
-      const params = {
-        page,
-        limit: ITEMS_PER_PAGE,
-      };
-      
-      // Add filters only if they're not 'all'
-      if (filters.establishmentId && filters.establishmentId !== 'all') {
-        params.establishmentId = filters.establishmentId;
-      }
-      if (filters.routeId && filters.routeId !== 'all') {
-        params.routeId = filters.routeId;
-      }
-      if (filters.busId && filters.busId !== 'all') {
-        params.busId = filters.busId;
-      }
-      if (filters.driverId && filters.driverId !== 'all') {
-        params.driverId = filters.driverId;
-      }
-      if (filters.search) {
-        params.search = filters.search;
-      }
-  
-      const response = await tripService.getAllTrips(params);
-      
-      if (!response) {
-        throw new Error('No response from server');
-      }
-      
-      // Handle response
-      const tripsArray = response.data?.data || response.data || [];
-      const paginationData = response.data?.pagination || response.pagination || { total: 0 };
-  
-      setTripsData({
-        trips: tripsArray,
-        pagination: paginationData
-      });
-  
-      const enrichedTrips = tripsArray.map(trip => ({
-        ...trip,
-        routeName: trip.route?.name || 'N/A',
-        busPlate: trip.bus?.plateNumber || 'N/A',
-        driverName: trip.driver?.fullname || 'N/A',
-        establishmentName: trip.establishment?.name || 'N/A',
-        studentCount: trip.tripStudents?.length || 0
-      }));
-      
-      setFilteredTrips(enrichedTrips);
-      
-    } catch (error) {
-      console.error('Error fetching trips:', error);
-      toast.error(`Failed to load trips: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch related data (routes, buses, drivers, establishments)
-  const fetchRelatedData = async () => {
-    try {
-      if (tripsData.trips.length > 0) {
-        // Get unique routes
-        const uniqueRoutes = Array.from(new Map(
-          tripsData.trips
-            .filter(t => t.route)
-            .map(t => [t.route.id, t.route])
-        ).values());
-        
-        // Get unique buses
-        const uniqueBuses = Array.from(new Map(
-          tripsData.trips
-            .filter(t => t.bus)
-            .map(t => [t.bus.id, t.bus])
-        ).values());
-        
-        // Get unique drivers
-        const uniqueDrivers = Array.from(new Map(
-          tripsData.trips
-            .filter(t => t.driver)
-            .map(t => [t.driver.id, t.driver])
-        ).values());
-        
-        // Get unique establishments
-        const uniqueEstablishments = Array.from(new Map(
-          tripsData.trips
-            .filter(t => t.establishment)
-            .map(t => [t.establishment.id, t.establishment])
-        ).values());
-        
-        setRoutes(uniqueRoutes);
-        setBuses(uniqueBuses);
-        setDrivers(uniqueDrivers);
-        setEstablishments(uniqueEstablishments);
-      }
-    } catch (error) {
-      console.error('Error fetching related data:', error);
-    }
-  };
-
-  // Initial data fetch
-  useEffect(() => {
-    fetchTrips();
-  }, []);
-
-  // Fetch related data when trips are loaded
-  useEffect(() => {
-    if (tripsData.trips.length > 0) {
-      fetchRelatedData();
-    }
-  }, [tripsData.trips]);
-
-  // Handle filter changes
-  const handleFilterChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
-    setCurrentPage(1); // Reset to first page when filters change
+  const [drivers, setDrivers] = useState([]);
+    const [routes, setRoutes] = useState([]);
+    const [buses, setBuses] = useState([]);
+   const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
+  const [loadingbus, setLoadingbus] = useState(false);
+  const [loadingroute, setLoadingroute] = useState(false);
+  const [loadingdriver, setLoadindriver] = useState(false);
+ 
     
+   useEffect(() => {
+    let isMounted = true;
+    
+  
+    async function loadEstablishments() {
+      setEstablishmentsLoading(true);
+      try {
+        const data = await fetchUserEstablishments();
+        console.log("Établissements reçus :", data);
+  
+        if (isMounted && data && Array.isArray(data)) {
+          setEstablishments(data);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des établissements', error);
+        toast.error("Impossible de charger les établissements");
+      } finally {
+        if (isMounted) {
+          setEstablishmentsLoading(false);
+        }
+      }
+    }
+  
+    // Charger seulement si non encore chargés
+    if (establishments.length === 0) {
+      loadEstablishments();
+    }
+  
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+  const loadBuses = async (filters) => {
+    try {
+      setLoadingbus(true);
+      
+      const data = await fetchMyBuses(filters);
+      console.log("Données reçues depuis l'API:", data);
+     
+      setBuses(data);
+    } catch (err) {
+      console.error("Erreur lors du chargement des bus :", err);
+      
+      toast.error("Erreur lors du chargement des buses");
+    } finally {
+      setLoading(false);
+    }
   };
-
-  // Apply filters and fetch new data
+  
+  // Charge les bus au montage du composant
   useEffect(() => {
-    fetchTrips(currentPage);
-  }, [filters, currentPage]);
+    loadBuses();
+  }, []);
+   const loadRoute = async () => {
+      setLoadingroute(true);
+      try {
+        const data = await getUserRoutes(); // Récupère les données depuis l'API
+        setRoutes(data || []); // Met à jour l'état local
+        
+        console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+      } catch (error) {
+        console.error('Erreur lors du chargement des parents', error);
+        toast.error("Impossible de charger les routes");
+      } finally {
+        setLoadingroute(false);
+      }
+    };
+  useEffect(() => {
+    loadRoute();
+  }, []);
+ const loadDriver = async () => {
+    setLoadindriver(true);
+    try {
+      const data = await fetchDrivers(); // Récupère les données depuis l'API
+      setDrivers(data || []); // Met à jour l'état local
+      
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les parents");
+    } finally {
+      setLoadindriver(false);
+    }
+  };
+useEffect(() => {
+  loadDriver();
+}, []);
+
+ 
+const [error, setError] = useState(null);
+
+// New states for filters
+const [filterRouteId, setFilterRouteId] = useState('all');
+const [filterBusId, setFilterBusId] = useState('all');
+const [filterDriverId, setFilterDriverId] = useState('all');
+const [filterEstablishmentId, setFilterEstablishmentId] = useState('all');
+
+
+
+ const fetchTripsWithFilters = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const filters = {};
+
+      if (filterRouteId !== 'all') filters.routeId = parseInt(filterRouteId);
+      if (filterBusId !== 'all') filters.busId = parseInt(filterBusId);
+      if (filterDriverId !== 'all') filters.driverId = parseInt(filterDriverId);
+      if (filterEstablishmentId !== 'all') filters.establishmentId = parseInt(filterEstablishmentId);
+
+      // Appel vers le backend
+      const data = await fetchAlltrip(filters);
+      console.log("data api",data)
+      
+      setTrips(data.data); // On stocke les trajets reçus du backend
+      setCurrentPage(1); // Réinitialise à la première page après filtrage
+    } catch (err) {
+      setError(err.message);
+      toast.error(`Erreur : ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+useEffect(() => {  fetchTripsWithFilters();
+}, [
+  filterRouteId,
+  filterBusId,
+  filterDriverId,
+  filterEstablishmentId,
+]);
+console.log("trips",trips)
+
+const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE);
+const paginatedTrips = trips.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+);
+
+
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -185,34 +193,109 @@ export const TripsPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTrip = async (id) => {
+  const handleDeleteTrip =async (id) => {
     try {
-      await tripService.deleteTrip(id);
+      await deleteTrip(id);
+      await fetchTripsWithFilters();
+
       toast.success('Trajet supprimé avec succès');
-      fetchTrips(currentPage); // Refresh the list
     } catch (error) {
-      console.error('Error deleting trip:', error);
-      toast.error('Erreur lors de la suppression du trajet');
+       let errorMessage = 'Erreur inconnue';
+
+    // Récupère le message d'erreur depuis le backend si disponible
+    if (error.response) {
+      // Erreur HTTP (ex: 400, 500)
+      errorMessage = error.response.data?.error || error.response.data?.message || 'Erreur serveur';
+    } else if (error.request) {
+      // Aucune réponse reçue (problème réseau)
+      errorMessage = 'Impossible de joindre le serveur. Vérifiez votre connexion.';
+    } else {
+      // Erreur côté client
+      errorMessage = error.message || 'Erreur lors de la suppression';
+    }
+
+    console.error('Erreur lors de la suppression du trajet :', errorMessage);
+
+    // Affiche l'erreur en bas à droite
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right"});
     }
   };
+const [initialStudentIds, setInitialStudentIds] = useState([]);
 
+useEffect(() => {
+  if (editingTrip && editingTrip.tripStudents) {
+    const ids = editingTrip.tripStudents.map(ts => ts.studentId);
+    setInitialStudentIds(ids);
+  }
+}, [editingTrip]);
   const handleSaveTrip = async (tripData) => {
     try {
+      let message = '';
+
       if (editingTrip) {
-        await tripService.updateTrip(editingTrip.id, tripData);
-        toast.success('Trajet modifié avec succès');
+           await updatetrip(editingTrip.id, tripData);
+          const currentStudentIds = tripData.studentIds;
+             // 🟢Ajouter les nouveaux élèves
+         const studentsToAdd = currentStudentIds.filter(id => !initialStudentIds.includes(id));
+         const data={studentIds:studentsToAdd};
+            if (studentsToAdd.length > 0) {
+            await createtripStudents(editingTrip.id, data);
+           }
+
+    // Supprimer les élèves retirés
+          const studentsToRemove = initialStudentIds.filter(id => !currentStudentIds.includes(id));
+         for (const studentId of studentsToRemove) {
+           await removeStudentFromTrip(editingTrip.id, studentId);
+           }
+           message = 'Trajet modfié avec succès';
       } else {
-        await tripService.createTrip(tripData);
-        toast.success('Trajet ajouté avec succès');
+         const dataAdd={ ...tripData, busId: parseInt(tripData.busId),
+          driverId: parseInt(tripData.driverId),
+          routeId: parseInt(tripData.routeId),
+          establishmentId: parseInt(tripData.establishmentId),};
+         const tripAdd=await createtrip(dataAdd);
+         
+          if (Array.isArray(tripData.studentIds) && tripData.studentIds.length > 0) {
+            const data={studentIds:tripData.studentIds};
+             await createtripStudents(tripAdd.id,data);
+           console.log("Élèves assignés avec succès");
+            } else {
+           console.warn("Aucun élève sélectionné ou format incorrect");
+           }
+
+        message = 'Trajet ajouté avec succès';
+
+       
       }
-      
+
+      await fetchTripsWithFilters();
+
+      toast.success(message);
       setIsModalOpen(false);
       setEditingTrip(null);
-      fetchTrips(currentPage); // Refresh the list
+
     } catch (error) {
-      console.error('Error saving trip:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+     let errorMessage = 'Erreur inconnue';
+
+    if (error.response) {
+      // Erreur côté serveur (ex: 400, 500)
+      errorMessage = error.response.data?.error || error.response.data?.message || 'Erreur serveur';
+    } else if (error.request) {
+      // Aucune réponse reçue
+      errorMessage = 'Impossible de joindre le serveur';
+    } else {
+      // Erreur locale
+      errorMessage = error.message;
     }
+
+    // Affichage de l'erreur en bas à droite
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right"
+    });
+
+    console.error('Error saving trip:', error);
+  }
   };
 
   const handleCloseModal = () => {
@@ -220,12 +303,18 @@ export const TripsPage = () => {
     setEditingTrip(null);
   };
 
+  // Helper arrays for Select options
+  const allRoutes =routes;
+  const allBuses = buses;
+  const allDrivers = drivers;
+  const allEstablishments = establishments;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-2xl font-medium text-default-800">
-          Gestion des Trajets (Plans)
-        </h2>
+      <div className="flex items-center flex-wrap justify-between gap-4">
+        <div className="text-2xl font-medium text-default-800">
+          Gestion des Trajets
+        </div>
         <Button onClick={() => {
           setEditingTrip(null);
           setIsModalOpen(true);
@@ -235,87 +324,70 @@ export const TripsPage = () => {
         </Button>
       </div>
 
-      {/* Search and Filters Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        {/* Search input */}
-        <Input
-          placeholder="Rechercher un trajet..."
-          value={filters.search}
-          onChange={(e) => handleFilterChange('search', e.target.value)}
-        />
 
-        {/* Filter by Establishment */}
-        <Select 
-          onValueChange={(value) => handleFilterChange('establishmentId', value)}
-          value={filters.establishmentId}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrer par Établissement" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les Établissements</SelectItem>
-            {establishments.map(est => (
-              <SelectItem key={est.id} value={String(est.id)}>
-                {est.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+{/* --- Filters Section --- */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {/* Filter by Route */}
+  <Select onValueChange={setFilterRouteId} value={filterRouteId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Route" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Toutes les Routes</SelectItem>
+      {allRoutes.map(route => (
+        <SelectItem key={route.id} value={String(route.id)}>
+          {route.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
-        {/* Filter by Route */}
-        <Select 
-          onValueChange={(value) => handleFilterChange('routeId', value)}
-          value={filters.routeId}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrer par Route" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les Routes</SelectItem>
-            {routes.map(route => (
-              <SelectItem key={route.id} value={String(route.id)}>
-                {route.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+  {/* Filter by Bus */}
+  <Select onValueChange={setFilterBusId} value={filterBusId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Bus" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Bus</SelectItem>
+      {allBuses.map(bus => (
+        <SelectItem key={bus.id} value={String(bus.id)}>
+          {bus.plateNumber}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
-        {/* Filter by Bus */}
-        <Select 
-          onValueChange={(value) => handleFilterChange('busId', value)}
-          value={filters.busId}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrer par Bus" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les Bus</SelectItem>
-            {buses.map(bus => (
-              <SelectItem key={bus.id} value={String(bus.id)}>
-                {bus.plateNumber}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+  {/* Filter by Driver */}
+  <Select onValueChange={setFilterDriverId} value={filterDriverId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Chauffeur" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Chauffeurs</SelectItem>
+      {allDrivers.map(driver => (
+        <SelectItem key={driver.id} value={String(driver.id)}>
+          {driver.fullname}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
-        {/* Filter by Driver */}
-        <Select 
-          onValueChange={(value) => handleFilterChange('driverId', value)}
-          value={filters.driverId}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrer par Chauffeur" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les Chauffeurs</SelectItem>
-            {drivers.map(driver => (
-              <SelectItem key={driver.id} value={String(driver.id)}>
-                {driver.fullname}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+  {/* Filter by Establishment */}
+  <Select onValueChange={setFilterEstablishmentId} value={filterEstablishmentId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Établissement" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Établissements</SelectItem>
+      {allEstablishments.map(est => (
+        <SelectItem key={est.id} value={String(est.id)}>
+          {est.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
+
 
       <ModalTrip
         isOpen={isModalOpen}
@@ -326,45 +398,25 @@ export const TripsPage = () => {
         buses={buses}
         drivers={drivers}
         establishments={establishments}
-        students={editingTrip?.tripStudents || []}
+        tripStudents={currentDemoData.tripStudents}
       />
 
-      {/* Main content area */}
-      <Card className="shadow-sm border border-gray-200">
-        <CardHeader className="py-4 px-6 border-b border-gray-200">
-          <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
-            <Icon icon="heroicons:route" className="h-6 w-6 text-primary" />
-            Liste des Trajets
-          </CardTitle>
-          <CardDescription>
-            {isLoading ? 'Chargement...' : `Total: ${tripsData.pagination?.total || 0} trajets`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-10">
-              <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin" />
-            </div>
-          ) : filteredTrips.length > 0 ? (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filteredTrips.map((trip) => (
-                <TripCard
-                  key={trip.id}
-                  trip={trip}
-                  onEditTrip={handleEditTrip}
-                  onDeleteTrip={handleDeleteTrip}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="col-span-full text-center text-gray-500 py-10">
-              Aucun trajet trouvé.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {paginatedTrips.length > 0 ? (
+          paginatedTrips.map((trip) => (
+            <TripCard
+              key={trip.id}
+              trip={trip}
+              onEditTrip={handleEditTrip}
+              onDeleteTrip={handleDeleteTrip}
+            />
+          ))
+        ) : (
+          <p className="col-span-full text-center text-gray-500">Aucun trajet trouvé.</p>
+        )}
+      </div>
 
-      {!isLoading && tripsData.pagination?.totalPages > 1 && (
+      {totalPages > 1 && (
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
             variant="outline"
@@ -376,7 +428,7 @@ export const TripsPage = () => {
             <Icon icon="heroicons:chevron-left" className="w-5 h-5 rtl:rotate-180" />
           </Button>
 
-          {Array.from({ length: tripsData.pagination.totalPages }, (_, i) => i + 1).map((page) => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
               key={`page-${page}`}
               onClick={() => handlePageChange(page)}
@@ -388,8 +440,8 @@ export const TripsPage = () => {
           ))}
 
           <Button
-            onClick={() => handlePageChange(Math.min(currentPage + 1, tripsData.pagination.totalPages))}
-            disabled={currentPage === tripsData.pagination.totalPages}
+            onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+            disabled={currentPage === totalPages}
             variant="outline"
             size="icon"
             className="h-8 w-8"

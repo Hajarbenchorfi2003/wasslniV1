@@ -28,6 +28,10 @@ export async function fetchallroute() {
   const response = await axiosInstance.get('/route/allrouters');
   return response.data;
 }
+export async function getUserRoutes() {
+  const response = await axiosInstance.get('/route');
+  return response.data;
+}
 export async function fetchroute() {
   const response = await axiosInstance.get('/route/');
   return response.data;

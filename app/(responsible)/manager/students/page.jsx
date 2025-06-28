@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import {confirmToast} from '@/components/ui/confirmToast';
 import { ModalStudent } from '@/components/models/ModalStudent';
 import StudentCard from './StudentCard';
 import {
   getStudentsByUser,
-  deleteStudentPermanently,
+  requestStudentDeletion, // Remplace deleteStudentPermanently
   createStudent,
   updateStudent
 } from '@/services/students';
@@ -28,34 +29,29 @@ export const StudentsPage = () => {
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [userEstablishmentId, setuserEstablishmentId] = useState(null);
-  // Récupère l'établissement de l'utilisateur
   const [error, setError] = useState(null);
 
-useEffect(() => {
-  const fetchEstablishment = async () => {
-    try {
-      const establishments = await fetchUserEstablishments();
-      console.log(establishments)
-      console.log(establishments[0])
-      console.log(establishments[0].id)
-      if (!establishments) {
-        setError('Aucun établissement trouvé.');
-        setLoading(false);
-        return;
+  useEffect(() => {
+    const fetchEstablishment = async () => {
+      try {
+        const establishments = await fetchUserEstablishments();
+        if (!establishments || establishments.length === 0) {
+          setError('Aucun établissement trouvé.');
+          setLoading(false);
+          return;
+        }
+        setuserEstablishmentId(establishments[0].id);
+      } catch (err) {
+        console.error('Échec du chargement des établissements', err);
+        setError('Impossible de charger les établissements.');
+        toast.error("Erreur lors du chargement des établissements");
       }
-      setuserEstablishmentId(establishments[0].id);
-    } catch (err) {
-      console.error('Échec du chargement des établissements', err);
-      setError('Impossible de charger les établissements.');
-      toast.error("Erreur lors du chargement des établissements");
-    }
-  };
+    };
 
-  fetchEstablishment();
-}, []);
+    fetchEstablishment();
+  }, []);
   
-useEffect(() => {
-  const loadStudents = async () => {
+  const fetchStudents = async () => {
     try {
       setLoading(true);
       const response = await getStudentsByUser({
@@ -79,10 +75,10 @@ useEffect(() => {
     }
   };
 
-  loadStudents();
-}, [currentPage]);
+  useEffect(() => {
+    fetchStudents();
+  }, [currentPage]);
 
-  // Appliquer le filtre de recherche
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredStudents(students);
@@ -100,7 +96,7 @@ useEffect(() => {
       )
     );
     setFilteredStudents(filtered);
-    setCurrentPage(1); // Réinitialiser la pagination
+    setCurrentPage(1);
   }, [searchTerm, students]);
 
   const handlePageChange = (page) => {
@@ -112,17 +108,27 @@ useEffect(() => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteStudent = async (id) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet élève définitivement ?")) return;
-
-    try {
-      await deleteStudentPermanently(id);
-      toast.success("Étudiant supprimé avec succès");
-      fetchStudents(); // Recharger après suppression
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
-      toast.error("Erreur lors de la suppression de l'étudiant.");
+  const handleDeleteStudent = (id) => {
+    // Vérifiez que id est valide
+    if (!id || typeof id !== 'number') {
+      console.error("ID d'étudiant invalide :", id);
+      return;
     }
+  
+    // Appel à confirmToast avec une fonction en second paramètre
+    confirmToast({
+      message: "Êtes-vous sûr de vouloir demander la suppression de cet élève ?",
+      onConfirm: async () => {
+        try {
+          await requestStudentDeletion(id, "Demande de suppression par l'utilisateur");
+          toast.success("Demande de suppression envoyée avec succès");
+          fetchStudents(); // Recharger après demande de suppression
+        } catch (error) {
+          console.error("Erreur lors de la demande de suppression:", error);
+          toast.error("Erreur lors de la demande de suppression de l'étudiant.");
+        }
+      }
+    });
   };
 
   const handleSaveStudent = async (studentData) => {
@@ -130,7 +136,7 @@ useEffect(() => {
       let message = '';
       const dataWithEstablishment = {
         ...studentData,
-        establishmentId: userEstablishmentId // Toujours lier à l'établissement de l'utilisateur
+        establishmentId: userEstablishmentId
       };
 
       if (editingStudent) {
@@ -144,7 +150,7 @@ useEffect(() => {
       toast.success(message);
       setIsModalOpen(false);
       setEditingStudent(null);
-      fetchStudents(); // Recharger après modification
+      fetchStudents();
     } catch (error) {
       console.error("Erreur lors de l'enregistrement:", error);
       toast.error(`Erreur: ${error.message}`);
@@ -200,7 +206,7 @@ useEffect(() => {
         establishmentId={userEstablishmentId}
       />
 
-      <div className="border shadow-sm p-6 rounded-lg">
+      <div className="p-6">
         {filteredStudents.length > 0 ? (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {filteredStudents.map((student) => (
@@ -217,7 +223,6 @@ useEffect(() => {
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button

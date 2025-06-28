@@ -4,16 +4,16 @@ import { getToken, isAuthenticated } from '@/utils/auth'; // Assurez-vous que ce
 
 const API_URL = process.env.NEXT_PUBLIC_SITE_URL; // Doit pointer vers votre backend
 
-// Création d'une instance Axios configurée
-const studentApi = axios.create({
-  baseURL: `${API_URL}/students`, 
+// Configure Axios instance
+const axiosInstance = axios.create({
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Intercepteur pour ajouter automatiquement le token JWT aux requêtes
-studentApi.interceptors.request.use(
+// Add JWT token to requests
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = getToken();
     if (token) {
@@ -24,6 +24,22 @@ studentApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Gestion centralisée des erreurs
+const handleApiError = (error) => {
+  let errorMessage = 'Erreur de connexion au serveur';
+
+  if (error.response) {
+    console.error('API Error:', error.response.data);
+    errorMessage = error.response.data.error || error.response.data.message || 'Erreur serveur';
+  } else if (error.request) {
+    console.error('No response from server');
+    errorMessage = 'Le serveur ne répond pas';
+  } else {
+    console.error('Request error:', error.message);
+  }
+
+  throw new Error(errorMessage);
+};
 // ==============================
 // Fonctions CRUD pour les étudiants
 // ==============================
@@ -32,7 +48,7 @@ export async function fetchAllStudents(filters = {}) {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await axiosInstance.get('/students', { params: filters });
+    const response = await axiosInstance.get('/students/students', { params: filters });
     console.log('Données des students reçues:', response.data);
     return response.data;
   } catch (error) {
@@ -76,7 +92,7 @@ export const getStudentsByUser = async (filters = {}) => {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await studentApi.get('/', { params: filters });
+    const response = await axiosInstance.get('/students/', { params: filters });
     return response.data;
   } catch (error) {
     console.error("Erreur lors de la récupération des étudiants de l'utilisateur:", error.response?.data || error.message);
@@ -91,7 +107,7 @@ export const getStudentById = async (studentId) => {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await studentApi.get(`/${studentId}`);
+    const response = await axiosInstance.get(`/students/${studentId}`);
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de la récupération de l’étudiant ${studentId}:`, error.response?.data || error.message);
@@ -106,7 +122,7 @@ export const getStudentDetailsById = async (studentId) => {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await studentApi.get(`/${studentId}/details`);
+    const response = await axiosInstance.get(`/students/${studentId}/details`);
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de la récupération des détails de l’étudiant ${studentId}:`, error.response?.data || error.message);
@@ -123,7 +139,7 @@ export const softDeleteStudent = async (studentId) => {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await studentApi.patch(`/${studentId}/delete`);
+    const response = await axiosInstance.patch(`/students/${studentId}/delete`);
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de la suppression douce de l’étudiant ${studentId}:`, error.response?.data || error.message);
@@ -138,7 +154,7 @@ export const restoreStudent = async (studentId) => {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await studentApi.patch(`/${studentId}/restore`);
+    const response = await axiosInstance.patch(`/students/${studentId}/restore`);
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de la restauration de l’étudiant ${studentId}:`, error.response?.data || error.message);
@@ -155,7 +171,7 @@ export const requestStudentDeletion = async (studentId, reason) => {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await studentApi.post(`/${studentId}/request-delete`, { reason });
+    const response = await axiosInstance.post(`/students/${studentId}/request-delete`, { reason });
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de l’envoi de la demande de suppression de l’étudiant ${studentId}:`, error.response?.data || error.message);
@@ -171,7 +187,7 @@ export const searchStudents = async (query, filters = {}) => {
 
   try {
     const params = { query, ...filters };
-    const response = await studentApi.get('/search', { params });
+    const response = await axiosInstance.get('/students/search', { params });
     return response.data;
   } catch (error) {
     console.error('Erreur lors de la recherche des étudiants:', error.response?.data || error.message);
@@ -186,7 +202,7 @@ export const getStudentStatistics = async (filters = {}) => {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
-    const response = await studentApi.get('/statistics', { params: filters });
+    const response = await axiosInstance.get('/students/statistics', { params: filters });
     return response.data;
   } catch (error) {
     console.error('Erreur lors de la récupération des statistiques:', error.response?.data || error.message);
@@ -202,7 +218,7 @@ export const getStudentStats = async (studentId, tripId) => {
 
   try {
     const params = tripId ? { tripId } : {};
-    const response = await studentApi.get(`/${studentId}/statistic`, { params });
+    const response = await axiosInstance.get(`/students/${studentId}/statistic`, { params });
     return response.data;
   } catch (error) {
     console.error(`Erreur lors de la récupération des stats de l’étudiant ${studentId}:`, error.response?.data || error.message);

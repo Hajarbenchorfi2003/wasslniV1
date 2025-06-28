@@ -1,77 +1,75 @@
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect } from 'react'; // Import useEffect for data fetching/filtering
 import ModalSchool from '@/components/models/ModalSchool1';
-import EditSchoolModal from '@/components/models/EditSchoolModal';
 import TableSchool from './tadelschool';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
+import { demoData } from '@/data/data'; // Ensure demoData is mutable for local state management
 import toast from 'react-hot-toast';
 import { Input } from '@/components/ui/input';
-import { fetchSchools, createSchool, deleteSchool, updateSchool } from '@/services/school';
+import{fetchSchools}from '@/services/school';
+
 
 const ITEMS_PER_PAGE = 5;
 
 const SchoolsPage = () => {
-  const [allSchools, setAllSchools] = useState([]);
-  const [schoolsToDisplay, setSchoolsToDisplay] = useState([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingSchool, setEditingSchool] = useState(null); // données de l'école à éditer
+  // Use a state variable for demoData to ensure re-renders when it changes
+  const [currentDemoData, setCurrentDemoData] = useState(demoData);
+  
+  const [schoolsToDisplay, setSchoolsToDisplay] = useState([]); // This will hold the filtered and enriched schools
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingSchool, setEditingSchool] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Charger les écoles depuis l'API
+ 
+  // Effect to filter and enrich schools whenever currentDemoData or searchQuery changes
   useEffect(() => {
-    async function loadSchools() {
-      try {
-        const schools = await fetchSchools();
+    const allSchools = currentDemoData.schools;
 
-        const formattedSchools = schools.map((school) => ({
-          id: school.id,
-          name: school.name,
-          email: school.email,
-          phone: school.phone,
-          address: school.address,
-          city: school.city,
-          isActive: school.isActive,
-          createdAt: school.createdAt,
-          establishmentCount: school.establishmentCount,
-          admins: school.admins || [],
-          adminName: school.admins?.[0]?.fullname ?? 'N/A',
-        }));
+    // 💡 Étape 1: Enrichir les écoles avec le nom de l'administrateur principal
+    const enrichedSchools = allSchools.map(school => {
+      const schoolAdmins = currentDemoData.userSchools
+        .filter(us => us.schoolId === school.id)
+        .map(us => currentDemoData.users.find(u => u.id === us.userId && u.role === 'ADMIN'))
+        .filter(Boolean); // Filter out any undefined results
 
-        setAllSchools(formattedSchools);
-        setSchoolsToDisplay(formattedSchools);
-      } catch (error) {
-        toast.error("Erreur lors du chargement des écoles");
-        console.error(error);
-      }
-    }
+      // Assume the first admin found is the 'main' admin for display/search purposes
+      const mainAdmin = schoolAdmins.length > 0 ? schoolAdmins[0] : null;
 
-    loadSchools();
-  }, []);
+      return {
+        ...school,
+        // Add adminName property for filtering and display
+        adminName: mainAdmin ? mainAdmin.fullname : 'N/A'
+      };
+    });
 
-  // Filtrer et paginer les écoles
-  useEffect(() => {
-    const filteredSchools = allSchools.filter((school) => {
+    // 💡 Étape 2: Filtrage basé sur le nom, la ville, l'email ou le nom de l'administrateur
+    const filteredAndEnrichedSchools = enrichedSchools.filter((school) => {
       const lowerCaseSearchQuery = searchQuery.toLowerCase();
       return (
         school.name.toLowerCase().includes(lowerCaseSearchQuery) ||
         school.city.toLowerCase().includes(lowerCaseSearchQuery) ||
         school.email.toLowerCase().includes(lowerCaseSearchQuery) ||
+        // NEW: Filter by adminName
         school.adminName.toLowerCase().includes(lowerCaseSearchQuery)
       );
     });
 
-    setSchoolsToDisplay(filteredSchools);
+    setSchoolsToDisplay(filteredAndEnrichedSchools);
 
-    const newTotalPages = Math.ceil(filteredSchools.length / ITEMS_PER_PAGE);
+    // 💡 Étape 3: Ajuster la pagination en fonction du filtre
+    const newTotalPages = Math.ceil(filteredAndEnrichedSchools.length / ITEMS_PER_PAGE);
     if (currentPage > newTotalPages && newTotalPages > 0) {
       setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && currentPage !== 1) {
+    } else if (newTotalPages === 0 && filteredAndEnrichedSchools.length > 0) {
+      // If there are schools but somehow currentPage is 0, reset to 1
+      setCurrentPage(1);
+    } else if (filteredAndEnrichedSchools.length === 0 && currentPage !== 1) { // Only reset if no schools and not already on page 1
       setCurrentPage(1);
     }
-  }, [allSchools, currentPage, searchQuery]);
+  }, [currentDemoData, currentPage, searchQuery]); // Add searchQuery to dependency array
 
   const totalPages = Math.ceil(schoolsToDisplay.length / ITEMS_PER_PAGE);
   const paginatedSchools = schoolsToDisplay.slice(
@@ -82,11 +80,13 @@ const SchoolsPage = () => {
   const handlePageChange = (page) => setCurrentPage(page);
 
   const handleEditSchool = (school) => {
-    if (!school || !school.id) return;
+    // Find the associated admin for the school being edited
+    const schoolAdmins = currentDemoData.userSchools
+      .filter(us => us.schoolId === school.id)
+      .map(us => currentDemoData.users.find(u => u.id === us.userId && u.role === 'ADMIN'))
+      .filter(Boolean);
 
-    const mainAdmin = Array.isArray(school.admins) && school.admins.length > 0
-      ? school.admins[0]
-      : null;
+    const mainAdmin = schoolAdmins[0]; // Assuming the first found admin is the one to edit
 
     const defaultValuesForForm = {
       id: school.id,
@@ -96,91 +96,72 @@ const SchoolsPage = () => {
         phone: school.phone || '',
         address: school.address || '',
         city: school.city || '',
-        isActive: school.isActive !== undefined ? school.isActive : true,
+        isActive: school.isActive !== undefined ? school.isActive : true
       },
-      admin: mainAdmin
-        ? {
-            fullname: mainAdmin.fullname || '',
-            email: mainAdmin.email || '',
-            phone: mainAdmin.phone || '',
-            password: '',
-            cin: mainAdmin.cin || '',
-            isActive: mainAdmin.isActive !== undefined ? mainAdmin.isActive : true,
-          }
-        : undefined,
-      existingAdminId: mainAdmin && mainAdmin.id ? mainAdmin.id.toString() : '',
-      addNewAdmin: !mainAdmin,
+      admin: mainAdmin ? {
+        fullname: mainAdmin.fullname || '', // Use fullname directly if available
+        email: mainAdmin.email || '',
+        phone: mainAdmin.phone || '',
+        password: '', // Password is not retrieved for security
+        cin: mainAdmin.cin || '',
+        isActive: mainAdmin.isActive !== undefined ? mainAdmin.isActive : true
+      } : undefined,
+      existingAdminId: mainAdmin ? mainAdmin.id.toString() : '',
+      addNewAdmin: !mainAdmin // If no admin, then it's a new admin situation
     };
 
     setEditingSchool(defaultValuesForForm);
-    setIsCreateModalOpen(true); // Ouvre le modal en mode édition
+    setIsAddDialogOpen(true);
   };
 
-  const handleDeleteSchool = async (id) => {
+  const handleDeleteSchool = (id) => {
     try {
-      await deleteSchool(id);
-      const updatedSchools = allSchools.filter((school) => school.id !== id);
-      setAllSchools(updatedSchools);
+      // Filter out the school
+      const updatedSchools = demoData.schools.filter(school => school.id !== id);
+      // Filter out userSchool associations for this school
+      const updatedUserSchools = demoData.userSchools.filter(us => us.schoolId !== id);
+
+      // Update the demoData directly (as it's imported as a mutable object)
+      demoData.schools = updatedSchools;
+      demoData.userSchools = updatedUserSchools;
+
+      // Force a state update to trigger re-render
+      setCurrentDemoData({ ...demoData });
+
+      // Adjust page if current page becomes empty
+      if (paginatedSchools.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
       toast.success('École supprimée avec succès');
     } catch (error) {
-      console.error('Erreur lors de la suppression de l’école', error);
-      toast.error('Impossible de supprimer cette école');
+      toast.error('Erreur lors de la suppression de l\'école');
+      console.error(error);
     }
   };
 
   const handleSaveSchool = (updatedData) => {
-    if (!updatedData || !updatedData.id) {
-      toast.error('Impossible d’enregistrer : ID manquant');
-      return;
-    }
-
-    const schoolFields = updatedData.school || updatedData;
-
-    const newSchoolData = {
-      id: updatedData.id,
-      name: schoolFields.name,
-      email: schoolFields.email,
-      phone: schoolFields.phone,
-      address: schoolFields.address,
-      city: schoolFields.city,
-      isActive: schoolFields.isActive,
-
-      admins: updatedData.admins || [],
-      adminName: updatedData.adminName || 'N/A',
-    };
-
-    const updatedSchools = [...allSchools];
-    const index = updatedSchools.findIndex((s) => s.id === updatedData.id);
-
-    if (index > -1) {
-      // Mise à jour
-      updatedSchools[index] = newSchoolData;
-    } else {
-      // Création
-      updatedSchools.push(newSchoolData);
-    }
-
-    setAllSchools(updatedSchools);
-    setIsCreateModalOpen(false);
+    // This function will be called from ModalSchool1
+    // ModalSchool1 is expected to update demoData directly, then call onSave
+    setCurrentDemoData({ ...demoData }); // Force a state update to trigger re-render
+    setIsAddDialogOpen(false);
     setEditingSchool(null);
-    toast.success('École sauvegardée avec succès');
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header + Bouton */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-medium text-default-800">Gestion des Écoles</h2>
         <Button onClick={() => {
           setEditingSchool(null);
-          setIsCreateModalOpen(true);
+          setIsAddDialogOpen(true);
         }}>
           <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
           Ajouter une école
         </Button>
       </div>
 
-      {/* Barre de recherche */}
+      {/* 🔍 Barre de recherche */}
       <div className="relative max-w-md w-full">
         <Input
           type="text"
@@ -192,34 +173,26 @@ const SchoolsPage = () => {
         <Icon icon="heroicons:magnifying-glass" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
       </div>
 
-      {/* Modale conditionnée : création vs édition */}
-      {editingSchool ? (
-        <EditSchoolModal
-          isOpen={isCreateModalOpen}
-          setIsOpen={setIsCreateModalOpen}
-          editingSchool={editingSchool}
-          onSave={handleSaveSchool}
-        />
-      ) : (
-        <ModalSchool
-          isOpen={isCreateModalOpen}
-          setIsOpen={setIsCreateModalOpen}
-          editingSchool={editingSchool}
-          onSave={handleSaveSchool}
-          schools={allSchools}
-          users={[]}
-          userSchools={[]}
-        />
-      )}
+      {/* 🧾 Modale */}
+      <ModalSchool
+        isOpen={isAddDialogOpen}
+        setIsOpen={setIsAddDialogOpen}
+        editingSchool={editingSchool}
+        onSave={handleSaveSchool}
+        schools={currentDemoData.schools} // Pass all schools
+        users={currentDemoData.users} // Pass all users
+        userSchools={currentDemoData.userSchools} // Pass userSchools for linking
+        setCurrentDemoData={setCurrentDemoData} // Pass setter for demoData if ModalSchool updates it
+      />
 
-      {/* Tableau */}
+      {/* 📋 Tableau */}
       <TableSchool
         schools={paginatedSchools}
         onEditSchool={handleEditSchool}
         onDeleteSchool={handleDeleteSchool}
       />
 
-      {/* Pagination */}
+      {/* 🔢 Pagination */}
       {totalPages > 1 && (
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
@@ -231,6 +204,7 @@ const SchoolsPage = () => {
           >
             <Icon icon="heroicons:chevron-left" className="w-5 h-5 rtl:rotate-180" />
           </Button>
+
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <Button
               key={`page-${page}`}
@@ -241,6 +215,7 @@ const SchoolsPage = () => {
               {page}
             </Button>
           ))}
+
           <Button
             onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
             disabled={currentPage === totalPages}

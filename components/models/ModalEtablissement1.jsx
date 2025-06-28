@@ -1,4 +1,3 @@
-//models/modaletablissement
 'use client';
 
 import { useState, useEffect } from "react";
@@ -12,10 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import EtablissementResponsableForm from "./EtablissementResponsableForm"; // Assurez-vous du chemin correct
 import { demoData } from '@/data/data'; // Importez vos données de démonstration
 import toast from 'react-hot-toast'; // Pour les notifications
-import { createEstablishments, updateEstablishments } from '@/services/etablissements';
-import { fetchSchools } from '@/services/school';
-import { register,fetchResponsibles } from '@/services/user'; 
-
+  import {fetchResponsibles,register} from '@/services/user';
+  import {createEstablishments,updateEstablishments} from '@/services/etablissements';
 
 const ModalEtablissement = ({
   isOpen,
@@ -26,36 +23,53 @@ const ModalEtablissement = ({
   fixedSchoolId, // ID de l'école si l'établissement est lié à une école spécifique
 }) => {
   const [existingResponsables, setExistingResponsables] = useState([]);
-  const [loadingResponsables, setLoadingResponsables] = useState(false);
-const [errorResponsables, setErrorResponsables] = useState(null);
-
-  // Récupérer tous les responsables existants (rôle 'RESPONSIBLE')
-  const loadResponsables = async () => {
-  setLoadingResponsables(true);
-  setErrorResponsables(null);
-
-  try {
-    const responsables = await fetchResponsibles();
-    setExistingResponsables(responsables);
-  } catch (error) {
-    setErrorResponsables(error);
-  } finally {
-    setLoadingResponsables(false);
-  }
-};
-
-// Appel initial
+   const[loading,setLoading] = useState('');
 useEffect(() => {
-  loadResponsables();
-}, []);
+  let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
+
+  async function loadResponsibles() {
+    if (loading || existingResponsables.length > 0) {
+      // 🚫 Évite de recharger si déjà en cours ou déjà chargé
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await fetchResponsibles(); // Assurez-vous que cette fonction renvoie bien un tableau
+      console.log("Données reçues depuis l'API:", data);
+
+     
+        // Met à jour la liste des responsables
+        setExistingResponsables(data);
+
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des responsables', error);
+      toast.error("Impossible de charger les responsables");
+    } finally {
+      if (isMounted) {
+        setLoading(false); // 🔄 Fin du chargement
+      }
+    }
+  }
+
+  loadResponsibles();
+
+  // Nettoyage pour éviter les mises à jour sur un composant non monté
+  return () => {
+    isMounted = false;
+  };
+}, [loading,existingResponsables]);
+  // Récupérer tous les responsables existants (rôle 'RESPONSIBLE')
+
 
   // Fonction pour déterminer les valeurs par défaut initiales pour EtablissementResponsableForm
   const getInitialDefaultValues = () => {
-    if (!editingEtablissement|| Object.keys(editingEtablissement).length === 0) {
+    if (!editingEtablissement) {
       // Si ajout d'un nouvel établissement, retourne des valeurs par défaut vides
       return {
         etablissement: {
-          id:'',name: '', email: '', phone: '', address: '', quartie: '', city: '', isActive: true
+          name: '', email: '', phone: '', address: '', quartie: '', city: '', isActive: true
         },
         responsable: {
           fullname: '', email: '', phone: '', password: '', cin: '', isActive: true
@@ -68,14 +82,13 @@ useEffect(() => {
 
     // Lorsque l'on modifie, pré-remplit avec les données de l'établissement actuel
     const etablissementDefaults = {
-    
-      name: editingEtablissement.name || '',
-      email: editingEtablissement.email || '',
-      phone:editingEtablissement.phone || '',
-      address: editingEtablissement.address || '',
-      quartie: editingEtablissement.quartie || '', // N'oubliez pas 'quartie'
-      city: editingEtablissement.city || '',
-      isActive: editingEtablissement.isActive !== undefined ? editingEtablissement.isActive : true,
+      name: editingEtablissement.etablissement.name || '',
+      email: editingEtablissement.etablissement.email || '',
+      phone: editingEtablissement.etablissement.phone || '',
+      address: editingEtablissement.etablissement.address || '',
+      quartie: editingEtablissement.etablissement.quartie || '', // N'oubliez pas 'quartie'
+      city: editingEtablissement.etablissement.city || '',
+      isActive: editingEtablissement.etablissement.isActive !== undefined ? editingEtablissement.etablissement.isActive : true,
     };
 
     let responsableDefaults = { 
@@ -113,18 +126,53 @@ useEffect(() => {
     };
   };
 
- const handleSave = (formData) => {
-  try {
-    onSave(formData); // Envoie au parent qui gère l'appel API
-    console.log("data from modal",formData)
-    setIsOpen(false);
-  } catch (error) {
+  const handleSave = async (formData) => {
+     console.log("formData",formData)
+    try {
+      let responsableId=null;
+          if (formData.addNewResponsable) {
+               const responsableAdd={...formData.responsable,
+                    role: 'RESPONSIBLE',
+                  ecolId:formData.schoolId}
+                 const addNewResponsable=await register(responsableAdd)
+                 responsableId=addNewResponsable.id
+            }else{
+             responsableId = formData.existingResponsableId;
+            }
+             const updatedata = {
+             ...formData.etablissement,
+               ecolId: formData.schoolId,
+              responsableId,
+    };
+
+        if (editingEtablissement) {
+          
+            await updateEstablishments(editingEtablissement.id,updatedata)
+
+            toast.success('Établissement modifié avec succès');
+
+        } else {
+
+            
+            // --- AJOUT D'UN NOUVEL ÉTABLISSEMENT ---
+           
+            
+            await createEstablishments(updatedata)
+           
+            toast.success('Établissement ajouté avec succès');
+        }
+
+        onSave(updatedata); // Notifie le parent que la sauvegarde est terminée
+        setIsOpen(false); // Ferme le modal
+
+    } catch (error) {
     console.error('Erreur lors de la sauvegarde:', error);
-    toast.error('Erreur lors de la sauvegarde');
+    toast.error(error.response?.data?.message || 'Erreur lors de la sauvegarde');
   }
-};
+  };
 
   const currentDefaultValues = getInitialDefaultValues();
+ 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

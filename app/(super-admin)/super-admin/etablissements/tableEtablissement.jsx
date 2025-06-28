@@ -81,8 +81,8 @@ const TableEtablissement = ({ etablissements, onEditEtablissement, onDeleteEtabl
           <TableBody>
             {etablissements && etablissements.length > 0 ? (
               etablissements.map((item) => {
-                const responsible = item.responsable;
-                const school = item.school;
+                const responsible =item.responsable;
+                const school =item.school;
 
                 return (
                   <Fragment key={item.id}>

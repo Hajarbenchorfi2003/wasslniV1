@@ -23,8 +23,10 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
     tripId: null,
     date: '',
     status: 'PLANNED', // Default status
+    timeSlot: '', 
   });
-
+ const timeSlots = ['MATIN', 'SOIR'];
+  const isEditing = !!editingDailyTrip;
   useEffect(() => {
     if (editingDailyTrip) {
       const tripDate = editingDailyTrip.date ? new Date(editingDailyTrip.date).toISOString().split('T')[0] : '';
@@ -32,12 +34,14 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
         tripId: editingDailyTrip.tripId || null,
         date: tripDate,
         status: editingDailyTrip.status || 'PLANNED',
+        timeSlot: editingDailyTrip.timeSlot|| '' , 
       });
     } else {
       setFormData({
         tripId: null,
         date: '',
         status: 'PLANNED',
+        timeSlot: '', 
       });
     }
   }, [editingDailyTrip]);
@@ -72,7 +76,7 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
             <div>
               <Label htmlFor="trip" className="text-right">Trajet</Label>
               <Select onValueChange={(value) => handleSelectChange('tripId', value)} value={formData.tripId ? String(formData.tripId) : ''} required>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="col-span-3"  disabled={isEditing}>
                   <SelectValue placeholder="Sélectionner un trajet" />
                 </SelectTrigger>
                 <SelectContent>
@@ -88,7 +92,7 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
 
           <div>
             <Label htmlFor="date" className="text-right">Date du Trajet</Label>
-            <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} className="col-span-3" required />
+            <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} className="col-span-3" disabled={isEditing} required />
           </div>
 
           {/* Status Selection */}
@@ -109,6 +113,26 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
               </Select>
             </div>
           )}
+           {/* Status Selection */}
+        
+            <div>
+              <Label htmlFor="timeSlot" className="text-right">Créneau horaire</Label>
+              <Select onValueChange={(value) => handleSelectChange('timeSlot', value)} value={formData.timeSlot} required>
+                <SelectTrigger className="col-span-3"  disabled={isEditing}>
+                  <SelectValue placeholder="Sélectionner un créneau" />
+                </SelectTrigger>
+                <SelectContent>
+                  
+                  {timeSlots.map((slot) => (
+                   <SelectItem key={slot} value={slot}>
+                    {slot === 'MATIN' ? 'Matin' : 'Soir'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+         
+
 
           <DialogFooter>
             <Button type="submit">Sauvegarder</Button>

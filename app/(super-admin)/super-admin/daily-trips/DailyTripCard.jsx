@@ -45,7 +45,7 @@ const DailyTripCard = ({ dailyTrip, onEditDailyTrip, onDeleteDailyTrip }) => {
           <CardTitle className="text-lg font-semibold flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Icon icon="heroicons:calendar-days" className="h-6 w-6 text-orange-600" />
-              {dailyTrip.tripName}
+              {dailyTrip.trip?.name ? dailyTrip.trip.name : 'Trajet inconnu'}
             </div>
             <span className="text-sm text-gray-500 font-normal">
               {new Date(dailyTrip.date).toLocaleDateString('fr-FR', {
@@ -75,19 +75,19 @@ const DailyTripCard = ({ dailyTrip, onEditDailyTrip, onDeleteDailyTrip }) => {
         <CardContent className="p-4 pt-0 space-y-2 text-sm  text-default-600">
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:bolt" className="w-4 h-4 opacity-70" />
-            Statut: <Badge variant={getStatusColor(dailyTrip.status)}>{dailyTrip.statusText}</Badge>
+            Statut: <Badge variant={getStatusColor(dailyTrip.status)}>{dailyTrip.status}</Badge>
           </p>
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:map" className="w-4 h-4 opacity-70" />
-            Route: {dailyTrip.routeName}
+            Route: {dailyTrip.trip?.name ? dailyTrip.trip.name : 'Trajet inconnu'}
           </p>
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:truck" className="w-4 h-4 opacity-70" />
-            Bus: {dailyTrip.busPlate}
+            Bus: {dailyTrip.trip?.bus?.plateNumber || 'Inconnu'}
           </p>
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:user" className="w-4 h-4 opacity-70" />
-            Chauffeur: {dailyTrip.driverName}
+            Chauffeur:   {dailyTrip.trip?.driver?.fullname || 'Aucun chauffeur'}
           </p>
         </CardContent>
       </Card>

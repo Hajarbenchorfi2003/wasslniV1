@@ -9,6 +9,10 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalDailyTrip } from '@/components/models/ModalDailyTrip';
 import DailyTripCard from './DailyTripCard'; // Create this
+import{fetchdailytrip,createDailyTrip,updateDailyTrip,deleteDailyTrip} from '@/services/dailyTrip';
+import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchDrivers} from '@/services/user';
+import {fetchAlltrip} from '@/services/trips';
 
  
 // Import shadcn/ui Select and Input components
@@ -20,101 +24,175 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input"; // Make sure you have this installed: npx shadcn-ui@latest add input
+import { date } from 'zod';
 
-const ITEMS_PER_PAGE = 3;
+
 
 const DailyTripsPage = () => {
   const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
   const [dailyTrips, setDailyTrips] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDailyTrip, setEditingDailyTrip] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
 
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const ITEMS_PER_PAGE = 10;
   // States for existing filters
   const [filterTripId, setFilterTripId] = useState('all');
   const [filterDriverId, setFilterDriverId] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterEstablishmentsId, setFilterEstablishmentsId] = useState('all');
 
   // New states for search functionality
-  const [searchTerm, setSearchTerm] = useState(''); // For trip name, driver name, bus plate
+ 
   const [searchDate, setSearchDate] = useState(''); // For specific date search (YYYY-MM-DD)
-
+  const[establishments,setEstablishments]=useState([]);
+ const [error, setError] = useState(null);
+  const [drivers, setDrivers] = useState([]);
+  const [trips, setTrips] = useState([]);
+  const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
+   
+    const [loadingtrip, setLoadingtrip] = useState(false);
+    const [loadingdriver, setLoadingdriver] = useState(false);
+   
+    const loadtrip = async () => {
+    try {
+     setLoadingtrip(true);
+      
+      const data = await fetchAlltrip();
+     
+      setTrips(data.data);
+    } catch (err) {
+      console.error("Erreur lors du chargement des bus :", err);
+      
+      toast.error("Erreur lors du chargement des buses");
+    } finally {
+      setLoadingtrip(false);
+    }
+  };
+  
+  // Charge les bus au montage du composant
   useEffect(() => {
-    console.log("Filters or search terms updated, re-filtering daily trips...");
-    let processedDailyTrips = currentDemoData.dailyTrips;
-
-    // Enrich daily trips with trip name, route name, driver, bus, and status
-    // Also add driverId and tripId for filtering, and busPlate for search
-    let enrichedDailyTrips = processedDailyTrips.map(dailyTrip => {
-      const trip = currentDemoData.trips.find(t => t.id === dailyTrip.tripId);
-      const route = trip ? currentDemoData.routes.find(r => r.id === trip.routeId) : null;
-      const bus = trip ? currentDemoData.buses.find(b => b.id === trip.busId) : null;
-      const driver = trip ? currentDemoData.users.find(u => u.id === trip.driverId) : null;
-
-      return {
-        ...dailyTrip,
-        tripName: trip ? trip.name : 'N/A',
-        routeId: trip ? trip.routeId : null,
-        routeName: route ? route.name : 'N/A',
-        busPlate: bus ? bus.plateNumber : 'N/A',
-        driverId: trip ? trip.driverId : null,
-        driverName: driver ? driver.fullname : 'N/A',
-        statusText: dailyTrip.status,
+    loadtrip();
+  }, []); 
+    
+    const loadDriver = async () => {
+      try {
+        setLoadingdriver(true);
+        
+        const data = await fetchDrivers();
+       
+        setDrivers(data);
+      } catch (err) {
+        console.error("Erreur lors du chargement des bus :", err);
+        
+        toast.error("Erreur lors du chargement des buses");
+      } finally {
+        setLoadingdriver(false);
+      }
+    };
+    
+    // Charge les bus au montage du composant
+    useEffect(() => {
+      loadDriver();
+    }, []);
+       useEffect(() => {
+      let isMounted = true;
+    
+      async function loadEstablishments() {
+        setEstablishmentsLoading(true);
+        try {
+          const data = await fetchAllEstablishments();
+          console.log("Établissements reçus :", data);
+    
+          if (isMounted && data && Array.isArray(data)) {
+            setEstablishments(data);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des établissements', error);
+          toast.error("Impossible de charger les établissements");
+        } finally {
+          if (isMounted) {
+            setEstablishmentsLoading(false);
+          }
+        }
+      }
+    
+      // Charger seulement si non encore chargés
+      if (establishments.length === 0) {
+        loadEstablishments();
+      }
+    
+      return () => {
+        isMounted = false;
       };
+    }, []);
+
+
+const fetchDailyTripsWithFilters = async () => {
+        setLoading(true);
+       setError(null);
+
+  try {
+    const filters = {};
+
+    if (filterTripId !== 'all') filters.tripId = parseInt(filterTripId);
+    if (filterEstablishmentsId !== 'all') filters.establishmentId = parseInt(filterEstablishmentsId);
+    if (filterDriverId !== 'all') filters.driverId = parseInt(filterDriverId);
+    if (filterStatus !== 'all') filters.status = filterStatus;
+    if (searchDate) filters.date = searchDate;
+    
+
+    // Appel vers le backend
+    const data = await fetchdailytrip(filters);
+    
+    console.log("Données reçues depuis l'API :", data);
+
+    // ✅ Extraction des données avec gestion robuste
+    const tripsData = Array.isArray(data.data) ? data.data : [];
+    const pagination = data.pagination || {};
+    console.log(pagination)
+
+    setDailyTrips(tripsData);
+    setTotalPages(pagination.totalPages|| 1);
+    setCurrentPage(pagination.page || 1);
+
+  } catch (err) {
+    let errorMessage = "Erreur lors du chargement des trajets quotidiens";
+
+    if (err.response?.data?.error || err.response?.data?.message) {
+      errorMessage = err.response.data.error || err.response.data.message;
+    } else if (err.request) {
+      errorMessage = "Aucune réponse du serveur";
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    setError(errorMessage);
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right"
     });
 
-    // --- Apply Filters ---
-    if (filterTripId !== 'all') {
-      enrichedDailyTrips = enrichedDailyTrips.filter(dailyTrip =>
-        dailyTrip.tripId === parseInt(filterTripId)
-      );
-    }
-    if (filterDriverId !== 'all') {
-      enrichedDailyTrips = enrichedDailyTrips.filter(dailyTrip =>
-        dailyTrip.driverId === parseInt(filterDriverId)
-      );
-    }
-    if (filterStatus !== 'all') {
-      enrichedDailyTrips = enrichedDailyTrips.filter(dailyTrip =>
-        dailyTrip.status === filterStatus
-      );
-    }
+    setDailyTrips([]);
 
-    // --- Apply Search Term (Nom de trajet, Nom de chauffeur, Numéro de plaque du bus) ---
-    if (searchTerm.trim() !== '') {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      enrichedDailyTrips = enrichedDailyTrips.filter(dailyTrip =>
-        dailyTrip.tripName.toLowerCase().includes(lowerCaseSearchTerm) ||
-        dailyTrip.driverName.toLowerCase().includes(lowerCaseSearchTerm) ||
-        dailyTrip.busPlate.toLowerCase().includes(lowerCaseSearchTerm)
-      );
-    }
+  } finally {
+    setLoading(false);
+  }
+  };
+    useEffect(() => {
+     fetchDailyTripsWithFilters();
+    }, [
+      filterTripId,
+      filterEstablishmentsId,
+      filterDriverId,
+      filterStatus,
+      searchDate,
+      currentPage,
+    ]);
 
-    // --- Apply Search Date ---
-    if (searchDate) {
-      // Format searchDate to YYYY-MM-DD for comparison
-      const formattedSearchDate = new Date(searchDate).toISOString().split('T')[0];
-      enrichedDailyTrips = enrichedDailyTrips.filter(dailyTrip => {
-        // Format dailyTrip.date to YYYY-MM-DD for comparison
-        const dailyTripDate = new Date(dailyTrip.date).toISOString().split('T')[0];
-        return dailyTripDate === formattedSearchDate;
-      });
-    }
-
-    setDailyTrips(enrichedDailyTrips);
-
-    // Adjust current page if the number of pages changes after filtering/searching
-    const newTotalPages = Math.ceil(enrichedDailyTrips.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (enrichedDailyTrips.length === 0 && currentPage !== 1) {
-      setCurrentPage(1); // Go to page 1 if no items, to avoid empty page
-    } else if (newTotalPages === 0 && enrichedDailyTrips.length > 0) {
-      setCurrentPage(1); // If suddenly there are items, but totalPages was 0
-    }
-  }, [currentDemoData, currentPage, filterTripId, filterDriverId, filterStatus, searchTerm, searchDate]); // Add all filter and search states to dependencies
-
-  const totalPages = Math.ceil(dailyTrips.length / ITEMS_PER_PAGE);
+ 
+ 
   const paginatedDailyTrips = dailyTrips.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -129,77 +207,80 @@ const DailyTripsPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteDailyTrip = (id) => {
+  const handleDeleteDailyTrip =async (id) => {
     try {
-      console.log(`Attempting to delete daily trip with ID: ${id}`);
-      const updatedDailyTrips = currentDemoData.dailyTrips.filter(dt => dt.id !== id);
-
-      // Also remove associated attendances and positions
-      const updatedAttendances = currentDemoData.attendances.filter(att => att.dailyTripId !== id);
-      const updatedPositions = currentDemoData.positions.filter(pos => pos.dailyTripId !== id);
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        dailyTrips: updatedDailyTrips,
-        attendances: updatedAttendances,
-        positions: updatedPositions,
-      }));
-
+      await deleteDailyTrip(id)
+     
+      await fetchDailyTripsWithFilters();
       toast.success('Trajet quotidien supprimé avec succès');
     } catch (error) {
-      console.error('Error deleting daily trip:', error);
-      toast.error('Erreur lors de la suppression du trajet quotidien');
+    let errorMessage = 'Erreur inconnue';
+
+    // ✅ Récupère l'erreur depuis le serveur si possible
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.request) {
+      errorMessage = 'Aucune réponse du serveur';
+    } else if (error.message) {
+      errorMessage = error.message;
     }
+
+    console.error('Erreur lors de la sauvegarde :', errorMessage);
+    
+    // Affichage de l'erreur utilisateur
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right", // Notification en bas à droite
+      duration: 5000,
+    });
+  }
   };
 
   const handleSaveDailyTrip = async (dailyTripData) => {
-    try {
-      let message = '';
-      let updatedDailyTripsArray = [...currentDemoData.dailyTrips];
+  try {
+    let message = '';
 
-      if (editingDailyTrip) {
-        const index = updatedDailyTripsArray.findIndex(dt => dt.id === editingDailyTrip.id);
-        if (index !== -1) {
-          const dailyTripToUpdate = updatedDailyTripsArray[index];
-          const updatedDailyTrip = {
-            ...dailyTripToUpdate,
-            ...dailyTripData,
-            id: editingDailyTrip.id,
-            tripId: parseInt(dailyTripData.tripId),
-            date: dailyTripData.date ? new Date(dailyTripData.date).toISOString() : null,
-          };
-          updatedDailyTripsArray[index] = updatedDailyTrip;
-          message = 'Trajet quotidien modifié avec succès';
-        } else {
-          throw new Error("Trajet quotidien à modifier non trouvé.");
-        }
-      } else {
-        const newId = Math.max(...currentDemoData.dailyTrips.map(dt => dt.id), 0) + 1;
-        const newDailyTrip = {
-          ...dailyTripData,
-          id: newId,
-          tripId: parseInt(dailyTripData.tripId),
-          date: dailyTripData.date ? new Date(dailyTripData.date).toISOString() : null,
-          status: dailyTripData.status || currentDemoData.enums.TripStatus.SCHEDULED, // Default status for new trips
-        };
-        updatedDailyTripsArray.push(newDailyTrip);
-        message = 'Trajet quotidien ajouté avec succès';
-      }
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        dailyTrips: updatedDailyTripsArray,
-      }));
-
-      toast.success(message);
-      setIsModalOpen(false);
-      setEditingDailyTrip(null);
-
-    } catch (error) {
-      console.error('Error saving daily trip:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+    if (editingDailyTrip) {
+      const status = {status:dailyTripData.status};
+      console.log(status)
+      await updateDailyTrip(editingDailyTrip.id, status);
+      message = 'Trajet quotidien modifié avec succès';
+    } else {
+      console.log("data",dailyTripData)
+      await createDailyTrip(dailyTripData);
+      message = 'Trajet quotidien ajouté avec succès';
     }
-  };
+
+    await fetchDailyTripsWithFilters();
+
+    toast.success(message);
+    setIsModalOpen(false);
+    setEditingDailyTrip(null);
+
+  } catch (error) {
+    let errorMessage = 'Erreur inconnue';
+
+    // ✅ Récupère l'erreur depuis le serveur si possible
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.request) {
+      errorMessage = 'Aucune réponse du serveur';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    console.error('Erreur lors de la sauvegarde :', errorMessage);
+    
+    // Affichage de l'erreur utilisateur
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right", // Notification en bas à droite
+      duration: 5000,
+    });
+  }
+};
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -233,19 +314,20 @@ const DailyTripsPage = () => {
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
   {/* Search by Text */}
   
-   <div className="relative w-full  ">
-        <Input
-          type="text"
-          placeholder=" Trajet, chauffeur, bus..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 pr-4 py-2 border rounded-md w-full"
-        />
-        <Icon
-          icon="heroicons:magnifying-glass"
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-        />
-    </div>
+    {/* Filter by Driver */}
+  <Select onValueChange={setFilterEstablishmentsId} value={filterEstablishmentsId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Establishments" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Establishments</SelectItem>
+      {establishments.map((establishment) => (
+        <SelectItem key={establishment.id} value={String(establishment.id)}>
+          {establishment.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
   {/* Search by Date */}
   <Input
@@ -262,7 +344,7 @@ const DailyTripsPage = () => {
     </SelectTrigger>
     <SelectContent>
       <SelectItem value="all">Tous les Trajets</SelectItem>
-      {uniqueTrips.map((trip) => (
+      {trips.map((trip) => (
         <SelectItem key={trip.id} value={String(trip.id)}>
           {trip.name}
         </SelectItem>
@@ -277,13 +359,14 @@ const DailyTripsPage = () => {
     </SelectTrigger>
     <SelectContent>
       <SelectItem value="all">Tous les Chauffeurs</SelectItem>
-      {uniqueDrivers.map((driver) => (
+      {drivers.map((driver) => (
         <SelectItem key={driver.id} value={String(driver.id)}>
           {driver.fullname}
         </SelectItem>
       ))}
     </SelectContent>
   </Select>
+
 
   {/* Filter by Status */}
   <Select onValueChange={setFilterStatus} value={filterStatus}>
@@ -307,7 +390,7 @@ const DailyTripsPage = () => {
         onClose={handleCloseModal}
         editingDailyTrip={editingDailyTrip}
         onSave={handleSaveDailyTrip}
-        trips={currentDemoData.trips}
+        trips={trips}
         tripStatuses={currentDemoData.enums.TripStatus}
       />
 
@@ -326,7 +409,7 @@ const DailyTripsPage = () => {
         )}
       </div>
 
-      {totalPages > 1 && (
+      {totalPages >1 && (
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
             variant="outline"
@@ -360,6 +443,10 @@ const DailyTripsPage = () => {
           </Button>
         </div>
       )}
+
+     
+ 
+
     </div>
   );
 };

@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch"; // Assuming shadcn/ui Switch
 import { Button } from '@/components/ui/button'; // Assuming shadcn/ui Button
 import toast from 'react-hot-toast'; // Assuming react-hot-toast
 
+
 // Define the Zod schema for validation
 const formSchema = z.object({
   fullname: z.string().min(3, "Le nom complet est requis et doit contenir au moins 3 caractères."),

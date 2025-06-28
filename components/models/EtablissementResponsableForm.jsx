@@ -128,6 +128,7 @@ export default function EtablissementResponsableForm({
 
 
   const handleSubmit = (data) => {
+     console.log("Données envoyées:", data); // ✅ Debug
     const errors = form.formState.errors;
   if (Object.keys(errors).length > 0) {
     console.error("Erreurs de validation", errors); // ✅ Affiche les erreurs

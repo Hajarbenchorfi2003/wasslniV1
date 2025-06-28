@@ -33,9 +33,10 @@ const TripsPage = () => {
   const [editingTrip, setEditingTrip] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [establishments, setEstablishments] = useState([]);
-  const [drivers, setDrivers] = useState([]);
+ 
     const [routes, setRoutes] = useState([]);
     const [buses, setBuses] = useState([]);
+     const [drivers, setDrivers] = useState([]);
    const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
   const [loading, setLoading] = useState(false);
   const [loadingbus, setLoadingbus] = useState(false);
@@ -74,11 +75,11 @@ const TripsPage = () => {
       isMounted = false;
     };
   }, []);
-  const loadBuses = async (filters) => {
+  const loadBuses = async () => {
     try {
       setLoadingbus(true);
       
-      const data = await fetchAllBuses(filters);
+      const data = await fetchAllBuses();
       console.log("Données reçues depuis l'API:", data);
      
       setBuses(data);
@@ -87,7 +88,7 @@ const TripsPage = () => {
       
       toast.error("Erreur lors du chargement des buses");
     } finally {
-      setLoading(false);
+      setLoadingbus(false);
     }
   };
   
@@ -158,6 +159,7 @@ const [filterEstablishmentId, setFilterEstablishmentId] = useState('all');
       console.log("data api",data)
       
       setTrips(data.data); // On stocke les trajets reçus du backend
+     
       setCurrentPage(1); // Réinitialise à la première page après filtrage
     } catch (err) {
       setError(err.message);

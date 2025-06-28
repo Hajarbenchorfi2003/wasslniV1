@@ -32,11 +32,11 @@ const EtablissementsPage = () => {
        setSchoolsLoading(true);
        try {
          const data = await fetchSchools();
-         console.log("schools reçus :", data);
+       
    
          if (isMounted) {
            setSchools(data); // Mise à jour conditionnelle si le composant est toujours monté
-           console.log("schools", schools); // ⚠️ Ceci affichera l'ancienne valeur (problème de closure)
+           
          }
        } catch (error) {
          console.error('Erreur lors du chargement des établissements', error);
@@ -58,38 +58,37 @@ const EtablissementsPage = () => {
      };
    }, [schools]);
 
-useEffect(() => {
-  let isMounted = true; // Variable locale pour suivre le statut de montage
-
-  async function loadEstablishments() {
+ const loadEstablishments = async () => {
     setEstablishmentsLoading(true);
     try {
       const data = await fetchAllEstablishments();
-      console.log("Établissements reçus :", data);
-
-      if (isMounted) {
-        setEstablishments(data); // Mise à jour conditionnelle si le composant est toujours monté
-        console.log("etablisment", establishments); // ⚠️ Ceci affichera l'ancienne valeur (problème de closure)
-      }
+      
+      setEstablishments(data);
     } catch (error) {
       console.error('Erreur lors du chargement des établissements', error);
       toast.error("Impossible de charger les établissements");
     } finally {
-      if (isMounted) {
-        setEstablishmentsLoading(false);
-      }
+      setEstablishmentsLoading(false);
     }
-  }
-
-  // Charger seulement si non encore chargés
-  if (establishments.length === 0) {
-    loadEstablishments();
-  }
-
-  return () => {
-    isMounted = false; // Nettoyage : indique que le composant n'est plus monté
   };
-}, [establishments]); // ⚠️ Attention ici, voir plus bas
+
+  // Utiliser useEffect pour charger initialement si nécessaire
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadIfNotLoaded = async () => {
+      if (!isMounted) return;
+      if (establishments.length === 0) {
+        await loadEstablishments();
+      }
+    };
+
+    loadIfNotLoaded();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [establishments]); // ⚠️ Attention ici, voir plus bas
   console.log("etablisment",establishments)
   // Filter establishments based on search query
   const filteredEtablissements = establishments.filter(etablissement =>
@@ -173,6 +172,7 @@ useEffect(() => {
 
   // Function to handle saving (add or edit) an establishment
   const handleSaveEtablissement = (updatedata) => {
+    consol.log("data frome save",updatedata)
     // ModalEtablissement is now responsible for modifying demoData directly.
     // We just need to refresh our local state after it's done.
     setEtablissements([...demoData.establishments]);

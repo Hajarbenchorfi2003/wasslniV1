@@ -11,7 +11,7 @@ import {
 import ModalSuppression from '@/components/models/ModalSuppression'; // Assuming you have this modal
 import { useState } from 'react';
 
-const BusCard = ({ bus, onEditBus, onDeleteBus }) => {
+const BusCard = ({ bus, onEditBus, onDeleteBus, onDetachBus  }) => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const openDeleteModal = () => {
@@ -46,6 +46,10 @@ const BusCard = ({ bus, onEditBus, onDeleteBus }) => {
               <DropdownMenuItem onClick={() => onEditBus(bus)}>
                 <Icon icon="heroicons:pencil-square" className="mr-2 h-4 w-4" />
                 Modifier
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDetachBus(bus)} className="text-red-600 cursor-pointer">
+                 <Icon icon="heroicons:link-slash" className="mr-2 h-4 w-4" />
+                    Désassocier de l’établissement
               </DropdownMenuItem>
               <DropdownMenuItem onClick={openDeleteModal} className="text-red-600">
                 <Icon icon="heroicons:trash" className="mr-2 h-4 w-4" />

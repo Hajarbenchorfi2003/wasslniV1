@@ -83,17 +83,18 @@ const FooterContent = () => {
   return (
     <div className="block md:flex md:justify-between text-muted-foreground">
       <p className="sm:mb-0 text-xs md:text-sm">
-        COPYRIGHT © {new Date().getFullYear()} DashTail All rights Reserved
+      © {new Date().getFullYear()} Wasslni. Tous droits réservés.
       </p>
       <p className="mb-0 text-xs md:text-sm">
         Hand-crafted & Made by{" "}
-        <a
+        <span  className="text-primary"> Khawla  & Hajar Benchorfi</span>
+        {/* <a
           className="text-primary"
           target="__blank"
           href="https://codeshaper.net"
         >
           Codeshaper
-        </a>
+        </a> */}
       </p>
     </div>
   );

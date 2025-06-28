@@ -16,7 +16,8 @@ import {
 
 export function ModalUser({ isOpen, onClose, editingUser, onSave, role ,establishments}) {
   const [editdrive, setEditdrive] = useState(false);
-  const title = editingUser ? "Modifier le responsable" : "Ajouter un nouveau responsable";
+  const roleuser = role?.toLowerCase();
+  const title = editingUser ? `Modifier ${roleuser}` : `Ajouter un nouveau ${roleuser}`;
   useEffect(() => {
   if (role === "DRIVER" && editingUser) {
     setEditdrive(true);

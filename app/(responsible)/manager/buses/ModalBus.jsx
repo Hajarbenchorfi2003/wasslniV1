@@ -190,7 +190,7 @@ export const ModalBus = ({
                   <SelectValue placeholder="Sélectionnez un établissement" />
                 </SelectTrigger>
                 <SelectContent>
-                  <ScrollArea className="h-48">
+                  <ScrollArea>
                     {userEstablishments.map(est => (
                       <SelectItem key={est.id} value={String(est.id)}>
                         {est.name}
@@ -200,35 +200,6 @@ export const ModalBus = ({
                 </SelectContent>
               </Select>
             </div>
-
-            <div>
-              <Label htmlFor="driverId">Conducteur (optionnel)</Label>
-              <Select
-                value={formData.driverId}
-                onValueChange={(value) => handleSelectChange('driverId', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez un conducteur" />
-                </SelectTrigger>
-                <SelectContent>
-                  <ScrollArea className="h-48">
-                    <SelectItem value="">Aucun conducteur</SelectItem>
-                    {availableDrivers.length > 0 ? (
-                      availableDrivers.map(driver => (
-                        <SelectItem key={driver.id} value={String(driver.id)}>
-                          {driver.fullname} ({driver.phone})
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="" disabled>
-                        Aucun conducteur disponible
-                      </SelectItem>
-                    )}
-                  </ScrollArea>
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Annuler

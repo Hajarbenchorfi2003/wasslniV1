@@ -28,6 +28,8 @@ const DriverCard = ({ driver, onEditDriver, onDeleteDriver }) => {
   const cancelDelete = () => {
     setModalOpen(false);
   };
+  
+
 
   return (
     <>
@@ -40,9 +42,7 @@ const DriverCard = ({ driver, onEditDriver, onDeleteDriver }) => {
                 <Avatar>
                   <AvatarFallback>
                     {/* Generates initials from fullname */}
-                    {driver?.fullname
-                     ? driver.fullname.split(' ').map(n => n[0]).join('').toUpperCase()
-                    : ''}
+                    {driver.fullname.split(' ').map(n => n[0]).join('').toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 {/* Status badge for active/inactive */}
@@ -88,6 +88,7 @@ const DriverCard = ({ driver, onEditDriver, onDeleteDriver }) => {
             <Icon icon="heroicons:phone" className="w-4 h-4 opacity-70" />
             {driver.phone}
           </p>
+         
         </CardContent>
       </Card>
 

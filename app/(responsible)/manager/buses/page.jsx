@@ -8,12 +8,14 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalBus } from './ModalBus';
 import BusCard from './BusCard';
+import {confirmToast} from '@/components/ui/confirmToast';
 import {
   fetchMyBuses,
   createBus,
   updateBus,
   deleteBus,
-  fetchAvailableDrivers
+  fetchAvailableDrivers,
+  detachBusFromEstablishment
 } from '@/services/bus';
 import { Input } from '@/components/ui/input';
 
@@ -132,6 +134,21 @@ export const BusesPage = () => {
     setIsModalOpen(false);
     setEditingBus(null);
   };
+  const handleDetachBus = (bus) => {
+    confirmToast({
+      message: `Êtes-vous sûr de vouloir désassocier le bus "${bus.plateNumber}" de l'établissement ?`,
+      onConfirm: async () => {
+        try {
+          await  detachBusFromEstablishment(bus.id);
+          toast.success('Bus désassocié avec succès');
+          fetchBuses(); // Rafraîchir les données
+        } catch (error) {
+          console.error("Erreur lors de la désassociation :", error);
+          toast.error("Impossible de désassocier ce bus.");
+        }
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -162,6 +179,7 @@ export const BusesPage = () => {
         editingBus={editingBus}
         onSave={handleSaveBus}
         availableDrivers={availableDrivers}
+        onDetachBus={handleDetachBus} 
       />
 
       {isLoading ? (

@@ -9,7 +9,7 @@ import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { Input } from '@/components/ui/input'; // Import Input component
-import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchAllEstablishments,deletePremently} from '@/services/etablissements';
 import{fetchSchools}from '@/services/school';
 
 const ITEMS_PER_PAGE = 5;
@@ -149,19 +149,11 @@ const EtablissementsPage = () => {
   };
 
   // Function to handle deleting an establishment
-  const handleDeleteEtablissement = (id) => {
+  const handleDeleteEtablissement = async(id) => {
     try {
-      // Remove from demoData
-      demoData.establishments = demoData.establishments.filter(etablissement => etablissement.id !== id);
-      // You might also want to handle orphan responsibles if they are no longer linked to any establishment
-
-      // Update local state
-      setEtablissements([...demoData.establishments]);
-
-      // Adjust pagination if the current page becomes empty
-      if (paginatedEtablissements.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
+      await deletePremently(id)
+     loadEstablishments();
+     
 
       toast.success('Établissement supprimé avec succès');
     } catch (error) {
@@ -173,9 +165,7 @@ const EtablissementsPage = () => {
   // Function to handle saving (add or edit) an establishment
   const handleSaveEtablissement = (updatedata) => {
     consol.log("data frome save",updatedata)
-    // ModalEtablissement is now responsible for modifying demoData directly.
-    // We just need to refresh our local state after it's done.
-    setEtablissements([...demoData.establishments]);
+    
      loadEstablishments();
     setIsAddEditDialogOpen(false);
     setEditingEtablissement(null); // Clear editing state after save

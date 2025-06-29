@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { demoData as initialDemoData } from '@/data/data';
+
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalUser } from '@/components/models/ModalUser';
 import DriverCard from './DriverCard';
-import { Input } from '@/components/ui/input'; // Import Input component
+import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchDrivers,register,updateUser,deleteUser} from '@/services/user';
 
 // Import shadcn/ui Select components
 import {
@@ -17,74 +18,100 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"; // Adjust this path if your components are organized differently
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 9;
 
 const DriversPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
+  const [currentDemoData, setCurrentDemoData] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterEstablishmentId, setFilterEstablishmentId] = useState('all');
-  const [searchTerm, setSearchTerm] = useState(''); // New state for search term
+  // New state for filtering by establishment
+  const [filterEstablishmentId, setFilterEstablishmentId] = useState('all'); // 'all' for no filter
+ const [establishments, setEstablishments] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+  
+ useEffect(() => {
+  let isMounted = true;
 
-  // Effect to filter and set Drivers whenever currentDemoData, filterEstablishmentId, or searchTerm changes
-  useEffect(() => {
-    console.log("Filtering drivers based on currentDemoData, filterEstablishmentId, and searchTerm...");
-    let allDrivers = currentDemoData.users.filter(user => user.role === 'DRIVER');
+  async function loadEstablishments() {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchAllEstablishments();
+      console.log("Établissements reçus :", data);
 
-    // Enrich drivers with associated establishment names
-    let enrichedDrivers = allDrivers.map(driver => {
-      const associatedEstablishmentIds = currentDemoData.trips
-        .filter(trip => trip.driverId === driver.id)
-        .map(trip => trip.establishmentId);
-
-      const uniqueEstablishmentIds = [...new Set(associatedEstablishmentIds)];
-
-      const establishmentNames = uniqueEstablishmentIds.map(establishmentId => {
-        const establishment = currentDemoData.establishments.find(e => e.id === establishmentId);
-        return establishment ? establishment.name : 'N/A';
-      });
-
-      return {
-        ...driver,
-        establishmentNames: establishmentNames.length > 0 ? establishmentNames.join(', ') : 'N/A',
-        associatedEstablishmentIds: uniqueEstablishmentIds
-      };
-    });
-
-    // Apply establishment filter
-    if (filterEstablishmentId !== 'all') {
-      const selectedId = parseInt(filterEstablishmentId);
-      enrichedDrivers = enrichedDrivers.filter(driver =>
-        driver.associatedEstablishmentIds.includes(selectedId)
-      );
+      if (isMounted && data && Array.isArray(data)) {
+        setEstablishments(data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      if (isMounted) {
+        setEstablishmentsLoading(false);
+      }
     }
+  }
 
-    // Apply search term filter
-    if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      enrichedDrivers = enrichedDrivers.filter(driver =>
-        driver.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-        driver.email.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (driver.phone && driver.phone.toLowerCase().includes(lowerCaseSearchTerm))
-      );
+  // Charger seulement si non encore chargés
+  if (establishments.length === 0) {
+    loadEstablishments();
+  }
+
+  return () => {
+    isMounted = false;
+  };
+}, []); // ✅ seulement au montage du composant
+// 👈 pas `loading` global ici
+console.log("etablisment",establishments)
+ const loadDriver = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchDrivers(); // Récupère les données depuis l'API
+      setDrivers(data || []); // Met à jour l'état local
+      setCurrentDemoData(data || []);
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les parents");
+    } finally {
+      setLoading(false);
     }
+  };
+useEffect(() => {
+  loadDriver();
+}, []);
+console.log("drivers",drivers)
+  // Effect to filter and set Drivers whenever currentDemoData or filterEstablishmentId changes
+ useEffect(() => {
+  console.log("currentDemoData or filterEstablishmentId updated, filtering drivers...");
 
-    setDrivers(enrichedDrivers);
+  let filteredDrivers = [...currentDemoData]; // Ici tu dois récupérer les utilisateurs
 
-    // Adjust currentPage if filtering leads to fewer pages
-    const newTotalPages = Math.ceil(enrichedDrivers.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && enrichedDrivers.length > 0) {
-      setCurrentPage(1);
-    } else if (enrichedDrivers.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  }, [currentDemoData, currentPage, filterEstablishmentId, searchTerm]); // Add searchTerm to dependency array
+  if (filterEstablishmentId !== 'all') {
+    const selectedId = parseInt(filterEstablishmentId);
+
+    filteredDrivers = filteredDrivers.filter(driver => 
+      driver.establishmentsLink && 
+      driver.establishmentsLink.some(link => link.establishmentId === selectedId)
+    );
+  }
+
+  setDrivers(filteredDrivers);
+
+  const newTotalPages = Math.ceil(filteredDrivers.length / ITEMS_PER_PAGE);
+  if (currentPage > newTotalPages && newTotalPages > 0) {
+    setCurrentPage(newTotalPages);
+  } else if (newTotalPages === 0 && filteredDrivers.length > 0) {
+    setCurrentPage(1);
+  } else if (filteredDrivers.length === 0 && currentPage !== 1) {
+    setCurrentPage(1);
+  }
+}, [currentDemoData, filterEstablishmentId]);
+ // Add filterEstablishmentId to dependency array
 
   const totalPages = Math.ceil(drivers.length / ITEMS_PER_PAGE);
   const paginatedDrivers = drivers.slice(
@@ -101,103 +128,63 @@ const DriversPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteDriver = (id) => {
+  const handleDeleteDriver =async (id) => {
     try {
+      await deleteUser(id);
       console.log(`Attempting to delete user with ID: ${id}`);
-      const updatedUsers = currentDemoData.users.filter(user => user.id !== id);
+    
 
-      const updatedTrips = currentDemoData.trips.map(trip => {
-        if (trip.driverId === id) {
-          return { ...trip, driverId: null };
-        }
-        return trip;
-      });
-
-      const updatedAttendances = currentDemoData.attendances.map(attendance => {
-        if (attendance.markedById === id) {
-          return { ...attendance, markedById: null };
-        }
-        return attendance;
-      });
-
-      const updatedIncidents = currentDemoData.incidents.map(incident => {
-        if (incident.reportedById === id) {
-          return { ...incident, reportedById: null };
-        }
-        return incident;
-      });
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        users: updatedUsers,
-        trips: updatedTrips,
-        attendances: updatedAttendances,
-        incidents: updatedIncidents,
-      }));
-
-      toast.success('Driver supprimé avec succès');
-      console.log("User deleted successfully, updated demoData:", { users: updatedUsers, trips: updatedTrips });
+      toast.success('Chauffeur supprimé avec succès');
+       await loadDriver();
+      
     } catch (error) {
       console.error('Error deleting driver:', error);
-      toast.error('Erreur lors de la suppression du Driver');
+      
+      toast.error(
+      `Erreur lors de la sauvegarde: ${error.response?.data?.message || error.message || 'Vérifiez les données.'}`,
+      { position: 'bottom-right' }
+    );
     }
   };
 
   const handleSaveUser = async (userData) => {
-    try {
-      let message = '';
-      let updatedUsersArray = [...currentDemoData.users];
+  try {
+    let message = '';
 
-      if (editingUser) {
-        const index = updatedUsersArray.findIndex(u => u.id === editingUser.id);
-        if (index !== -1) {
-          const userToUpdate = updatedUsersArray[index];
+    if (editingUser) {
+      await updateUser(editingUser.id,userData);
+      message = 'Chauffeur mis à jour avec succès';
+    } else {
+      const newUser = {
+        ...userData,
+        role: 'DRIVER',
+      };
 
-          const updatedUser = {
-            ...userToUpdate,
-            ...userData,
-            id: editingUser.id,
-            role: 'DRIVER',
-            password: userData.password && userData.password.trim() !== '' ? userData.password : userToUpdate.password
-          };
-
-          updatedUsersArray[index] = updatedUser;
-          message = 'Driver modifié avec succès';
-          console.log("Driver updated:", updatedUser);
-
-        } else {
-          console.warn("Editing user not found in current demoData.users:", editingUser);
-          throw new Error("Utilisateur à modifier non trouvé.");
-        }
-      } else {
-        const newId = Math.max(...currentDemoData.users.map(u => u.id), 0) + 1;
-        const newUser = {
-          ...userData,
-          id: newId,
-          createdAt: new Date().toISOString(),
-          role: 'DRIVER',
-          isActive: true,
-        };
-        updatedUsersArray.push(newUser);
-        message = 'Driver ajouté avec succès';
-        console.log("New driver added:", newUser);
-      }
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        users: updatedUsersArray,
-      }));
-
-      toast.success(message);
-      console.log("Save operation successful. Final users array after save:", updatedUsersArray);
-      setIsModalOpen(false);
-      setEditingUser(null);
-
-    } catch (error) {
-      console.error('Error saving user:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+      await register(newUser);
+      message = 'Chauffeur ajouté avec succès';
+      console.log("New driver added:", newUser);
     }
-  };
+
+    // 🔄 Charger les données uniquement après succès
+    await loadDriver();
+
+    // ✅ Message de succès en bas à droite
+    toast.success(message, { position: 'bottom-right' });
+
+    setIsModalOpen(false);
+    setEditingUser(null);
+
+  } catch (error) {
+    console.error('Error saving user:', error);
+
+    // ✅ Message d'erreur clair en bas à droite
+    toast.error(
+      `Erreur lors de la sauvegarde: ${error.response?.data?.message || error.message || 'Vérifiez les données.'}`,
+      { position: 'bottom-right' }
+    );
+  }
+};
+
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -208,43 +195,34 @@ const DriversPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-medium text-default-800">
-          Gestion des drivers
+        Gestion des drivers
         </h2>
-      </div>
+      </div>  
       <div className="flex items-center justify-between flex-wrap gap-4">
-        {/* Search Input */}
-        <Input
-          type="text"
-          placeholder="Rechercher par nom ou email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full max-w-md"
-        />
+          {/* Filter by Establishment using shadcn/ui Select */}
+          <Select onValueChange={setFilterEstablishmentId} value={filterEstablishmentId}>
+            <SelectTrigger  className="w-full max-w-md">
+              <SelectValue placeholder="Filtrer par établissement" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les Établissements</SelectItem>
+              {establishments.map((establishment) => (
+                <SelectItem key={establishment.id} value={String(establishment.id)}>
+                  {establishment.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        {/* Filter by Establishment using shadcn/ui Select */}
-        <Select onValueChange={setFilterEstablishmentId} value={filterEstablishmentId}>
-          <SelectTrigger className="w-full max-w-md">
-            <SelectValue placeholder="Filtrer par établissement" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes les Établissements</SelectItem>
-            {currentDemoData.establishments.map((establishment) => (
-              <SelectItem key={establishment.id} value={String(establishment.id)}>
-                {establishment.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button onClick={() => {
-          setEditingUser(null);
-          setIsModalOpen(true);
-        }}>
-          <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
-          Ajouter un Driver
-        </Button>
-      </div>
-
+          <Button onClick={() => {
+            setEditingUser(null);
+            setIsModalOpen(true);
+          }}>
+            <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
+            Ajouter un Driver
+          </Button>
+        </div>
+ 
 
       <ModalUser
         isOpen={isModalOpen}
@@ -252,7 +230,7 @@ const DriversPage = () => {
         editingUser={editingUser}
         onSave={handleSaveUser}
         role="DRIVER"
-        establishments={currentDemoData.establishments}
+        establishments={establishments}
       />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

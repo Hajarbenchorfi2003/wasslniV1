@@ -1,44 +1,92 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { demoData as initialDemoData } from '@/data/data';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { ModalUser } from '@/components/models/ModalUser';
+import { ModalUser1 } from '@/components/models/modalResp';
 import ResponsableCard from './ResponsableCard';
 import { Input } from '@/components/ui/input';
+  import {fetchResponsibles,register,updateUser,deleteUser} from '@/services/user';
 
 const ITEMS_PER_PAGE = 3;
 
 const ResponsablesPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
+  const [currentDemoData, setCurrentDemoData] =useState({
+  users: []
+});
+const [loading, setLoading] = useState(false);
   const [responsables, setResponsables] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+ 
+
+
+
+
+useEffect(() => {
+  let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
+
+  async function loadResponsibles() {
+    if (loading || responsables.length > 0) {
+      // 🚫 Évite de recharger si déjà en cours ou déjà chargé
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await fetchResponsibles(); // Assurez-vous que cette fonction renvoie bien un tableau
+      console.log("Données reçues depuis l'API:", data);
+
+     
+        // Met à jour la liste des responsables
+        setResponsables(data);
+
+        // Met à jour currentDemoData.users
+        setCurrentDemoData((prev) => ({ ...prev, users: data }));
+
+        console.log("Données mises à jour dans currentDemoData:", currentDemoData);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des responsables', error);
+      toast.error("Impossible de charger les responsables");
+    } finally {
+      if (isMounted) {
+        setLoading(false); // 🔄 Fin du chargement
+      }
+    }
+  }
+
+  loadResponsibles();
+
+  // Nettoyage pour éviter les mises à jour sur un composant non monté
+  return () => {
+    isMounted = false;
+  };
+}, [loading]); // ⚠️ Tu peux retirer `responsables` si tu veux forcer le rechargement manuellement
 
   // Effect to filter and set responsables whenever currentDemoData or searchQuery changes
   useEffect(() => {
+    
+     
     console.log("currentDemoData or searchQuery updated, filtering responsables...");
-    const allResponsibles = currentDemoData.users.filter(user => user.role === 'RESPONSIBLE');
+    console.log("currentData",currentDemoData)
+    const allResponsibles = currentDemoData.users;
 
     // Enrich responsable data with associated establishment names
     const enrichedResponsibles = allResponsibles.map(responsable => {
       // Find establishments where this responsable is the responsableId
-      const associatedEstablishments = currentDemoData.establishments.filter(
-        est => est.responsableId === responsable.id
-      );
-
-      // Map to their names
-      const establishmentNames = associatedEstablishments.map(est => est.name);
+      const establishmentNames = responsable.establishments?.map(e => e.name).join(', ') || 'Aucun établissement';
+      console.log(establishmentNames)
+   
 
       return {
         ...responsable,
         // Join multiple establishment names if a responsable is linked to several
-        establishmentNames: establishmentNames.length > 0 ? establishmentNames.join(', ') : 'Aucun établissement attribué'
+        establishmentNames: establishmentNames
       };
     });
 
@@ -115,6 +163,7 @@ const ResponsablesPage = () => {
       let updatedUsersArray = [...currentDemoData.users];
 
       if (editingUser) {
+        const response=await updateUser(editingUser.id,userData)
         const index = updatedUsersArray.findIndex(u => u.id === editingUser.id);
         if (index !== -1) {
           const userToUpdate = updatedUsersArray[index];
@@ -135,13 +184,21 @@ const ResponsablesPage = () => {
           throw new Error("Utilisateur à modifier non trouvé.");
         }
       } else {
+        const dataToSend = {
+          ...userData,
+         role: 'RESPONSIBLE'
+         };
+
+       console.log("Data being sent to register:",(dataToSend) );
+
+       const response = await register(dataToSend);
+       console.log(response);
         const newId = Math.max(...currentDemoData.users.map(u => u.id), 0) + 1; // Generate a numeric ID
         const newUser = {
-          ...userData,
+          ...dataToSend,
           id: newId,
           createdAt: new Date().toISOString(),
-          role: 'RESPONSIBLE',
-          isActive: true,
+        
         };
         updatedUsersArray.push(newUser);
         message = 'Responsable ajouté avec succès';
@@ -158,10 +215,20 @@ const ResponsablesPage = () => {
       setIsModalOpen(false);
       setEditingUser(null);
 
-    } catch (error) {
-      console.error('Error saving user:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
-    }
+    }  catch (error) {
+  let errorMessage = 'Erreur inconnue. Vérifiez les données ou réessayez plus tard.';
+
+  if (error.response?.data?.message) {
+    errorMessage = error.response.data.message;
+  } else if (error.message) {
+    errorMessage = error.message;
+  }
+
+  console.error('Error saving user:', error);
+  toast.error(`Erreur : ${errorMessage}`, {
+    position: "bottom-right",
+  });
+}
   };
 
   const handleCloseModal = () => {
@@ -205,7 +272,7 @@ const ResponsablesPage = () => {
         </Button>
       </div>
 
-      <ModalUser
+      <ModalUser1
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         editingUser={editingUser}

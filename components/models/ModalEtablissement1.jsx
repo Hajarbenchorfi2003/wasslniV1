@@ -23,7 +23,7 @@ const ModalEtablissement = ({
   fixedSchoolId, // ID de l'école si l'établissement est lié à une école spécifique
 }) => {
   const [existingResponsables, setExistingResponsables] = useState([]);
-   const[loading,setLoading] = useState('');
+   const[loading,setLoading] = useState(false);
 useEffect(() => {
   let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
 

@@ -10,7 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import SchoolAdminForm from "./SchoolAdminForm"; 
 import { demoData } from '@/data/data';
 import toast from 'react-hot-toast';
-
+import{createSchool,updateSchool,deleteSchool}from '@/services/school';
+import{fetchAdmins,register}from '@/services/user';
 const ModalSchool = ({
   isOpen,
   setIsOpen,
@@ -19,13 +20,41 @@ const ModalSchool = ({
   schools, 
 }) => {
   const [existingAdmins, setExistingAdmins] = useState([]);
+const [loading, setLoading] = useState(false); 
 
-  useEffect(() => {
-    // Récupérer tous les admins existants
-    const admins = demoData.users.filter(u => u.role === 'ADMIN');
-    setExistingAdmins(admins);
-  }, [demoData.users]); 
+useEffect(() => {
+  let isMounted = true;
 
+  async function loadAdmins() {
+    if (loading || existingAdmins.length > 0) {
+      return; // ✅ évite double chargement
+    }
+
+    setLoading(true);
+    try {
+      const data = await fetchAdmins();
+      console.log("Données reçues depuis l'API:", data);
+      if (isMounted) {
+        setExistingAdmins(data); // ✅ mise à jour des admins
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des responsables', error);
+      toast.error("Impossible de charger les responsables");
+    } finally {
+      if (isMounted) {
+        setLoading(false);
+      }
+    }
+  }
+
+  loadAdmins();
+
+  return () => {
+    isMounted = false;
+  };
+}, []); // ✅ Ne dépend que du montage
+
+console.log("admins",existingAdmins)
   // Function to determine initial defaultValues for SchoolAdminForm
   const getInitialDefaultValues = () => {
     if (!editingSchool) {
@@ -35,7 +64,7 @@ const ModalSchool = ({
           name: '', email: '', phone: '', address: '', city: '', isActive: true
         },
         admin: {
-          fullname: '', email: '', phone: '', password: '', cin: '', isActive: true
+          fullname: '', email: '', phone: '', password: '', isActive: true
         },
         existingAdminId: '',
       };
@@ -53,7 +82,7 @@ const ModalSchool = ({
     };
 
     let adminDefaults = { // Default empty for new admin
-      fullname: '', email: '', phone: '', password: '', cin: '', isActive: true
+      fullname: '', email: '', phone: '', password: '', isActive: true
     };
     let existingAdminIdDefault = '';
     let addNewAdminDefault = true; // Assume adding new admin by default unless an existing one is linked
@@ -69,7 +98,7 @@ const ModalSchool = ({
             email: editingSchool.admin.email || '',
             phone: editingSchool.admin.phone || '',
             password: '', // Never pre-fill password for security
-            cin: editingSchool.admin.cin || '',
+          
             isActive: editingSchool.admin.isActive !== undefined ? editingSchool.admin.isActive : true,
         };
         addNewAdminDefault = true; // Keep it in 'add new admin' mode, but pre-filled
@@ -87,7 +116,59 @@ const ModalSchool = ({
     };
   };
 
-  const handleSave = (formData) => {
+
+const handleSave = async (formData) => {
+     console.log("formData",formData)
+      
+    try {
+      let adminId=null;
+      console.log(!formData.existingAdminId);
+          if (!formData.existingAdminId) {
+            
+               const adminAdd={...formData.admin,
+                    role: 'ADMIN',
+                  }
+                  console.log("usrs",adminAdd)
+                 const addNewAdmine=await register(adminAdd)
+                 adminId=addNewAdmine.id
+            }else{
+             adminId = formData.existingAdminId;
+            }
+             const updatedata = {
+             ...formData.school,
+              adminId:Number(adminId),
+    }; 
+    console.log("data updated",updatedata);
+
+        if (editingSchool) {
+          
+            await updateSchool(editingSchool.id,updatedata)
+
+             toast.success('École modifiée avec succès');
+
+        } else {
+
+            
+            // --- AJOUT D'UN NOUVEL ÉTABLISSEMENT ---
+           
+            
+            await createSchool(updatedata)
+           
+            toast.success('École ajouté avec succès');
+        }
+
+        onSave(updatedata); // Notifie le parent que la sauvegarde est terminée
+        setIsOpen(false); // Ferme le modal
+
+    } catch (error) {
+  console.error('Erreur lors de la sauvegarde:', error);
+  toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde');
+  toast.error(error.response?.data?.message || 'Erreur lors de la sauvegarde');
+
+}
+  };
+
+ /*  const handleSave = (formData) => {
     try {
         let updatedSchool = { ...formData.school };
         let updatedAdmin = formData.admin; 
@@ -177,7 +258,7 @@ const ModalSchool = ({
         console.error('Erreur lors de la sauvegarde:', error);
         toast.error('Erreur lors de la sauvegarde');
     }
-  };
+  }; */
 
   const currentDefaultValues = getInitialDefaultValues();
 

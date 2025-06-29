@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalParent } from '@/components/models/ModalParent'; // Create this
 import ParentCard from './ParentCard'; // Create this
-import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchUserEstablishments} from '@/services/etablissements';
 import {fetchParents,register,updateUser,deleteUser} from '@/services/user';
 const ITEMS_PER_PAGE = 9;
 
@@ -30,7 +30,7 @@ const ParentsPage = () => {
   async function loadEstablishments() {
     setEstablishmentsLoading(true);
     try {
-      const data = await fetchAllEstablishments();
+      const data = await fetchUserEstablishments();
       console.log("Établissements reçus :", data);
 
       if (isMounted && data && Array.isArray(data)) {

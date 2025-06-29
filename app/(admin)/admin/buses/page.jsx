@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils'; // For conditional classnames
 import toast from 'react-hot-toast'; // For notifications
 import { ModalBus } from '@/components/models/ModalBus'; // We'll create this next
 import BusCard from './BusCard'; // You'll create this or use a generic card
-import {fetchAllBuses,createBus,updateBus,deleteBus} from '@/services/bus.jsx';
-import { fetchAllEstablishments} from '@/services/etablissements';
+import {fetchMyBuses,createBus,updateBus,deleteBus} from '@/services/bus.jsx';
+import { fetchUserEstablishments} from '@/services/etablissements';
 import { Input } from '@/components/ui/input';
 // Import Shadcn UI Select components
 import {
@@ -50,7 +50,7 @@ const loadBuses = async (filters) => {
   try {
     setLoading(true);
     setError(null);
-    const data = await fetchAllBuses(filters);
+    const data = await fetchMyBuses(filters);
     console.log("Données reçues depuis l'API:", data);
     setAllBuses(data);
     setBuses(data);
@@ -73,7 +73,7 @@ useEffect(() => {
     async function loadEstablishments() {
       try {
         setLoading(true);
-        const data = await fetchAllEstablishments();
+        const data = await fetchUserEstablishments();
        console.log("data",data)
         if (isMounted) {
           setEstablishments(data);

@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { ModalRoute } from '@/components/models/ModalRoute'; // Create this
 import RouteCard from './RouteCard'; // Create this
 import {fetchroute,createroute,updateroute,deleteroute}  from '@/services/route';
-import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchUserEstablishments} from '@/services/etablissements';
 import { sync } from 'framer-motion';
 
 const ITEMS_PER_PAGE = 9;
@@ -32,7 +32,7 @@ const RoutesPage = () => {
   async function loadEstablishments() {
     setEstablishmentsLoading(true);
     try {
-      const data = await fetchAllEstablishments();
+      const data = await fetchUserEstablishments();
       console.log("Établissements reçus :", data);
 
       if (isMounted && data && Array.isArray(data)) {

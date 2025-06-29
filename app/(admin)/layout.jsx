@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashBoardLayoutProvider from "@/provider/dashboard.layout.provider";
-import { menuSuperAdminConfig } from "@/config/menus";
+import { menuAdminConfig } from "@/config/menus";
 
 const Layout = ({ children }) => {
   const router = useRouter();
@@ -33,7 +33,7 @@ const Layout = ({ children }) => {
   if (!isAuth || !trans) return null;
 
   return (
-    <DashBoardLayoutProvider trans={trans} menusConfig={menuSuperAdminConfig}>
+    <DashBoardLayoutProvider trans={trans} menusConfig={menuAdminConfig}>
       {children}
     </DashBoardLayoutProvider>
   );

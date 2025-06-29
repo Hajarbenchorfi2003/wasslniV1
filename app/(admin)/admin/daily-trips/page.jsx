@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { ModalDailyTrip } from '@/components/models/ModalDailyTrip';
 import DailyTripCard from './DailyTripCard'; // Create this
 import{fetchdailytrip,createDailyTrip,updateDailyTrip,deleteDailyTrip} from '@/services/dailyTrip';
-import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchUserEstablishments} from '@/services/etablissements';
 import {fetchDrivers} from '@/services/user';
 import {fetchAlltrip} from '@/services/trips';
 
@@ -103,7 +103,7 @@ const ITEMS_PER_PAGE = 10;
       async function loadEstablishments() {
         setEstablishmentsLoading(true);
         try {
-          const data = await fetchAllEstablishments();
+          const data = await fetchUserEstablishments();
           console.log("Établissements reçus :", data);
     
           if (isMounted && data && Array.isArray(data)) {

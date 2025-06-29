@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalUser } from '@/components/models/ModalUser';
 import DriverCard from './DriverCard';
-import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchUserEstablishments} from '@/services/etablissements';
 import {fetchDrivers,register,updateUser,deleteUser} from '@/services/user';
 
 // Import shadcn/ui Select components
@@ -40,7 +40,7 @@ const DriversPage = () => {
   async function loadEstablishments() {
     setEstablishmentsLoading(true);
     try {
-      const data = await fetchAllEstablishments();
+      const data = await fetchUserEstablishments();
       console.log("Établissements reçus :", data);
 
       if (isMounted && data && Array.isArray(data)) {

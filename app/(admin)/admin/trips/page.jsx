@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalTrip } from '@/components/models/ModalTrip';
 import TripCard from './TripCard';
-import {fetchAllEstablishments} from '@/services/etablissements';
-import {fetchAllBuses} from '@/services/bus.jsx';
+import {fetchUserEstablishments} from '@/services/etablissements';
+import {fetchMyBuses} from '@/services/bus.jsx';
 import {fetchroute}  from '@/services/route';
 import {fetchDrivers} from '@/services/user';
 import {fetchAlltrip,createtrip,createtripStudents,updatetrip,removeStudentFromTrip,deleteTrip} from '@/services/trips';
@@ -50,7 +50,7 @@ const TripsPage = () => {
     async function loadEstablishments() {
       setEstablishmentsLoading(true);
       try {
-        const data = await fetchAllEstablishments();
+        const data = await fetchUserEstablishments();
         console.log("Établissements reçus :", data);
   
         if (isMounted && data && Array.isArray(data)) {
@@ -79,7 +79,7 @@ const TripsPage = () => {
     try {
       setLoadingbus(true);
       
-      const data = await fetchAllBuses();
+      const data = await fetchMyBuses();
       console.log("Données reçues depuis l'API:", data);
      
       setBuses(data);

@@ -9,7 +9,7 @@ import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { Input } from '@/components/ui/input'; // Import Input component
-import {fetchAllEstablishments,deletePremently} from '@/services/etablissements';
+import {fetchUserEstablishments,deletePremently} from '@/services/etablissements';
 import{fetchSchools}from '@/services/school';
 
 const ITEMS_PER_PAGE = 5;
@@ -61,7 +61,7 @@ const EtablissementsPage = () => {
  const loadEstablishments = async () => {
     setEstablishmentsLoading(true);
     try {
-      const data = await fetchAllEstablishments();
+      const data = await fetchUserEstablishments();
       
       setEstablishments(data);
     } catch (error) {

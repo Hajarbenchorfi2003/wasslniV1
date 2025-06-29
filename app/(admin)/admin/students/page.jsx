@@ -10,8 +10,8 @@ import toast from 'react-hot-toast';
 import { ModalStudent } from '@/components/models/ModalStudent'; // Create this
 import StudentCard from './StudentCard'; // Create this
 import {fetchParents} from '@/services/user';
-import {fetchAllEstablishments} from '@/services/etablissements';
-import {fetchAllStudents,createStudent, createAssignation,updateStudent,deleteStudent,removeAssignation} from '@/services/students';
+import {fetchUserEstablishments} from '@/services/etablissements';
+import {getStudentsByUser,createStudent, createAssignation,updateStudent,deleteStudent,removeAssignation} from '@/services/students';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -37,7 +37,7 @@ const StudentsPage = () => {
 
     setLoading(true);
     try {
-      const data = await fetchAllEstablishments(); // Assurez-vous que cette fonction renvoie bien un tableau
+      const data = await fetchUserEstablishments(); // Assurez-vous que cette fonction renvoie bien un tableau
       console.log("Données reçues depuis l'API:", data);
 
      
@@ -67,7 +67,7 @@ const StudentsPage = () => {
  const loadStudents = async () => {
     try {
       setLoading(true);
-      const data = await fetchAllStudents({
+      const data = await getStudentsByUser({
         page: 1,
         limit: 100
       });

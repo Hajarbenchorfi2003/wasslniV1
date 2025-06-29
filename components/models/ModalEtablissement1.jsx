@@ -23,7 +23,7 @@ const ModalEtablissement = ({
   fixedSchoolId, // ID de l'école si l'établissement est lié à une école spécifique
 }) => {
   const [existingResponsables, setExistingResponsables] = useState([]);
-   const[loading,setLoading] = useState('');
+   const[loading,setLoading] = useState(false);
 useEffect(() => {
   let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
 
@@ -54,12 +54,13 @@ useEffect(() => {
   }
 
   loadResponsibles();
-
+ 
   // Nettoyage pour éviter les mises à jour sur un composant non monté
   return () => {
     isMounted = false;
   };
 }, [loading,existingResponsables]);
+console.log("responsable",existingResponsables)
   // Récupérer tous les responsables existants (rôle 'RESPONSIBLE')
 
 
@@ -130,10 +131,13 @@ useEffect(() => {
      console.log("formData",formData)
     try {
       let responsableId=null;
-          if (formData.addNewResponsable) {
+      console.log(!formData.existingResponsableId);
+          if (!formData.existingResponsableId) {
+            
                const responsableAdd={...formData.responsable,
                     role: 'RESPONSIBLE',
                   ecolId:formData.schoolId}
+                  console.log("usrs",responsableAdd)
                  const addNewResponsable=await register(responsableAdd)
                  responsableId=addNewResponsable.id
             }else{
@@ -141,9 +145,10 @@ useEffect(() => {
             }
              const updatedata = {
              ...formData.etablissement,
-               ecolId: formData.schoolId,
+               ecoleId: formData.schoolId,
               responsableId,
-    };
+    }; 
+    console.log("data updated",updatedata);
 
         if (editingEtablissement) {
           
@@ -166,9 +171,11 @@ useEffect(() => {
         setIsOpen(false); // Ferme le modal
 
     } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error);
-    toast.error(error.response?.data?.message || 'Erreur lors de la sauvegarde');
-  }
+  console.error('Erreur lors de la sauvegarde:', error);
+  toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde');
+  toast.error(error.response?.data?.message || 'Erreur lors de la sauvegarde');
+
+}
   };
 
   const currentDefaultValues = getInitialDefaultValues();

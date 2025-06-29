@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { demoData } from '@/data/data'; // Ensure demoData is mutable for local state management
 import toast from 'react-hot-toast';
 import { Input } from '@/components/ui/input';
-import{fetchSchools}from '@/services/school';
+import{fetchSchools,createSchool,updateSchool,deleteSchool}from '@/services/school';
 
 
 const ITEMS_PER_PAGE = 5;
@@ -23,27 +23,68 @@ const SchoolsPage = () => {
   const [editingSchool, setEditingSchool] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
- 
+  const [schoolsLoading, setSchoolsLoading] = useState(false);
+  const [schools, setSchools] = useState([]);
+
+const loadschools = async () => {
+  setSchoolsLoading(true);
+  try {
+    const data = await fetchSchools();
+    setSchools(data);
+  } catch (error) {
+    console.error('Erreur lors du chargement des établissements', error);
+    toast.error("Impossible de charger les établissements");
+  } finally {
+    setSchoolsLoading(false);
+  }
+};
+
+useEffect(() => {
+  let isMounted = true;
+
+  const fetchData = async () => {
+    if (schools.length === 0) {
+      setSchoolsLoading(true);
+      try {
+        const data = await fetchSchools();
+        if (isMounted) {
+          setSchools(data);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des établissements', error);
+        toast.error("Impossible de charger les établissements");
+      } finally {
+        if (isMounted) {
+          setSchoolsLoading(false);
+        }
+      }
+    }
+  };
+
+  fetchData();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
+
+     
+
+  console.log("school",schools);
   // Effect to filter and enrich schools whenever currentDemoData or searchQuery changes
   useEffect(() => {
-    const allSchools = currentDemoData.schools;
+    const allSchools =schools;
 
     // 💡 Étape 1: Enrichir les écoles avec le nom de l'administrateur principal
-    const enrichedSchools = allSchools.map(school => {
-      const schoolAdmins = currentDemoData.userSchools
-        .filter(us => us.schoolId === school.id)
-        .map(us => currentDemoData.users.find(u => u.id === us.userId && u.role === 'ADMIN'))
-        .filter(Boolean); // Filter out any undefined results
+   const enrichedSchools = schools.map(school => {
+    // Récupérer le premier admin
+    const mainAdmin = school.admins && school.admins.length > 0 ? school.admins[0] : null;
 
-      // Assume the first admin found is the 'main' admin for display/search purposes
-      const mainAdmin = schoolAdmins.length > 0 ? schoolAdmins[0] : null;
-
-      return {
-        ...school,
-        // Add adminName property for filtering and display
-        adminName: mainAdmin ? mainAdmin.fullname : 'N/A'
-      };
-    });
+    return {
+      ...school,
+      adminName: mainAdmin ? mainAdmin.fullname : 'N/A'
+    };
+  });
 
     // 💡 Étape 2: Filtrage basé sur le nom, la ville, l'email ou le nom de l'administrateur
     const filteredAndEnrichedSchools = enrichedSchools.filter((school) => {
@@ -69,7 +110,7 @@ const SchoolsPage = () => {
     } else if (filteredAndEnrichedSchools.length === 0 && currentPage !== 1) { // Only reset if no schools and not already on page 1
       setCurrentPage(1);
     }
-  }, [currentDemoData, currentPage, searchQuery]); // Add searchQuery to dependency array
+  }, [schools, currentPage, searchQuery]); // Add searchQuery to dependency array
 
   const totalPages = Math.ceil(schoolsToDisplay.length / ITEMS_PER_PAGE);
   const paginatedSchools = schoolsToDisplay.slice(
@@ -81,10 +122,7 @@ const SchoolsPage = () => {
 
   const handleEditSchool = (school) => {
     // Find the associated admin for the school being edited
-    const schoolAdmins = currentDemoData.userSchools
-      .filter(us => us.schoolId === school.id)
-      .map(us => currentDemoData.users.find(u => u.id === us.userId && u.role === 'ADMIN'))
-      .filter(Boolean);
+    const schoolAdmins =school.admins
 
     const mainAdmin = schoolAdmins[0]; // Assuming the first found admin is the one to edit
 
@@ -103,7 +141,7 @@ const SchoolsPage = () => {
         email: mainAdmin.email || '',
         phone: mainAdmin.phone || '',
         password: '', // Password is not retrieved for security
-        cin: mainAdmin.cin || '',
+       
         isActive: mainAdmin.isActive !== undefined ? mainAdmin.isActive : true
       } : undefined,
       existingAdminId: mainAdmin ? mainAdmin.id.toString() : '',
@@ -114,24 +152,10 @@ const SchoolsPage = () => {
     setIsAddDialogOpen(true);
   };
 
-  const handleDeleteSchool = (id) => {
+  const handleDeleteSchool =async (id) => {
     try {
-      // Filter out the school
-      const updatedSchools = demoData.schools.filter(school => school.id !== id);
-      // Filter out userSchool associations for this school
-      const updatedUserSchools = demoData.userSchools.filter(us => us.schoolId !== id);
-
-      // Update the demoData directly (as it's imported as a mutable object)
-      demoData.schools = updatedSchools;
-      demoData.userSchools = updatedUserSchools;
-
-      // Force a state update to trigger re-render
-      setCurrentDemoData({ ...demoData });
-
-      // Adjust page if current page becomes empty
-      if (paginatedSchools.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
+      await deleteSchool(id)
+      loadschools();
       toast.success('École supprimée avec succès');
     } catch (error) {
       toast.error('Erreur lors de la suppression de l\'école');
@@ -139,10 +163,8 @@ const SchoolsPage = () => {
     }
   };
 
-  const handleSaveSchool = (updatedData) => {
-    // This function will be called from ModalSchool1
-    // ModalSchool1 is expected to update demoData directly, then call onSave
-    setCurrentDemoData({ ...demoData }); // Force a state update to trigger re-render
+  const handleSaveSchool =async (updatedata) => {
+    loadschools();
     setIsAddDialogOpen(false);
     setEditingSchool(null);
   };

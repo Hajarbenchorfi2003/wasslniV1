@@ -42,7 +42,7 @@ const newAdminSchema = z.object({
   email: z.string().email("Email invalide"),
   phone: z.string().min(10, "Numéro trop court"),
   password: z.string().min(6, "Minimum 6 caractères"),
-  cin: z.string().min(4, "CIN requis"),
+
   isActive: z.boolean().default(true),
 });
 
@@ -57,7 +57,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
   // Initialize addNewAdmin based on defaultValues.addNewAdmin or default to true for new entries
   const [addNewAdmin, setAddNewAdmin] = useState(defaultValues?.addNewAdmin !== undefined ? defaultValues.addNewAdmin : true);
   const [schema, setSchema] = useState(createSchema(addNewAdmin)); // Use initial addNewAdmin state for schema
-
+  const isEdit = !!defaultValues?.school || !!defaultValues?.adminId;
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: defaultValues // Pass defaultValues directly from props
@@ -88,7 +88,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
         form.setValue("admin.email", defaultValues.admin.email || '');
         form.setValue("admin.phone", defaultValues.admin.phone || '');
         form.setValue("admin.password", ''); // Always clear password
-        form.setValue("admin.cin", defaultValues.admin.cin || '');
+        
         form.setValue("admin.isActive", defaultValues.admin.isActive !== undefined ? defaultValues.admin.isActive : true);
       }
     } else { 
@@ -97,7 +97,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
       form.setValue('admin.email', '');
       form.setValue('admin.phone', '');
       form.setValue('admin.password', '');
-      form.setValue('admin.cin', '');
+     
       form.setValue('admin.isActive', true);
       // Set existingAdminId if it's available in defaultValues and we're switching to existing mode
       if (defaultValues?.existingAdminId) {
@@ -171,6 +171,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
               id="add-new-admin"
               checked={addNewAdmin}
               onCheckedChange={setAddNewAdmin}
+              disabled={isEdit && existingAdmins.length > 0}
             />
             <FormLabel htmlFor="add-new-admin">
               {addNewAdmin ? 'Créer un nouvel admin' : 'Choisir un admin existant'}
@@ -191,7 +192,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Admin existant</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}> {/* Use value prop */}
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isEdit && existingAdmins.length > 0}> {/* Use value prop */}
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Sélectionnez un admin" />

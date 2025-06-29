@@ -35,9 +35,13 @@ export async function fetchUserEstablishments() {
   const response = await axiosInstance.get('/establishments');
   return response.data;
 }
+export async function getEstablishments(id) {
+  const response = await axiosInstance.get(`/establishments/${id}`);
+  return response.data;
+}
 
 export async function createEstablishments(establishment) {
-  const response = await axiosInstance.get('/establishments',establishment);
+  const response = await axiosInstance.post('/establishments',establishment);
   return response.data;
 }
 export async function updateEstablishments(id,establishment) {

@@ -69,9 +69,9 @@ const TableSchool = ({ schools, onEditSchool, onDeleteSchool }) => {
         <TableBody>
           {schools && schools.length > 0 ? (
             schools.map((item) => {
-              const admins = getSchoolAdmins(item.id);
+              const admins = item.admins;
               const mainAdmin = admins[0];
-              const establishments=getSchoolEstablishments(item.id);
+              const establishments=item.establishmentCount;
               return (
                 <Fragment key={item.id}>
                   <TableRow>
@@ -183,7 +183,7 @@ const TableSchool = ({ schools, onEditSchool, onDeleteSchool }) => {
                                 </p>
                                 <p className="flex items-center gap-2">
                                   <Icon icon="heroicons:building-office-2" className="w-4 h-4 opacity-50" />
-                                  <span>Établissements: {establishments?.length || 0}</span>
+                                  <span>Établissements: {establishments}</span>
                                 </p>
                               </div>
                             </div>

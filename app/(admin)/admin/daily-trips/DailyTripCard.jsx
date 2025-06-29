@@ -1,6 +1,5 @@
-// components/ParentCard.jsx
+// components/DailyTripCard.jsx
 import { useState } from 'react';
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ModalSuppression from '@/components/models/ModalSuppression';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
+const DailyTripCard = ({ dailyTrip, onEditDailyTrip, onDeleteDailyTrip }) => {
   const [modalOpen, setModalOpen] = useState(false);
 
   const openDeleteModal = () => {
@@ -21,7 +20,7 @@ const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
   };
 
   const confirmDelete = () => {
-    onDeleteParent?.(parent.id);
+    onDeleteDailyTrip?.(dailyTrip.id);
     setModalOpen(false);
   };
 
@@ -29,35 +28,31 @@ const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
     setModalOpen(false);
   };
 
+  // Helper to get badge color based on status
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'PLANNED': return 'default';
+      case 'ONGOING': return 'info';
+      case 'COMPLETED': return 'success';
+      default: return 'secondary';
+    }
+  };
+
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow duration-200">
         <CardHeader className="flex flex-row items-start justify-between p-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex-none w-12 h-12 rounded-full">
-              <div className="relative inline-block">
-                <Avatar>
-                  <AvatarFallback>
-                    {parent.fullname.split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <Badge color={parent.isActive ? 'success' : 'destructive'} className="h-2 w-2 p-0 items-center justify-center absolute left-[calc(100%-8px)] bottom-[calc(100%-8px)]">
-                </Badge>
-              </div>
+          <CardTitle className="text-lg font-semibold flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <Icon icon="heroicons:calendar-days" className="h-6 w-6 text-orange-600" />
+              {dailyTrip.trip?.name ? dailyTrip.trip.name : 'Trajet inconnu'}
             </div>
-            <div>
-              <CardTitle className="text-base font-semibold text-default-900 leading-tight">
-                {parent.fullname}
-              </CardTitle>
-              <h5 className="text-sm text-default-600 leading-tight">
-             {parent.children && parent.children.length > 0 ? (
-              parent.children.map((child) => child.student.fullname).join(', ')
-              ) : (
-              'Aucun enfant associé'
-               )}
-              </h5>
-            </div>
-          </div>
+            <span className="text-sm text-gray-500 font-normal">
+              {new Date(dailyTrip.date).toLocaleDateString('fr-FR', {
+                year: 'numeric', month: 'long', day: 'numeric'
+              })}
+            </span>
+          </CardTitle>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -66,7 +61,7 @@ const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEditParent(parent)}>
+              <DropdownMenuItem onClick={() => onEditDailyTrip(dailyTrip)}>
                 <Icon icon="heroicons:pencil-square" className="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
@@ -79,22 +74,30 @@ const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-2 text-sm  text-default-600">
           <p className="flex items-center gap-2">
-            <Icon icon="heroicons:envelope" className="w-4 h-4 opacity-70" />
-            {parent.email}
+            <Icon icon="heroicons:bolt" className="w-4 h-4 opacity-70" />
+            Statut: <Badge variant={getStatusColor(dailyTrip.status)}>{dailyTrip.status}</Badge>
           </p>
           <p className="flex items-center gap-2">
-            <Icon icon="heroicons:phone" className="w-4 h-4 opacity-70" />
-            {parent.phone}
+            <Icon icon="heroicons:map" className="w-4 h-4 opacity-70" />
+            Route: {dailyTrip.trip?.name ? dailyTrip.trip.name : 'Trajet inconnu'}
           </p>
-         
+          <p className="flex items-center gap-2">
+            <Icon icon="heroicons:truck" className="w-4 h-4 opacity-70" />
+            Bus: {dailyTrip.trip?.bus?.plateNumber || 'Inconnu'}
+          </p>
+          <p className="flex items-center gap-2">
+            <Icon icon="heroicons:user" className="w-4 h-4 opacity-70" />
+            Chauffeur:   {dailyTrip.trip?.driver?.fullname || 'Aucun chauffeur'}
+          </p>
         </CardContent>
       </Card>
+
       <ModalSuppression
         isOpen={modalOpen}
         onClose={cancelDelete}
         onConfirm={confirmDelete}
         title="Confirmer la suppression"
-        description={`Êtes-vous sûr de vouloir supprimer le parent ${parent.fullname} ? Cette action est irréversible.`}
+        description={`Êtes-vous sûr de vouloir supprimer le trajet quotidien du ${new Date(dailyTrip.date).toLocaleDateString('fr-FR')} pour "${dailyTrip.tripName}" ? Cela supprimera aussi les présences et positions liées.`}
         confirmText="Supprimer"
         cancelText="Annuler"
       />
@@ -102,4 +105,4 @@ const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
   );
 };
 
-export default ParentCard;
+export default DailyTripCard;

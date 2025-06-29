@@ -28,7 +28,7 @@ export default function FormUser({
       setValue(`${prefix}.role`, role);
     }
   }, [setValue, prefix, role]);
- console.log("data in formUser",establishments)
+ console.log("data in formUser",setValue)
   const fields = [
     { name: "fullname", label: "Nom Complet", placeholder: "Entrez le nom complet" },
     { name: "email", label: "Email", placeholder: "Entrez l'email" },

@@ -1,6 +1,6 @@
 // app/etablissements/[id]/page.jsx
 'use client';
-
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { demoData } from '@/data/data'; // Adjust path as necessary
 import { Icon } from "@iconify/react";
@@ -19,21 +19,23 @@ import {
   getXAxisConfig,
   getYAxisConfig,
 } from "@/lib/appex-chart-options";
+import {getEstablishments} from '@/services/etablissements'
 
 // Helper function to get establishment details (can be moved to a utils file)
-const getEstablishmentDetails = (establishmentId) => {
-    const establishment = demoData.establishments.find(e => e.id === establishmentId);
-
+const getEstablishmentDetails =async (establishmentId) => {
+    const establishment = await getEstablishments(establishmentId) ;
+   console.log(establishment);
     if (!establishment) {
         return null;
     }
 
-    const school = demoData.schools.find(s => s.id === establishment.schoolId);
-    const responsible = demoData.users.find(u => u.id === establishment.responsableId && u.role === 'RESPONSIBLE');
-    const associatedStudents = demoData.students.filter(s => s.establishmentId === establishmentId);
-    const associatedBuses = demoData.buses.filter(b => b.establishmentId === establishmentId);
-    const associatedTrips = demoData.trips.filter(t => t.establishmentId === establishmentId);
-    const associatedRoutes = demoData.routes.filter(r => r.establishmentId === establishmentId);
+    const school = establishment.school;
+    const responsible = establishment.responsable;
+    const associatedStudents = establishment.students;
+    const associatedBuses = establishment.buses;
+    const associatedTrips =  establishment.trips;
+    const associatedRoutes = establishment.routes
+;
 
     return {
         ...establishment,
@@ -51,6 +53,7 @@ const getEstablishmentDetails = (establishmentId) => {
     };
 };
 
+
 const EstablishmentDetailsPage = () => {
     const params = useParams();
     const router = useRouter();
@@ -58,17 +61,43 @@ const EstablishmentDetailsPage = () => {
     const { theme: config } = useThemeStore();
     const { theme: mode } = useTheme();
     const theme = themes.find((theme) => theme.name === config);
+    const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    const details = getEstablishmentDetails(establishmentId);
+  useEffect(() => {
+    const loadDetails = async () => {
+      const data = await getEstablishmentDetails(establishmentId);
+      if (data) {
+        setDetails(data);
+        setLoading(false);
+      } else {
+        setError('Impossible de charger les détails de l’établissement.');
+        setLoading(false);
+      }
+    };
 
-    if (!details) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px] text-center text-muted-foreground">
-                <p>Établissement non trouvé.</p>
-                <Button onClick={() => router.back()} className="ml-4">Retour</Button>
-            </div>
-        );
-    }
+    loadDetails();
+  }, [establishmentId]);
+
+    
+   console.log("details",details)
+   if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        Chargement...
+      </div>
+    );
+  }
+
+  if (error || !details) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
+        <p>{error || "Aucune donnée disponible"}</p>
+        <Button onClick={() => router.back()} className="mt-4">Retour</Button>
+      </div>
+    );
+  }
 
     const {
         name, email, phone, address, quartie, city,
@@ -80,7 +109,7 @@ const EstablishmentDetailsPage = () => {
     const studentDistributionData = {
         series: [{
             name: 'Élèves',
-            data: [students.length]
+            data: [details.students.length]
         }],
         options: {
             chart: {
@@ -184,18 +213,8 @@ const EstablishmentDetailsPage = () => {
         <div className="space-y-6">
             {/* Header Section */}
             <div className="flex items-center flex-wrap justify-between gap-4">
-            <div className="flex items-center gap-4">
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => router.back()}
-                        className="rounded-full"
-                    >
-                        <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
-                    </Button>
-                    <div className="text-2xl font-medium text-default-800">
-                        {name}
-                    </div>
+                <div className="text-2xl font-medium text-default-800">
+                    {name}
                 </div>
             </div>
 
@@ -374,7 +393,7 @@ const EstablishmentDetailsPage = () => {
                             ) : (
                                 <p className="text-gray-600 text-sm">Aucun élève associé.</p>
                             )}
-                            <Link href={`/admin/students`} className="text-primary hover:underline text-sm mt-3 block">
+                            <Link href={`/super-admin/students`} className="text-primary hover:underline text-sm mt-3 block">
                                 Voir tous les élèves
                             </Link>
                         </CardContent>
@@ -401,7 +420,7 @@ const EstablishmentDetailsPage = () => {
                             ) : (
                                 <p className="text-gray-600 text-sm">Aucun bus affecté.</p>
                             )}
-                            <Link href={`/admin/buses`} className="text-primary hover:underline text-sm mt-3 block">
+                            <Link href={`/super-admin/buses`} className="text-primary hover:underline text-sm mt-3 block">
                                 Voir tous les bus
                             </Link>
                         </CardContent>
@@ -428,7 +447,7 @@ const EstablishmentDetailsPage = () => {
                             ) : (
                                 <p className="text-gray-600 text-sm">Aucune route enregistrée.</p>
                             )}
-                            <Link href={`/admin/routes`} className="text-primary hover:underline text-sm mt-3 block">
+                            <Link href={`/super-admin/routes`} className="text-primary hover:underline text-sm mt-3 block">
                                 Voir toutes les routes
                             </Link>
                         </CardContent>
@@ -455,7 +474,7 @@ const EstablishmentDetailsPage = () => {
                             ) : (
                                 <p className="text-gray-600 text-sm">Aucun voyage planifié.</p>
                             )}
-                            <Link href={`/admin/trips`} className="text-primary hover:underline text-sm mt-3 block">
+                            <Link href={`/super-admin/trips`} className="text-primary hover:underline text-sm mt-3 block">
                                 Voir tous les Trajet
                             </Link>
                         </CardContent>

@@ -1,288 +1,234 @@
+// components/RoutesPage.jsx
 'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@iconify/react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { mockRoutes } from "./data";
+import { useState, useEffect } from 'react';
+import { demoData as initialDemoData } from '@/data/data';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@iconify/react';
+import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
+import { ModalRoute } from '@/components/models/ModalRoute'; // Create this
+import RouteCard from './RouteCard'; // Create this
+import {fetchroute,createroute,updateroute,deleteroute}  from '@/services/route';
+import {fetchAllEstablishments} from '@/services/etablissements';
+import { sync } from 'framer-motion';
+
+const ITEMS_PER_PAGE = 9;
+
 
 const RoutesPage = () => {
-  const [routes, setRoutes] = useState(mockRoutes);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [currentDemoData, setCurrentDemoData] = useState([]);
+  const [routes, setRoutes] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoute, setEditingRoute] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+   const [loading, setLoading] = useState(false);
+   const [establishments, setEstablishments] = useState([]);
+      const [establishmentsLoading, setEstablishmentsLoading] = useState(false);
+
+ useEffect(() => {
+  let isMounted = true;
+
+  async function loadEstablishments() {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchAllEstablishments();
+      console.log("Établissements reçus :", data);
+
+      if (isMounted && data && Array.isArray(data)) {
+        setEstablishments(data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      if (isMounted) {
+        setEstablishmentsLoading(false);
+      }
+    }
+  }
+
+  // Charger seulement si non encore chargés
+  if (establishments.length === 0) {
+    loadEstablishments();
+  }
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
+ const loadRoute = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchroute(); // Récupère les données depuis l'API
+      setRoutes(data || []); // Met à jour l'état local
+      setCurrentDemoData(data);
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les routes");
+    } finally {
+      setLoading(false);
+    }
+  };
+useEffect(() => {
+  loadRoute();
+}, []);
+
+ 
+
+  const totalPages = Math.ceil(routes.length / ITEMS_PER_PAGE);
+  const paginatedRoutes = routes.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   const handleEditRoute = (route) => {
     setEditingRoute(route);
-    setIsAddDialogOpen(true);
+    setIsModalOpen(true);
   };
 
-  const handleDeleteRoute = (id) => {
-    setRoutes(routes.filter(route => route.id !== id));
-  };
-
-  const handleSaveRoute = (routeData) => {
-    if (editingRoute) {
-      setRoutes(routes.map(route => 
-        route.id === editingRoute.id ? { ...route, ...routeData } : route
-      ));
-    } else {
-      setRoutes([...routes, { ...routeData, id: routes.length + 1 }]);
+  const handleDeleteRoute = async(id) => {
+    try {
+      await deleteroute(id);
+      await loadRoute();
+      toast.success('Route supprimée avec succès');
+    } catch (error) {
+      console.error('Error deleting route:', error);
+      toast.error('Erreur lors de la suppression de la route');
     }
-    setIsAddDialogOpen(false);
+  };
+
+ const handleSaveRoute = async (routeData) => {
+  try {
+    let message = '';
+
+    if (editingRoute) {
+      await updateroute(editingRoute.id, routeData);
+      message = 'Route mise à jour avec succès';
+    } else {
+      await createroute(routeData);
+      message = 'Route ajoutée avec succès';
+    }
+
+    await loadRoute(); // recharge les routes
+    toast.success(message);
+    setIsModalOpen(false);
+    setEditingRoute(null);
+
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde de la route :', error);
+
+    if (error.response) {
+      // Erreur côté serveur avec réponse HTTP
+      const { status, data } = error.response;
+
+      if (status === 400 && data.error) {
+        // Affiche l'erreur spécifique pour Bad Request
+        toast.error(`Erreur : ${data.error}`, {
+          position: "bottom-right",
+          autoClose: 5000,
+        });
+      } else {
+        // Autres erreurs serveur (ex: 500)
+        toast.error(`Erreur serveur (${status}) : Veuillez réessayer plus tard.`, {
+          position: "bottom-right",
+          autoClose: 5000,
+        });
+      }
+    } else {
+      // Erreurs réseau ou autre
+      toast.error(`Erreur réseau : ${error.message}`, {
+        position: "bottom-right",
+        autoClose: 5000,
+      });
+    }
+  }
+};
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
     setEditingRoute(null);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'destructive';
-      default:
-        return 'default';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'active':
-        return 'Actif';
-      case 'inactive':
-        return 'Inactif';
-      default:
-        return status;
-    }
-  };
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Itinéraires</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
-              Ajouter un itinéraire
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingRoute ? "Modifier l'itinéraire" : "Ajouter un itinéraire"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.target);
-              handleSaveRoute({
-                name: formData.get('name'),
-                busNumber: formData.get('busNumber'),
-                driver: formData.get('driver'),
-                stops: JSON.parse(formData.get('stops')),
-                schedule: {
-                  monday: formData.get('monday') === 'true',
-                  tuesday: formData.get('tuesday') === 'true',
-                  wednesday: formData.get('wednesday') === 'true',
-                  thursday: formData.get('thursday') === 'true',
-                  friday: formData.get('friday') === 'true',
-                  saturday: formData.get('saturday') === 'true',
-                  sunday: formData.get('sunday') === 'true'
-                },
-                status: formData.get('status')
-              });
-            }}>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nom de l'itinéraire</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    defaultValue={editingRoute?.name}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="busNumber">Numéro de bus</Label>
-                  <Input
-                    id="busNumber"
-                    name="busNumber"
-                    defaultValue={editingRoute?.busNumber}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="driver">Chauffeur</Label>
-                  <Input
-                    id="driver"
-                    name="driver"
-                    defaultValue={editingRoute?.driver}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="stops">Arrêts (JSON)</Label>
-                  <Textarea
-                    id="stops"
-                    name="stops"
-                    defaultValue={JSON.stringify(editingRoute?.stops || [])}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label>Jours de service</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
-                      <div key={day} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={day}
-                          name={day}
-                          defaultChecked={editingRoute?.schedule[day]}
-                          className="rounded border-gray-300"
-                        />
-                        <Label htmlFor={day} className="capitalize">
-                          {day === 'monday' ? 'Lundi' :
-                           day === 'tuesday' ? 'Mardi' :
-                           day === 'wednesday' ? 'Mercredi' :
-                           day === 'thursday' ? 'Jeudi' :
-                           day === 'friday' ? 'Vendredi' :
-                           day === 'saturday' ? 'Samedi' : 'Dimanche'}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="status">Statut</Label>
-                  <select
-                    id="status"
-                    name="status"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
-                    defaultValue={editingRoute?.status}
-                    required
-                  >
-                    <option value="active">Actif</option>
-                    <option value="inactive">Inactif</option>
-                  </select>
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingRoute ? "Modifier" : "Ajouter"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+    <div className="space-y-6">
+      <div className="flex items-center flex-wrap justify-between gap-4">
+        <div className="text-2xl font-medium text-default-800">
+          Gestion des Routes
+        </div>
+        <Button onClick={() => {
+          setEditingRoute(null);
+          setIsModalOpen(true);
+        }}>
+          <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
+          Ajouter une Route
+        </Button>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nom</TableHead>
-            <TableHead>Bus</TableHead>
-            <TableHead>Chauffeur</TableHead>
-            <TableHead>Arrêts</TableHead>
-            <TableHead>Jours de service</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {routes.map((route) => (
-            <TableRow key={route.id}>
-              <TableCell>
-                <div className="font-medium">{route.name}</div>
-              </TableCell>
-              <TableCell>{route.busNumber}</TableCell>
-              <TableCell>{route.driver}</TableCell>
-              <TableCell>
-                <div className="space-y-2">
-                  {route.stops.map((stop) => (
-                    <div key={stop.id} className="text-sm">
-                      <div className="font-medium">{stop.name}</div>
-                      <div className="text-muted-foreground">
-                        {stop.time} - {stop.location}
-                      </div>
-                      {stop.students.length > 0 && (
-                        <div className="mt-1">
-                          <div className="text-xs text-muted-foreground">
-                            Étudiants: {stop.students.map(s => s.name).join(', ')}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {Object.entries(route.schedule)
-                    .filter(([_, value]) => value)
-                    .map(([day]) => (
-                      <Badge key={day} variant="soft" className="mr-1">
-                        {day === 'monday' ? 'Lun' :
-                         day === 'tuesday' ? 'Mar' :
-                         day === 'wednesday' ? 'Mer' :
-                         day === 'thursday' ? 'Jeu' :
-                         day === 'friday' ? 'Ven' :
-                         day === 'saturday' ? 'Sam' : 'Dim'}
-                      </Badge>
-                    ))}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="soft"
-                  color={getStatusColor(route.status)}
-                  className="capitalize"
-                >
-                  {getStatusText(route.status)}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-7 w-7 border-none"
-                    onClick={() => handleEditRoute(route)}
-                  >
-                    <Icon icon="heroicons:pencil-square" className="h-5 w-5 text-blue-500" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    color="destructive"
-                    className="h-7 w-7 border-none"
-                    onClick={() => handleDeleteRoute(route.id)}
-                  >
-                    <Icon icon="heroicons:trash" className="h-5 w-5" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
+      <ModalRoute
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        editingRoute={editingRoute}
+        onSave={handleSaveRoute}
+        establishments={establishments}
+      />
+
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {paginatedRoutes.length > 0 ? (
+          paginatedRoutes.map((route) => (
+            <RouteCard
+              key={route.id}
+              route={route}
+              onEditRoute={handleEditRoute}
+              onDeleteRoute={handleDeleteRoute}
+            />
+          ))
+        ) : (
+          <p className="col-span-full text-center text-gray-500">Aucune route trouvée.</p>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex gap-2 items-center mt-4 justify-center">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+            disabled={currentPage === 1}
+            className="h-8 w-8"
+          >
+            <Icon icon="heroicons:chevron-left" className="w-5 h-5 rtl:rotate-180" />
+          </Button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={`page-${page}`}
+              onClick={() => handlePageChange(page)}
+              variant={page === currentPage ? "default" : "outline"}
+              className={cn("w-8 h-8")}
+            >
+              {page}
+            </Button>
           ))}
-        </TableBody>
-      </Table>
+
+          <Button
+            onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+          >
+            <Icon icon="heroicons:chevron-right" className="w-5 h-5 rtl:rotate-180" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default RoutesPage; 
+export default RoutesPage;

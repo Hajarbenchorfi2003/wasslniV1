@@ -23,6 +23,39 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  // Récupérer le thème depuis localStorage
+                  const themeStore = localStorage.getItem('theme-store');
+                  let theme = '${siteConfig.theme}';
+                  
+                  if (themeStore) {
+                    const parsed = JSON.parse(themeStore);
+                    if (parsed.state && parsed.state.theme) {
+                      theme = parsed.state.theme;
+                    }
+                  }
+                  
+                  // Appliquer le thème immédiatement
+                  document.documentElement.classList.add('theme-' + theme);
+                  document.body.classList.add('wasslni');
+                  
+                  // Appliquer le radius par défaut
+                  document.documentElement.style.setProperty('--radius', '0.5rem');
+                } catch (e) {
+                  // En cas d'erreur, appliquer le thème par défaut
+                  document.documentElement.classList.add('theme-${siteConfig.theme}');
+                  document.body.classList.add('wasslni');
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           <TanstackProvider>

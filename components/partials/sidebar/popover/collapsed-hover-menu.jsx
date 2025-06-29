@@ -5,6 +5,7 @@ import MultiMenuHandler from "../common/multi-menu-handler";
 import MultiNestedMenu from "../common/multi-nested-menu";
 import { cn, isLocationMatch, getDynamicPath } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import MenuIcon from "../MenuIcon";
 
 const CollapsedHoverMenu = ({ item, index, menuTitle }) => {
   const [activeMultiMenu, setMultiMenu] = useState(null);
@@ -24,7 +25,7 @@ const CollapsedHoverMenu = ({ item, index, menuTitle }) => {
       {item?.child ? (
         <ul className="space-y-2 relative before:absolute before:left-4 before:top-0  before:h-[calc(100%-5px)]  before:w-[2px] before:bg-primary/20 before:rounded">
           <li className=" text-primary-foreground bg-primary font-medium px-3 py-3 rounded  relative flex items-center gap-3 ">
-            <item.icon className="h-5 w-5 " />
+            <MenuIcon icon={item.icon} className="h-5 w-5" />
             {menuTitle}
           </li>
           {item.child?.map((subItem, j) => (

@@ -17,7 +17,7 @@ const Sidebar = ({ trans , menusConfig }) => {
   let selectedSidebar = null;
 
   if (!isDesktop && (sidebarType === "popover" || sidebarType === "classic")) {
-    selectedSidebar = <MobileSidebar />;
+    selectedSidebar = <MobileSidebar   menusConfig={menusConfig}/>;
   } else {
     const sidebarComponents = {
       module: <ModuleSidebar collapsed={collapsed} trans={trans}  menusConfig={menusConfig}  />,

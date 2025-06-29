@@ -1,6 +1,7 @@
 "use client";
 import { Icon } from "@iconify/react";
 import { cn, translate } from "@/lib/utils";
+import MenuIcon from "../MenuIcon";
 
 const SubMenuHandler = ({
   item,
@@ -11,7 +12,7 @@ const SubMenuHandler = ({
   hovered,
   trans,
 }) => {
-  const { title } = item;
+  const { title, icon } = item;
 
   return (
     <>
@@ -27,7 +28,7 @@ const SubMenuHandler = ({
         >
           <div className="flex-1  gap-3 flex items-start">
             <span className="inline-flex items-center     ">
-              <item.icon className="w-5 h-5" />
+              <MenuIcon icon={icon} className="w-5 h-5" />
             </span>
             <div className=" ">{translate(title, trans)}</div>
           </div>
@@ -50,7 +51,7 @@ const SubMenuHandler = ({
         </div>
       ) : (
         <div className="inline-flex cursor-pointer items-center justify-center data-[state=open]:bg-primary-100 data-[state=open]:text-primary  w-12 h-12  rounded-md">
-          <item.icon className="w-6 h-6" />
+          <MenuIcon icon={icon} className="w-6 h-6" />
         </div>
       )}
     </>

@@ -47,6 +47,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
                 setOpen={setOpen}
                 open={open}
                 location={location}
+                menusConfig={menusConfig}
               >
                 {children}
               </LayoutWrapper>
@@ -75,6 +76,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
               setOpen={setOpen}
               open={open}
               location={location}
+              menusConfig={menusConfig}
             >
               {children}
             </LayoutWrapper>
@@ -109,6 +111,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
               setOpen={setOpen}
               open={open}
               location={location}
+              menusConfig={menusConfig}
             >
               {children}
             </LayoutWrapper>
@@ -141,6 +144,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
             setOpen={setOpen}
             open={open}
             location={location}
+            menusConfig={menusConfig}
           >
             {children}
           </LayoutWrapper>
@@ -148,13 +152,14 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
       </div>
       <Footer handleOpenSearch={() => setOpen(true)} trans={trans} />
       {isMobile && <ThemeCustomize />}
+      <MobileSidebar menusConfig={menusConfig} />
     </>
   );
 };
 
 export default DashBoardLayoutProvider;
 
-const LayoutWrapper = ({ children, isMobile, setOpen, open, location }) => {
+const LayoutWrapper = ({ children, isMobile, setOpen, open, location , menusConfig }) => {
   return (
     <>
       <motion.div
@@ -185,7 +190,6 @@ const LayoutWrapper = ({ children, isMobile, setOpen, open, location }) => {
         <main>{children}</main>
       </motion.div>
 
-      <MobileSidebar className="left-[300px]" />
       <HeaderSearch open={open} setOpen={setOpen} />
     </>
   );

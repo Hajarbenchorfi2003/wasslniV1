@@ -36,12 +36,11 @@ export const RoutesPage = () => {
         
         // Then fetch routes
         const routesData = await routeService.getUserRoutes();
-        console.log('Routes data:', routesData)
         setRoutes(routesData);
         
       } catch (error) {
         console.error('Error fetching data:', error);
-        toast.error(error.message || 'Erreur lors du chargement des données');
+        toast.error(error.response?.data?.message || error.message || 'Erreur lors du chargement des données');
         setRoutes([]);
         setEstablishments([]);
       } finally {
@@ -79,15 +78,13 @@ export const RoutesPage = () => {
   };
 
   const handleDeleteRoute = async (id) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette route ?')) return;
-    
     try {
       await routeService.deleteRoute(id);
       setRoutes(prev => prev.filter(route => route.id !== id));
       toast.success('Route supprimée avec succès');
     } catch (error) {
       console.error('Error deleting route:', error);
-      toast.error(error.message || 'Erreur lors de la suppression');
+      toast.error(error.response?.data?.message || error.message || 'Erreur lors de la suppression');
     }
   };
 
@@ -109,7 +106,7 @@ export const RoutesPage = () => {
       setEditingRoute(null);
     } catch (error) {
       console.error('Error saving route:', error);
-      toast.error(error.message || 'Erreur lors de la sauvegarde');
+      toast.error(error.response?.data?.message || error.message || 'Erreur lors de la sauvegarde');
     }
   };
 
@@ -152,7 +149,7 @@ export const RoutesPage = () => {
          setIsModalOpen(false);
          setEditingRoute(null);
        }}
-       editingRoute={editingRoute}  // This is what controls edit mode
+       editingRoute={editingRoute}
        establishments={establishments}
        onSave={handleSaveRoute}
       />
@@ -179,7 +176,7 @@ export const RoutesPage = () => {
                     stopCount: route.stops?.length || 0
                   }}
                   onEditRoute={handleEditRoute}
-                  onDelete={handleDeleteRoute}
+                  onDeleteRoute={handleDeleteRoute}
                 />
               ))}
             </div>

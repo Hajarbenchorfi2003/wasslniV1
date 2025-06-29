@@ -7,27 +7,38 @@ import { cn } from '@/lib/utils';
 import { ReactToaster } from '@/components/ui/toaster';
 import { Toaster } from 'react-hot-toast';
 import { SonnToaster } from '@/components/ui/sonner';
-import { usePathname } from 'next/navigation';
+import { useMounted } from '@/hooks/use-mounted';
+import { useEffect, useState } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
 const Providers = ({ children }) => {
   const { theme, radius } = useThemeStore();
-  const pathname = usePathname();
+  const mounted = useMounted();
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  const isHomePage = pathname === '/';
+  useEffect(() => {
+    // Marquer comme hydraté après un court délai pour s'assurer que le store est prêt
+    const timer = setTimeout(() => {
+      setIsHydrated(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Utiliser le thème par défaut pendant l'hydratation
+  const currentTheme = mounted && isHydrated ? theme : 'yellow';
+  const currentRadius = mounted && isHydrated ? radius : 0.5;
 
   const bodyClass = cn(
-    'dash-tail-app',
+    'wasslni',
     inter.className,
-    !isHomePage && `theme-${theme}`
+    `theme-${currentTheme}`
   );
 
-  const style = !isHomePage
-    ? {
-        '--radius': `${radius}rem`,
-      }
-    : undefined;
+  const style = {
+    '--radius': `${currentRadius}rem`,
+  };
 
   return (
     <body className={bodyClass} style={style}>

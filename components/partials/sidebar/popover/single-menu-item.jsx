@@ -9,8 +9,10 @@ import { cn, isLocationMatch, translate, getDynamicPath } from "@/lib/utils";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import MenuIcon from "../MenuIcon";
+
 const SingleMenuItem = ({ item, collapsed, trans }) => {
-  const { badge, href, title } = item;
+  const { badge, href, title, icon } = item;
 
   const pathname = usePathname();
   const locationName = getDynamicPath(pathname);
@@ -33,7 +35,7 @@ const SingleMenuItem = ({ item, collapsed, trans }) => {
                       }
                     )}
                   >
-                    <item.icon className="w-6 h-6" />
+                    <MenuIcon icon={icon} className="w-6 h-6" />
                   </span>
                 </Tooltip.Trigger>
                 <Tooltip.Portal>
@@ -62,7 +64,7 @@ const SingleMenuItem = ({ item, collapsed, trans }) => {
             )}
           >
             <span className="flex-grow-0">
-              <item.icon className="w-5 h-5" />
+              <MenuIcon icon={icon} className="w-5 h-5" />
             </span>
             <div className="text-box flex-grow ">{translate(title, trans)}</div>
             {badge && <Badge className=" rounded">{item.badge}</Badge>}

@@ -28,7 +28,8 @@ export const ModalRoute = ({
   editingRoute, 
   onSave, 
   establishments, 
-  fixedEstablishmentId 
+  fixedEstablishmentId,
+  
 }) => {
   const [name, setName] = useState('');
   const [establishmentId, setEstablishmentId] = useState('');

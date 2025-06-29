@@ -901,6 +901,11 @@ export const menuSuperAdminConfig = {
       icon: "CreditCard",
     },
     {
+      title: "Profile",
+      href: "/super-admin/profile",
+      icon: "User",
+    },
+    {
       title: "Notifications",
       href: "/admin/notifications",
       icon: "Bell",
@@ -937,7 +942,7 @@ export const menuSuperAdminConfig = {
     modern: [
       {
         title: "Dashboard",
-        href: "/super-admin/dashboard",
+        href: "/super-admin/",
         icon: "DashBoard",
       },
       {
@@ -1049,6 +1054,11 @@ export const menuSuperAdminConfig = {
           },
         ],
       },
+      {
+        title: "Profile",
+        href: "/super-admin/profile",
+        icon: "User",
+      },
     ],
     classic: [
       {
@@ -1058,7 +1068,7 @@ export const menuSuperAdminConfig = {
       {
         title: "Dashboard",
         icon: "DashBoard",
-        href: "/super-admin/dashboard",
+        href: "/super-admin/",
       },
       {
         isHeader: true,
@@ -1139,7 +1149,7 @@ export const menuSuperAdminConfig = {
       {
         title: "Notifications",
         icon: "Bell",
-        href: "/admin/notifications",
+        href: "/super-admin/notifications",
       },
       {
         title: "Rapports",
@@ -1155,6 +1165,11 @@ export const menuSuperAdminConfig = {
         title: "Rôles",
         icon: "UserCog",
         href: "/super-admin/roles",
+      },
+      {
+        title: "Profile",
+        href: "/super-admin/profile",
+        icon: "User",
       },
     ]  
   },
@@ -1188,7 +1203,7 @@ export const menuAdminConfig = {
       child: [
         {
           title: "Bus",
-          href: "/super-admin/buses",
+          href: "/admin/buses",
           icon: "Bus2",
         },
         {
@@ -1224,16 +1239,27 @@ export const menuAdminConfig = {
         },
         {
           title: "Trajets Quotidiens",
-          href: "/super-admin/daily-trips",
+          href: "/admin/daily-trips",
           icon: "Calendar",
         },
       ],
     },
     {
       title: "Rapports",
-      href: "/super-admin/reports",
+      href: "/admin/reports",
       icon: "BarChart",
     },
+    {
+      title: "Notifications",
+      icon: "Bell",
+      href: "/admin/notifications",
+    },
+    {
+      title: "Profile",
+      icon: "Bell",
+      href: "/admin/profile",
+    },
+    
   ],
 
   sidebarNav: {
@@ -1249,12 +1275,12 @@ export const menuAdminConfig = {
         child: [
           {
             title: "Établissements",
-            href: "/super-admin/etablissements",
+            href: "/admin/etablissements",
             icon: "Building",
           },
           {
             title: "Responsables",
-            href: "/super-admin/responsables",
+            href: "/admin/responsables",
             icon: "Responsable",
           },
         ],
@@ -1265,22 +1291,22 @@ export const menuAdminConfig = {
         child: [
           {
             title: "Bus",
-            href: "/super-admin/buses",
+            href: "/admin/buses",
             icon: "Bus2",
           },
           {
             title: "Étudiants",
-            href: "/super-admin/students",
+            href: "/admin/students",
             icon: "User",
           },
           {
             title: "Parents",
-            href: "/super-admin/parents",
+            href: "/admin/parents",
             icon: "Users",
           },
           {
             title: "Chauffeurs",
-            href: "/super-admin/drivers",
+            href: "/admin/drivers",
             icon: "SteeringWheel",
           },
         ],
@@ -1296,21 +1322,32 @@ export const menuAdminConfig = {
           },
           {
             title: "Trajets",
-            href: "/super-admin/trips",
+            href: "/admin/trips",
             icon: "Route",
           },
           {
             title: "Trajets Quotidiens",
-            href: "/super-admin/daily-trips",
+            href: "/admin/daily-trips",
             icon: "Calendar",
           },
         ],
       },
       {
         title: "Rapports",
-        href: "/super-admin/reports",
+        href: "/admin/reports",
         icon: "PretentionChartLine",
       },
+      {
+        title: "Notifications",
+        icon: "Bell",
+        href: "/admin/notifications",
+      },
+      {
+        title: "Profile",
+        icon: "Bell",
+        href: "/admin/profile",
+      },
+      
     ],
     classic: [
       {
@@ -1329,22 +1366,18 @@ export const menuAdminConfig = {
       {
         title: "Écoles",
         icon: "School",
-        href: "/super-admin/schools",
+        href: "/admin/schools",
       },
       {
         title: "Établissements",
         icon: "Building",
-        href: "/super-admin/etablissements",
+        href: "/admin/etablissements",
       },
-      {
-        title: "Admins",
-        icon: "UserShield",
-        href: "/super-admin/admins",
-      },
+
       {
         title: "Responsables",
         icon: "UserTie",
-        href: "/super-admin/responsables",
+        href: "/admin/responsables",
       },
       {
         isHeader: true,
@@ -1353,22 +1386,22 @@ export const menuAdminConfig = {
       {
         title: "Bus",
         icon: "Bus2",
-        href: "/super-admin/buses",
+        href: "/admin/buses",
       },
       {
         title: "Étudiants",
         icon: "User",
-        href: "/super-admin/students",
+        href: "/admin/students",
       },
       {
         title: "Parents",
         icon: "Users",
-        href: "/super-admin/parents",
+        href: "/admin/parents",
       },
       {
         title: "Chauffeurs",
         icon: "SteeringWheel",
-        href: "/super-admin/drivers",
+        href: "/admin/drivers",
       },
       {
         isHeader: true,
@@ -1377,17 +1410,17 @@ export const menuAdminConfig = {
       {
         title: "Routes",
         icon: "Map",
-        href: "/super-admin/routes",
+        href: "/admin/routes",
       },
       {
         title: "Trajets",
         icon: "Route",
-        href: "/super-admin/trips",
+        href: "/admin/trips",
       },
       {
         title: "Trajets Quotidiens",
         icon: "Calendar",
-        href: "/super-admin/daily-trips",
+        href: "/admin/daily-trips",
       },
       {
         isHeader: true,
@@ -1396,7 +1429,12 @@ export const menuAdminConfig = {
       {
         title: "Rapports",
         icon: "BarChart",
-        href: "/super-admin/reports",
+        href: "/admin/reports",
+      },
+      {
+        title: "Profile",
+        icon: "Bell",
+        href: "/admin/profile",
       },
     ]  
   },
@@ -1406,49 +1444,49 @@ export const menuParentConfig = {
   mainNav: [
     {
       title: "Tableau de Bord",
-      icon: "DashBoard", // Utilisez une icône appropriée, par exemple, 'DashBoard'
+      icon: "DashBoard",  
       href: "/parent/",
     },
     {
-      title: "Mes Enfants", // This category now contains overview and tracking
+      title: "Mes Enfants",  
       icon: "Users",
       child: [
         {
           title: "Vue d'ensemble",
-          href: "/parent/children-overview", // NEW DEDICATED PAGE
+          href: "/parent/children-overview",  
           icon: "User",
         },
         {
-          title: "Suivi du Bus", // NEW DEDICATED PAGE
-          href: "/parent/bus-tracking", // This page will require a childId parameter in a real app
+          title: "Suivi du Bus",  
+          href: "/parent/bus-tracking",  
           icon: "MapPin",
         },
         {
           title: "Historique Présence",
-          href: "/parent/attendance-history", // Existing page
+          href: "/parent/attendance-history",  
           icon: "Calendar",
         },
       ],
     },
     {
       title: "Notifications",
-      icon: "Bell", // Icône pour les notifications
-      href: "/parent/notifications", // Page dédiée aux notifications
+      icon: "Bell", 
+      href: "/parent/notifications",  
     },
     {
       title: "Signaler une Préoccupation",
-      icon: "ChatBubbleLeftRight", // Icône pour signaler une préoccupation
-      href: "/parent/report-concern", // Pourrait ouvrir la modale ou une page
+      icon: "ChatBubbleLeftRight",  
+      href: "/parent/report-concern", 
     },
     {
       title: "Mon Profil",
-      icon: "User", // Icône pour le profil
-      href: "/parent/profile", // Page dédiée au profil
+      icon: "User",  
+      href: "/parent/profile", 
     },
     {
       title: "Aide & Support",
-      icon: "QuestionMarkCircle", // Icône pour l'aide
-      href: "/parent/help", // Page dédiée à l'aide
+      icon: "Monitor",  
+      href: "/parent/help", 
     },
   ],
 
@@ -1466,17 +1504,17 @@ export const menuParentConfig = {
         child: [
           {
             title: "Vue d'ensemble",
-            href: "/parent/children-overview", // NEW DEDICATED PAGE
+            href: "/parent/children-overview",  
             icon: "User",
           },
           {
-            title: "Suivi du Bus", // NEW DEDICATED PAGE
-            href: "/parent/bus-tracking", // This page will require a childId parameter in a real app
+            title: "Suivi du Bus",  
+            href: "/parent/bus-tracking",  
             icon: "MapPin",
           },
           {
             title: "Historique Présence",
-            href: "/parent/attendance-history", // Existing page
+            href: "/parent/attendance-history",  
             icon: "Calendar",
           },
         ],
@@ -1494,7 +1532,7 @@ export const menuParentConfig = {
       {
         title: "Aide",
         href: "/parent/help",
-        icon: "QuestionMarkCircle",
+        icon: "Monitor",
       },
       {
         title: "Signaler",
@@ -1558,7 +1596,7 @@ export const menuParentConfig = {
       },
       {
         title: "Aide & Support",
-        icon: "QuestionMarkCircle",
+        icon: "Monitor",
         href: "/parent/help",
       },
     ],
@@ -1583,7 +1621,7 @@ export const menuDriverConfig = {
         {
           title: "Historique des Trajets",
           href: "/driver/trip-history",
-          icon: "Clock",
+          icon: "Application",
         },
       ],
     },
@@ -1599,8 +1637,8 @@ export const menuDriverConfig = {
     },
     {
       title: "Aide & Support",
-      icon: "QuestionMarkCircle",
-      href: "/driver/help", // Added a help page for drivers
+      icon: "Monitor",
+      href: "/driver/help",  
     },
   ],
 
@@ -1623,7 +1661,7 @@ export const menuDriverConfig = {
           {
             title: "Historique des Trajets",
             href: "/driver/trip-history",
-            icon: "Clock",
+            icon: "Application",
           },
         ],
       },
@@ -1640,7 +1678,7 @@ export const menuDriverConfig = {
       {
         title: "Aide", // Shorter title for modern sidebar if preferred
         href: "/driver/help",
-        icon: "QuestionMarkCircle",
+        icon: "Monitor",
       },
     ],
     classic: [
@@ -1664,7 +1702,7 @@ export const menuDriverConfig = {
       },
       {
         title: "Historique des Trajets",
-        icon: "Clock",
+        icon: "Application",
         href: "/driver/trip-history",
       },
       {
@@ -1687,7 +1725,7 @@ export const menuDriverConfig = {
       },
       {
         title: "Aide & Support", // Full title for classic sidebar
-        icon: "QuestionMarkCircle",
+        icon: "Monitor",
         href: "/driver/help",
       },
     ],
@@ -1744,6 +1782,11 @@ export const menuManagerConfig = {
           title: "Trajets Quotidiens",
           href: "/manager/daily-trips",
           icon: "Calendar",
+        },
+        {
+          title: "Routes",
+          icon: "Map",
+          href: "/manager/routes",
         },
         {
           title: "Arrêts",
@@ -1831,6 +1874,11 @@ export const menuManagerConfig = {
             title: "Trajets Quotidiens",
             href: "/manager/daily-trips",
             icon: "Calendar",
+          },
+          {
+            title: "Routes",
+            icon: "Map",
+            href: "/manager/routes",
           },
           {
             title: "Arrêts",
@@ -1931,8 +1979,13 @@ export const menuManagerConfig = {
         href: "/manager/daily-trips",
       },
       {
+        title: "Routes",
+        icon: "Map",
+        href: "/manger/routes",
+      },
+      {
         title: "Arrêts",
-        icon: "MapMarker",
+        icon: "Flag",
         href: "/manager/stops",
       },
       {
@@ -1941,7 +1994,7 @@ export const menuManagerConfig = {
       },
       {
         title: "Présence Élèves",
-        icon: "UserCheck",
+        icon: "ListFill",
         href: "/manager/attendance",
       },
       {

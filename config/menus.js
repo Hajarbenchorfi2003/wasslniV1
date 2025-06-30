@@ -884,6 +884,11 @@ export const menuSuperAdminConfig = {
           icon: "Map",
         },
         {
+          title: "Arrêts",
+          icon: "Flag",
+          href: "/super-admin/stops",
+        },
+        {
           title: "Trajets",
           href: "/super-admin/trips",
           icon: "Route",
@@ -892,6 +897,11 @@ export const menuSuperAdminConfig = {
           title: "Trajets Quotidiens",
           href: "/super-admin/daily-trips",
           icon: "Calendar",
+        },
+        {
+          title: "Présence Élèves",
+          href: "/super-admin/attendance",
+          icon: "ListFill",
         },
       ],
     },
@@ -1007,6 +1017,11 @@ export const menuSuperAdminConfig = {
             icon: "Map",
           },
           {
+            title: "Arrêts",
+            icon: "Flag",
+            href: "/super-admin/stops",
+          },
+          {
             title: "Trajets",
             href: "/super-admin/trips",
             icon: "Route",
@@ -1015,6 +1030,11 @@ export const menuSuperAdminConfig = {
             title: "Trajets Quotidiens",
             href: "/super-admin/daily-trips",
             icon: "Calendar",
+          },
+          {
+            title: "Présence Élèves",
+            href: "/super-admin/attendance",
+            icon: "ListFill",
           },
         ],
       },
@@ -1128,6 +1148,11 @@ export const menuSuperAdminConfig = {
         href: "/super-admin/routes",
       },
       {
+        title: "Arrêts",
+        icon: "Flag",
+        href: "/super-admin/stops",
+      },
+      {
         title: "Trajets",
         icon: "Route",
         href: "/super-admin/trips",
@@ -1136,6 +1161,11 @@ export const menuSuperAdminConfig = {
         title: "Trajets Quotidiens",
         icon: "Calendar",
         href: "/super-admin/daily-trips",
+      },
+      {
+        title: "Présence Élèves",
+        href: "/super-admin/attendance",
+        icon: "ListFill",
       },
       {
         isHeader: true,
@@ -1233,6 +1263,11 @@ export const menuAdminConfig = {
           icon: "Map",
         },
         {
+          title: "Arrêts",
+          icon: "Flag",
+          href: "/admin/stops",
+        },
+        {
           title: "Trajets",
           href: "/admin/trips",
           icon: "Route",
@@ -1241,6 +1276,11 @@ export const menuAdminConfig = {
           title: "Trajets Quotidiens",
           href: "/admin/daily-trips",
           icon: "Calendar",
+        },
+        {
+          title: "Présence Élèves",
+          href: "/admin/attendance",
+          icon: "ListFill",
         },
       ],
     },
@@ -1321,6 +1361,11 @@ export const menuAdminConfig = {
             icon: "Map",
           },
           {
+            title: "Arrêts",
+            icon: "Flag",
+            href: "/admin/stops",
+          },
+          {
             title: "Trajets",
             href: "/admin/trips",
             icon: "Route",
@@ -1329,6 +1374,11 @@ export const menuAdminConfig = {
             title: "Trajets Quotidiens",
             href: "/admin/daily-trips",
             icon: "Calendar",
+          },
+          {
+            title: "Présence Élèves",
+            href: "/admin/attendance",
+            icon: "ListFill",
           },
         ],
       },
@@ -1413,6 +1463,11 @@ export const menuAdminConfig = {
         href: "/admin/routes",
       },
       {
+        title: "Arrêts",
+        icon: "Flag",
+        href: "/admin/stops",
+      },
+      {
         title: "Trajets",
         icon: "Route",
         href: "/admin/trips",
@@ -1421,6 +1476,11 @@ export const menuAdminConfig = {
         title: "Trajets Quotidiens",
         icon: "Calendar",
         href: "/admin/daily-trips",
+      },
+      {
+        title: "Présence Élèves",
+        href: "/admin/attendance",
+        icon: "ListFill",
       },
       {
         isHeader: true,

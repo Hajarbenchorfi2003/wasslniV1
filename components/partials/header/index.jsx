@@ -33,7 +33,8 @@ const NavTools = ({ isDesktop, isMobile, sidebarType }) => {
     </div>
   );
 };
-const Header = ({ handleOpenSearch, trans }) => {
+
+const Header = ({ trans }) => {
   const { collapsed, sidebarType, setCollapsed, subMenu, setSidebarType } =
     useSidebar();
   const { layout, navbarType, setLayout } = useThemeStore();
@@ -59,7 +60,7 @@ const Header = ({ handleOpenSearch, trans }) => {
       >
         <div className="w-full bg-card/90 backdrop-blur-lg md:px-6 px-[15px] py-3 border-b">
           <div className="flex justify-between items-center h-full">
-            <HorizontalHeader handleOpenSearch={handleOpenSearch} />
+            <HorizontalHeader />
             <NavTools
               isDesktop={isDesktop}
               isMobile={isMobile}
@@ -90,7 +91,6 @@ const Header = ({ handleOpenSearch, trans }) => {
             <div className="flex justify-between items-center h-full">
               <VerticalHeader
                 sidebarType={sidebarType}
-                handleOpenSearch={handleOpenSearch}
               />
               <NavTools
                 isDesktop={isDesktop}
@@ -120,7 +120,6 @@ const Header = ({ handleOpenSearch, trans }) => {
           <div className="flex justify-between items-center h-full">
             <VerticalHeader
               sidebarType={sidebarType}
-              handleOpenSearch={handleOpenSearch}
             />
             <NavTools
               isDesktop={isDesktop}
@@ -150,7 +149,6 @@ const Header = ({ handleOpenSearch, trans }) => {
           <div className="flex justify-between items-center h-full">
             <VerticalHeader
               sidebarType={sidebarType}
-              handleOpenSearch={handleOpenSearch}
             />
             <NavTools
               isDesktop={isDesktop}
@@ -176,7 +174,6 @@ const Header = ({ handleOpenSearch, trans }) => {
         <div className="flex justify-between items-center h-full">
           <VerticalHeader
             sidebarType={sidebarType}
-            handleOpenSearch={handleOpenSearch}
           />
           <NavTools
             isDesktop={isDesktop}

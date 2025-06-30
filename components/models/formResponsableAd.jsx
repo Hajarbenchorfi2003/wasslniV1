@@ -16,40 +16,42 @@ import {
 import { Input } from "@/components/ui/input"; // Assuming shadcn/ui Input
 import { Switch } from "@/components/ui/switch"; // Assuming shadcn/ui Switch
 import { Button } from '@/components/ui/button'; // Assuming shadcn/ui Button
-import toast from 'react-hot-toast'; // Assuming react-hot-toast
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
+import toast from 'react-hot-toast'; // Assuming react-hot-toast
 
 // Define the Zod schema for validation
-const formSchema = z.object({
-  fullname: z.string().min(3, "Le nom complet est requis et doit contenir au moins 3 caractères."),
-  email: z.string().email("L'email doit être une adresse email valide."),
-  phone: z.string().regex(/^\+?[0-9\s-]+$/, "Le numéro de téléphone n'est pas valide.").min(8, "Le numéro de téléphone doit contenir au moins 8 chiffres."),
- 
-  isActive: z.boolean(),
-  password: z.string().optional() // Optional for editing, required for adding
-    .refine((val) => val === undefined || val.length === 0 || val.length >= 6, {
-      message: "Le mot de passe doit contenir au moins 6 caractères."
-    }),
-    establishmentId: z.union([z.string(), z.null()]).optional(),
-});
+const createFormSchema = (isAddingMode) =>
+  z.object({
+    fullname: z.string().min(3, "Le nom complet est requis et doit contenir au moins 3 caractères."),
+    email: z.string().email("L'email doit être une adresse email valide."),
+    phone: z.string()
+      .regex(/^\+?[0-9\s-]+$/, "Le numéro de téléphone n'est pas valide.")
+      .min(8, "Le numéro de téléphone doit contenir au moins 8 chiffres."),
+    isActive: z.boolean(),
+    password: z.string().optional()
+      .refine((val) => val === undefined || val.length === 0 || val.length >= 6, {
+        message: "Le mot de passe doit contenir au moins 6 caractères."
+      }),
+    
+  });
 
-export function FormUser({ initialData, onSubmit, onCancel, role , establishments,editdrive}) {
+export function FormUserRes({ initialData, onSubmit, onCancel, role }) {
+     const isAddingMode = !initialData;
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createFormSchema(isAddingMode)), // ✅ Schéma dynamique
     defaultValues: {
       fullname: '',
       email: '',
       phone: '',
       isActive: true,
       password: '',
-      role:role,
-      establishmentId:null,
+      
     },
   });
 
@@ -63,7 +65,7 @@ export function FormUser({ initialData, onSubmit, onCancel, role , establishment
         phone: initialData.phone || '',
         isActive: initialData.isActive,
         password: '', // Never pre-fill password for security
-        role:role,
+        
       });
     } else {
       // Reset to default values for adding a new user
@@ -71,10 +73,9 @@ export function FormUser({ initialData, onSubmit, onCancel, role , establishment
         fullname: '',
         email: '',
         phone: '',
-        role:role,
         isActive: true,
         password: '',
-        establishmentId:null,
+       
       });
     }
   }, [initialData, form]);
@@ -155,6 +156,7 @@ export function FormUser({ initialData, onSubmit, onCancel, role , establishment
             )}
           />
         )}
+      
 
         <FormField
           control={form.control}
@@ -176,39 +178,6 @@ export function FormUser({ initialData, onSubmit, onCancel, role , establishment
             </FormItem>
           )}
         />
-{!editdrive && establishments && establishments.length > 0 && (
-  <FormField
-    control={form.control}
-    name="establishmentId"
-    render={({ field }) => (
-      <FormItem className="pr-4">
-        <FormLabel>Établissement</FormLabel>
-        <FormControl>
-          <Select
-            value={field.value?.toString() || ''}
-            onValueChange={(val) => field.onChange(val)}
-           
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Sélectionner un établissement" />
-            </SelectTrigger>
-            <SelectContent>
-              {establishments.map((est) => (
-                <SelectItem key={est.id} value={est.id.toString()}>
-                  {est.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormControl>
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-)}
-
-
-
         <div className="flex justify-end space-x-2 mt-6  pr-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Annuler

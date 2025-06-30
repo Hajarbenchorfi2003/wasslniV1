@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { ModalUser1 } from '@/components/models/modalResp';
+import { ModalUser1 } from '@/components/models/modalRespAd';
 import ResponsableCard from './ResponsableCard';
 import { Input } from '@/components/ui/input';
   import {fetchResponsibles,register,updateUser,deleteUser} from '@/services/user';

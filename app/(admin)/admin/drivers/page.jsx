@@ -71,8 +71,10 @@ console.log("etablisment",establishments)
     setLoading(true);
     try {
       const data = await fetchDrivers(); // Récupère les données depuis l'API
-      setDrivers(data || []); // Met à jour l'état local
-      setCurrentDemoData(data || []);
+       const safeDrivers = Array.isArray(data) ? data : [];
+
+    setDrivers(safeDrivers);
+    setCurrentDemoData(safeDrivers);
       console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
     } catch (error) {
       console.error('Erreur lors du chargement des parents', error);

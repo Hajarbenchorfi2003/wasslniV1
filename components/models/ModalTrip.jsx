@@ -32,6 +32,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
     establishmentId: null,
     studentIds: [], // For linking students to this trip
   });
+  console.log("drivers",drivers)
    const [students, setStudents] = useState([]);
      const [loadingStudents, setLoadingStudents] = useState(false);
      const[filteredRoutes,setFilteredRoute] = useState([]);
@@ -115,7 +116,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
     if (filterDrivers.length === 0 && formData.driverId !== null) {
     setFormData(prev => ({ ...prev, driverId: null }));
   }
-
+ console.log("filtered",filterDrivers)
   // -----------------------------------------------
 
   loadStudentsForEstablishment();
@@ -182,31 +183,35 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
           )}
 
           {/* Route Selection */}
-          {routes && routes.length > 0 && (
-  <div>
-    <Label htmlFor="route" className="text-right">Route</Label>
-    <Select 
-      onValueChange={(value) => handleSelectChange('routeId', value)} 
-      value={formData.routeId ? String(formData.routeId) : ''} 
+        <div>
+  <Label htmlFor="route" className="text-right">Route</Label>
+
+  {routes && routes.length > 0 ? (
+    <Select
+      onValueChange={(value) => handleSelectChange('routeId', value)}
+      value={formData.routeId ? String(formData.routeId) : ''}
       required
     >
       <SelectTrigger className="col-span-3">
         <SelectValue placeholder="Sélectionner une route" />
       </SelectTrigger>
       <SelectContent>
-        {filteredRoutes.length === 0 ? (
-          <p className="text-sm text-gray-500 pl-2">Aucune route disponible pour cet établissement.</p>
-        ) : (
+        {filteredRoutes.length > 0 ? (
           filteredRoutes.map(route => (
             <SelectItem key={route.id} value={String(route.id)}>
               {route.name}
             </SelectItem>
           ))
+        ) : (
+          <div className="text-sm text-gray-500 px-4 py-2">Aucune route disponible pour cet établissement.</div>
         )}
       </SelectContent>
     </Select>
-  </div>
-)}
+  ) : (
+    <p className="text-sm text-gray-500 mt-2">Aucune route disponible.</p>
+  )}
+</div>
+
 
           {/* Bus Selection */}
          {buses && buses.length > 0 && (

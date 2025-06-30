@@ -61,7 +61,9 @@ console.log("etablisment",establishments)
     setLoading(true);
     try {
       const data = await fetchParents(); // Récupère les données depuis l'API
-      setParents(data || []); // Met à jour l'état local
+      const safePrents = Array.isArray(data) ? data : [];
+
+      setParents(afePrents); // Met à jour l'état local
       console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
     } catch (error) {
       console.error('Erreur lors du chargement des parents', error);

@@ -62,7 +62,7 @@ const EtablissementsPage = () => {
     setEstablishmentsLoading(true);
     try {
       const data = await fetchUserEstablishments();
-      
+      console.log("etablisement",data)
       setEstablishments(data);
     } catch (error) {
       console.error('Erreur lors du chargement des établissements', error);

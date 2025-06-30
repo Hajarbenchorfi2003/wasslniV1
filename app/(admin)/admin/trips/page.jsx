@@ -117,7 +117,9 @@ const TripsPage = () => {
     setLoadindriver(true);
     try {
       const data = await fetchDrivers(); // Récupère les données depuis l'API
-      setDrivers(data || []); // Met à jour l'état local
+      const safeDrivers = Array.isArray(data) ? data : [];
+
+      setDrivers(safeDrivers); // Met à jour l'état local
       
       console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
     } catch (error) {

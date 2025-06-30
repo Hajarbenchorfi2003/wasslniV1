@@ -10,23 +10,24 @@ import Footer from "@/components/partials/footer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import ThemeCustomize from "@/components/partials/customizer/theme-customizer";
 import MobileSidebar from "@/components/partials/sidebar/mobile-sidebar";
-import HeaderSearch from "@/components/header-search";
 import { useMounted } from "@/hooks/use-mounted";
 import LayoutLoader from "@/components/layout-loader";
+
 const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
   const { collapsed, sidebarType, setCollapsed, subMenu } = useSidebar();
-  const [open, setOpen] = React.useState(false);
   const { layout } = useThemeStore();
   const location = usePathname();
   const isMobile = useMediaQuery("(min-width: 768px)");
   const mounted = useMounted();
+  
   if (!mounted) {
     return <LayoutLoader />;
   }
+  
   if (layout === "semibox") {
     return (
       <>
-        <Header handleOpenSearch={() => setOpen(true)} trans={trans} />
+        <Header trans={trans} />
         <Sidebar trans={trans} menusConfig={menusConfig} />
 
         <div
@@ -44,8 +45,6 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
             <div className="semibox-content-wrapper ">
               <LayoutWrapper
                 isMobile={isMobile}
-                setOpen={setOpen}
-                open={open}
                 location={location}
                 menusConfig={menusConfig}
               >
@@ -62,7 +61,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
   if (layout === "horizontal") {
     return (
       <>
-        <Header handleOpenSearch={() => setOpen(true)} trans={trans} />
+        <Header trans={trans} />
 
         <div className={cn("content-wrapper transition-all duration-150 ")}>
           <div
@@ -73,8 +72,6 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
           >
             <LayoutWrapper
               isMobile={isMobile}
-              setOpen={setOpen}
-              open={open}
               location={location}
               menusConfig={menusConfig}
             >
@@ -91,7 +88,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
   if (sidebarType !== "module") {
     return (
       <>
-        <Header handleOpenSearch={() => setOpen(true)} trans={trans} />
+        <Header trans={trans} />
         <Sidebar trans={trans} menusConfig={menusConfig} />
 
         <div
@@ -108,8 +105,6 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
           >
             <LayoutWrapper
               isMobile={isMobile}
-              setOpen={setOpen}
-              open={open}
               location={location}
               menusConfig={menusConfig}
             >
@@ -124,7 +119,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
   }
   return (
     <>
-      <Header handleOpenSearch={() => setOpen(true)} trans={trans} />
+      <Header trans={trans} />
       <Sidebar trans={trans} menusConfig={menusConfig} />
 
       <div
@@ -141,8 +136,6 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
         >
           <LayoutWrapper
             isMobile={isMobile}
-            setOpen={setOpen}
-            open={open}
             location={location}
             menusConfig={menusConfig}
           >
@@ -150,7 +143,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
           </LayoutWrapper>
         </div>
       </div>
-      <Footer handleOpenSearch={() => setOpen(true)} trans={trans} />
+      <Footer trans={trans} />
       {isMobile && <ThemeCustomize />}
       <MobileSidebar menusConfig={menusConfig} />
     </>
@@ -159,7 +152,7 @@ const DashBoardLayoutProvider = ({ children, trans , menusConfig }) => {
 
 export default DashBoardLayoutProvider;
 
-const LayoutWrapper = ({ children, isMobile, setOpen, open, location , menusConfig }) => {
+const LayoutWrapper = ({ children, isMobile, location, menusConfig }) => {
   return (
     <>
       <motion.div
@@ -189,8 +182,6 @@ const LayoutWrapper = ({ children, isMobile, setOpen, open, location , menusConf
       >
         <main>{children}</main>
       </motion.div>
-
-      <HeaderSearch open={open} setOpen={setOpen} />
     </>
   );
 };

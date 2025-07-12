@@ -65,7 +65,7 @@ export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
       // Fetch all daily trips first
       const tripsResponse = await driverService.getDailyTrips();
       setDailyTrips(tripsResponse);
-      
+      console.log(tripsResponse);
       // If no specific trip ID is provided, use the first one
       const tripIdToFetch = dailyTripId || (tripsResponse.length > 0 ? tripsResponse[0].id : null);
       

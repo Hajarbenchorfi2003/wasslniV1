@@ -444,19 +444,19 @@ const SuperAdminDashboardPage = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                <Link href="/super-admin/users?role=ADMIN" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/admins" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:user-shield" className="h-5 w-5 text-blue-500" />
                                     <span className="font-medium text-default-700">Gérer les Admins ({totalAdmins})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=RESPONSIBLE" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/responsables" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:user" className="h-5 w-5 text-teal-500" />
                                     <span className="font-medium text-default-700">Gérer les Responsables ({totalResponsible})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=DRIVER" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/drivers" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:truck" className="h-5 w-5 text-indigo-500" />
                                     <span className="font-medium text-default-700">Gérer les Chauffeurs ({totalDrivers})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=PARENT" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/parents" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:home" className="h-5 w-5 text-rose-500" />
                                     <span className="font-medium text-default-700">Gérer les Parents ({totalParents})</span>
                                 </Link>

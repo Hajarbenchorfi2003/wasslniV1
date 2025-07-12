@@ -1,9 +1,5 @@
-import React from "react";
-import Link from "next/link";
-//import ErrorBlock from "@/components/error-block";
+import { redirect } from 'next/navigation';
 
-const PageNotFound = () => {
-  return <div>ami error..</div>;
-};
-
-export default PageNotFound;
+export default function NotFound() {
+  redirect('/error-page/404');
+}

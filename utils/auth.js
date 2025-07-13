@@ -170,30 +170,30 @@ export const hasAnyRole = (requiredRoles) => {
   if (!user) return false;
   return requiredRoles.includes(user.role);
 };
-
+ 
 // Vérifier si l'utilisateur est super admin
 export const isSuperAdmin = () => {
-  return hasRole('super-admin');
+  return hasRole('SUPER_ADMIN');
 };
 
 // Vérifier si l'utilisateur est admin
 export const isAdmin = () => {
-  return hasRole('admin');
+  return hasRole('ADMIN');
 };
 
 // Vérifier si l'utilisateur est driver
 export const isDriver = () => {
-  return hasRole('driver');
+  return hasRole('DRIVER');
 };
 
 // Vérifier si l'utilisateur est parent
 export const isParent = () => {
-  return hasRole('parent');
+  return hasRole('PARENT');
 };
 
 // Vérifier si l'utilisateur est responsable
 export const isResponsible = () => {
-  return hasRole('responsible');
+  return hasRole('RESPONSIBLE');
 };
 
 // Obtenir le rôle de l'utilisateur actuel

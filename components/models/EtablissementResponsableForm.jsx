@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Updated Zod Schema for Etablissement (quartie already added)
 const etablissementSchema = z.object({
@@ -272,11 +273,13 @@ const handleSubmit = (data) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                    <ScrollArea className="h-[100px]">
                       {filteredResponsables.map((responsable) => (
                         <SelectItem key={responsable.id} value={responsable.id.toString()}>
                           {responsable.firstName} {responsable.lastName} ({responsable.email})
                         </SelectItem>
                       ))}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   <FormMessage />

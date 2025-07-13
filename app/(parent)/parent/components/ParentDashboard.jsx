@@ -196,7 +196,6 @@ const refreshParentData = useCallback(async () => {
         </Button>
       </div>
 
-      // Remplacer les cartes statistiques par ce code :
 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
   <Card><CardContent className="p-4"><div className="flex items-center space-x-2">
     <Icon icon="heroicons:users" className="h-5 w-5 text-blue-500" />

@@ -96,14 +96,13 @@ const SuperAdminDashboardPage = () => {
 
         fetchData();
     }, []);
-
     // --- Aggregated Data for Dashboard ---
     const totalSchools = dashboardData.schools.length;
     const activeSchools = dashboardData.schools.filter(school => school.status === 'ACTIVE').length;
     const inactiveSchools = totalSchools - activeSchools;
 
     const totalEstablishments = dashboardData.establishments.length;
-    const totalStudents = dashboardData.students.length;
+    const totalStudents = dashboardData.students.data?.length || 0;
     const totalBuses = dashboardData.buses.length;
     const totalRoutes = dashboardData.routes.length;
     
@@ -353,7 +352,7 @@ const SuperAdminDashboardPage = () => {
                                     <Link href="/super-admin/routes" className="text-xs text-primary hover:underline mt-2">Voir</Link>
                                 </div>
                                 {/* Total Users */}
-                                <div className="p-4 bg-default-50 rounded-lg flex flex-col items-center justify-center col-span-full md:col-span-1 lg:col-span-1">
+                                <div className="p-4 bg-default-50 rounded-lg flex flex-col items-center justify-center">
                                     <div className="flex items-center gap-2 mb-2">
                                       <Icon icon="heroicons:user-group" className="h-6 w-6 text-purple-500 mb-2" />
                                       <span className="text-sm font-medium text-default-600">Utilisateurs</span>

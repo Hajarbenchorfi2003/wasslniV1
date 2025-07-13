@@ -227,11 +227,13 @@ export const ModalParent = ({ isOpen, onClose, editingParent, onSave,establishme
                               <SelectValue placeholder="Sélectionner un établissement" />
                             </SelectTrigger>
                             <SelectContent>
+                            <ScrollArea className="h-[100px]">
                               {establishments.map(est => (
                                 <SelectItem key={est.id} value={String(est.id)}>
                                   {est.name}
                                 </SelectItem>
                               ))}
+                              </ScrollArea>
                             </SelectContent>
                           </Select>
                         </div>

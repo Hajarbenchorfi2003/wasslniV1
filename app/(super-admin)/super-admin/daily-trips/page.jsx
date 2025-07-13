@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ModalDailyTrip } from '@/components/models/ModalDailyTrip';
 import DailyTripCard from './DailyTripCard'; // Create this
 import{fetchdailytrip,createDailyTrip,updateDailyTrip,deleteDailyTrip} from '@/services/dailyTrip';
@@ -320,12 +321,14 @@ const fetchDailyTripsWithFilters = async () => {
       <SelectValue placeholder="Filtrer par Establishments" />
     </SelectTrigger>
     <SelectContent>
+    <ScrollArea className="h-[150px]">
       <SelectItem value="all">Tous les Establishments</SelectItem>
       {establishments.map((establishment) => (
         <SelectItem key={establishment.id} value={String(establishment.id)}>
           {establishment.name}
         </SelectItem>
       ))}
+      </ScrollArea>
     </SelectContent>
   </Select>
 
@@ -343,12 +346,14 @@ const fetchDailyTripsWithFilters = async () => {
       <SelectValue placeholder="Filtrer par Trajet" />
     </SelectTrigger>
     <SelectContent>
+    <ScrollArea className="h-[150px]">
       <SelectItem value="all">Tous les Trajets</SelectItem>
       {trips.map((trip) => (
         <SelectItem key={trip.id} value={String(trip.id)}>
           {trip.name}
         </SelectItem>
       ))}
+      </ScrollArea>
     </SelectContent>
   </Select>
 
@@ -358,12 +363,14 @@ const fetchDailyTripsWithFilters = async () => {
       <SelectValue placeholder="Filtrer par Chauffeur" />
     </SelectTrigger>
     <SelectContent>
+    <ScrollArea className="h-[150px]">
       <SelectItem value="all">Tous les Chauffeurs</SelectItem>
       {drivers.map((driver) => (
         <SelectItem key={driver.id} value={String(driver.id)}>
           {driver.fullname}
         </SelectItem>
       ))}
+      </ScrollArea>
     </SelectContent>
   </Select>
 
@@ -373,13 +380,15 @@ const fetchDailyTripsWithFilters = async () => {
     <SelectTrigger className="w-full">
       <SelectValue placeholder="Filtrer par Statut" />
     </SelectTrigger>
-    <SelectContent>
+    <SelectContent  >
+    <ScrollArea className="h-[150px]">
       <SelectItem value="all">Tous les Statuts</SelectItem>
       {tripStatuses.map((status) => (
         <SelectItem key={status} value={status}>
           {status}
         </SelectItem>
       ))}
+      </ScrollArea>
     </SelectContent>
   </Select>
 </div>

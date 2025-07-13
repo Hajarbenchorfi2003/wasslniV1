@@ -18,7 +18,7 @@ const RoleGuard = ({
   useEffect(() => {
     // Vérifier si l'utilisateur est connecté
     if (!isAuthenticated()) {
-      router.push("/auth/login");
+      router.push("/");
       return;
     }
 

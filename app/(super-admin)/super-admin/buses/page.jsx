@@ -295,7 +295,7 @@ useEffect(() => {
       <SelectTrigger className="w-full md:w-[250px]">
         <SelectValue placeholder="Filtrer par établissement" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className>
         <SelectItem value="all">Toutes les Établissements</SelectItem>
         {establishments.map((establishment) => (
           <SelectItem key={establishment.id} value={String(establishment.id)}>

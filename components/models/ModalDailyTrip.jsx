@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trips, tripStatuses }) => {
   const [formData, setFormData] = useState({
@@ -80,11 +81,13 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
                   <SelectValue placeholder="Sélectionner un trajet" />
                 </SelectTrigger>
                 <SelectContent>
+                <ScrollArea className="h-[100px]">
                   {trips.map(trip => (
                     <SelectItem key={trip.id} value={String(trip.id)}>
                       {trip.name}
                     </SelectItem>
                   ))}
+                  </ScrollArea>
                 </SelectContent>
               </Select>
             </div>

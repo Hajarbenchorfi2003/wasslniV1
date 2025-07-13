@@ -1,20 +1,23 @@
-"use client"; // Error components must be Client Components
+"use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Error({ error, reset }) {
-  return (
-    <div className="space-y-4">
-      <Alert color="destructive" variant="soft">
-        <Info class="h-5 w-5" />
-        <AlertDescription>Something went wrong!</AlertDescription>
-      </Alert>
-      <Button onClick={() => reset()} color="destructive" size="sm">
-        Try again
-      </Button>
-    </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    // Log the error to an error reporting service
+    console.error(error);
+    
+    // Check if it's a 403 error (access denied)
+    if (error?.message?.includes('403') || error?.status === 403) {
+      router.push('/error-page/403');
+    } else {
+      // For all other errors, redirect to 500 error page
+      router.push('/error-page/500');
+    }
+  }, [error, router]);
+
+  return null; // This component won't render anything as we're redirecting
 }

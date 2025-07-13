@@ -156,3 +156,48 @@ export const userAPI = {
   }
   
 };
+
+// Vérifier si l'utilisateur a un rôle spécifique
+export const hasRole = (requiredRole) => {
+  const user = getUser();
+  if (!user) return false;
+  return user.role === requiredRole;
+};
+
+// Vérifier si l'utilisateur a un des rôles requis
+export const hasAnyRole = (requiredRoles) => {
+  const user = getUser();
+  if (!user) return false;
+  return requiredRoles.includes(user.role);
+};
+ 
+// Vérifier si l'utilisateur est super admin
+export const isSuperAdmin = () => {
+  return hasRole('SUPER_ADMIN');
+};
+
+// Vérifier si l'utilisateur est admin
+export const isAdmin = () => {
+  return hasRole('ADMIN');
+};
+
+// Vérifier si l'utilisateur est driver
+export const isDriver = () => {
+  return hasRole('DRIVER');
+};
+
+// Vérifier si l'utilisateur est parent
+export const isParent = () => {
+  return hasRole('PARENT');
+};
+
+// Vérifier si l'utilisateur est responsable
+export const isResponsible = () => {
+  return hasRole('RESPONSIBLE');
+};
+
+// Obtenir le rôle de l'utilisateur actuel
+export const getCurrentUserRole = () => {
+  const user = getUser();
+  return user ? user.role : null;
+};

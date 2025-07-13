@@ -1,12 +1,13 @@
-// pages/driver/DailyTripDetailsPage.jsx
-'use client';
+"use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import driverService from '@/services/driverService';
 import { MarkAttendanceModal } from '../MarkAttendanceModal';
 import { ReportIncidentModal } from '../ReportIncidentModal';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card, CardContent, CardHeader, CardTitle, CardDescription,
+} from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
@@ -16,23 +17,17 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 
-// Import Leaflet components for the embedded map
+// Leaflet
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-
-// Fix for default Leaflet marker icons
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+ 
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -41,7 +36,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow.src,
 });
 
-export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
+export const DailyTripDetailsPage = () => {
+  const [dailyTrips, setDailyTrips] = useState([]);
+  const [selectedTripId, setSelectedTripId] = useState(null);
   const [dailyTrip, setDailyTrip] = useState(null);
   const [students, setStudents] = useState([]);
   const [stops, setStops] = useState([]);
@@ -49,104 +46,98 @@ export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
   const [isTrackingActive, setIsTrackingActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dailyTrips, setDailyTrips] = useState([]);
 
-  // Modal states
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [attendanceModalStudentId, setAttendanceModalStudentId] = useState(null);
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] = useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
 
-  // Function to fetch daily trip data
   const fetchDailyTripData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Fetch all daily trips first
-      const tripsResponse = await driverService.getDailyTrips();
-      setDailyTrips(tripsResponse);
-      
-      // If no specific trip ID is provided, use the first one
-      const tripIdToFetch = dailyTripId || (tripsResponse.length > 0 ? tripsResponse[0].id : null);
-      
-      if (tripIdToFetch) {
-        const tripDetails = await driverService.getTripDetails(tripIdToFetch);
+      const trips = await driverService.getDailyTrips();
+      setDailyTrips(trips);
+      console.log("Current dailyTrips:", trips);
+      if (selectedTripId) {
+        const tripDetails = await driverService.getTripDetails(selectedTripId);
         setDailyTrip(tripDetails);
-        
-        // Extract students from tripDetails
-        const tripStudents = tripDetails.trip?.tripStudents?.map(ts => ts.student) || [];
-        setStudents(tripStudents);
-        
-        // Extract stops from tripDetails
-        const routeStops = tripDetails.trip?.route?.stops || [];
-        setStops(routeStops);
+        setStudents(tripDetails.trip?.tripStudents?.map(ts => ts.student) || []);
+        setStops(tripDetails.trip?.route?.stops || []);
+       
+      } else {
+        setDailyTrip(null);
+        setStudents([]);
+        setStops([]);
       }
-      
+
       setLoading(false);
     } catch (err) {
       setError(err.message);
       setLoading(false);
     }
-  }, [dailyTripId]);
+  }, [selectedTripId]);
 
   useEffect(() => {
     fetchDailyTripData();
   }, [fetchDailyTripData]);
-
-  // Helper Functions
   const getAttendanceStatusForStudent = useCallback((studentId) => {
-    if (!dailyTrip || !dailyTrip.attendances) return null;
-    const attendance = dailyTrip.attendances.find(a => a.studentId === studentId && a.type === 'DEPART');
-    return attendance?.status || 'ABSENT';
-  }, [dailyTrip]);
+    if (!dailyTrip?.attendances) return 'NON_MARQUE'; // Return a specific value for "Non marqué"
+    const a = dailyTrip.attendances.find(att => att.studentId === studentId && att.type === 'DEPART');
+    return a?.status || 'NON_MARQUE'; // Use 'NON_MARQUE' if status is not found
+}, [dailyTrip]);
+ 
+const getAttendanceText = (status) => ({
+    PRESENT: 'Présent',
+    ABSENT: 'Absent',
+    LATE: 'En Retard',
+    NON_MARQUE: 'Non marqué', // Add the text for 'NON_MARQUE'
+}[status] || 'Non marqué'); // Fallback in case of unexpected status
 
-  const getAttendanceText = (status) => {
-    switch (status) {
-      case 'PRESENT': return 'Présent';
-      case 'ABSENT': return 'Absent';
-      case 'LATE': return 'En Retard';
-      default: return 'Non marqué';
+const getAttendanceColor = (status) => ({
+    PRESENT: 'green',
+    ABSENT: 'red',
+    LATE: 'yellow',
+    NON_MARQUE: 'gray', // Add the color for 'NON_MARQUE'
+}[status] || 'gray');
+
+  const getTripStatusText = (s) => ({
+    PENDING: 'En attente',
+    ONGOING: 'En cours',
+    COMPLETED: 'Terminé',
+    CANCELED: 'Annulé',
+  }[s] || 'Inconnu');
+
+  const getTripStatusColor = (s) => ({
+    PENDING: 'blue',
+    ONGOING: 'yellow',
+    COMPLETED: 'green',
+    CANCELED: 'red',
+  }[s] || 'gray');
+  const mapStatusColorToTailwind = (statusColor) => {
+    switch (statusColor) {
+      case 'blue':
+        return 'text-blue-600 border-blue-600';
+      case 'yellow':
+        return 'text-yellow-600 border-yellow-600';
+      case 'green':
+        return 'text-green-600 border-green-600';
+      case 'red':
+        return 'text-red-600 border-red-600';
+      case 'gray':
+        return 'text-gray-600 border-gray-600';
+      default:
+        return 'text-gray-600 border-gray-600'; // Default for unknown colors
     }
   };
 
-  const getAttendanceColor = (status) => {
-    switch (status) {
-      case 'PRESENT': return 'green';
-      case 'ABSENT': return 'red';
-      case 'LATE': return 'yellow';
-      default: return 'gray';
-    }
-  };
-
-  const getTripStatusColor = (s) => {
-    switch (s) {
-      case 'PENDING': return 'blue';
-      case 'ONGOING': return 'yellow';
-      case 'COMPLETED': return 'green';
-      case 'CANCELED': return 'red';
-      default: return 'gray';
-    }
-  };
-
-  const getTripStatusText = (s) => {
-    switch (s) {
-      case 'PENDING': return 'En attente';
-      case 'ONGOING': return 'En cours';
-      case 'COMPLETED': return 'Terminé';
-      case 'CANCELED': return 'Annulé';
-      default: return 'Inconnu';
-    }
-  };
-
-  // Handlers
   const handleUpdateTripStatus = async (newStatus) => {
     try {
       await driverService.updateTripStatus(dailyTrip.id, newStatus);
-      const updatedTrip = await driverService.getTripDetails(dailyTrip.id);
-      setDailyTrip(updatedTrip);
-      toast.success(`Statut du trajet mis à jour à "${getTripStatusText(newStatus)}"`);
-    } catch (err) {
-      toast.error("Échec de la mise à jour du statut du trajet.");
+      const updated = await driverService.getTripDetails(dailyTrip.id);
+      setDailyTrip(updated);
+      toast.success(`Statut mis à jour à "${getTripStatusText(newStatus)}"`);
+    } catch {
+      toast.error("Erreur lors de la mise à jour.");
     }
   };
 
@@ -158,57 +149,163 @@ export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
 
   const handleAttendanceMarked = async () => {
     await fetchDailyTripData();
-    toast.success('Présence mise à jour!');
-  };
-
-  const handleOpenIncidentModal = () => {
-    setIsIncidentModalOpen(true);
+    toast.success("Présence mise à jour !");
   };
 
   const handleIncidentReported = async () => {
     await fetchDailyTripData();
-    toast.success('Incident signalé avec succès !');
+    toast.success("Incident signalé !");
   };
+ 
+
+  // Define handleOpenIncidentModal
+  const handleOpenIncidentModal = () => {
+    setIsIncidentModalOpen(true);
+  };
+
+  
 
   const handleToggleTracking = () => {
-    setIsTrackingActive(!isTrackingActive);
-    toast(isTrackingActive ? "Suivi GPS désactivé" : "Suivi GPS activé");
+    setIsTrackingActive(prev => !prev);
+    toast(isTrackingActive ? "Suivi désactivé" : "Suivi activé");
   };
 
-  if (loading) {
+  // ----------- AFFICHAGE DE LA LISTE DES TRAJETS -----------
+  if (!selectedTripId) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Icon icon="heroicons:arrow-path" className="h-8 w-8 mx-auto animate-spin" />
-          <p className="mt-2">Chargement des données du trajet...</p>
+      <div className="space-y-6 p-6">
+        <h1 className="text-2xl font-bold">Liste des Trajets du Jour</h1>
+        {loading ? (
+          <div className="text-center py-8">
+            <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin mx-auto" />
+            <p>Chargement...</p>
+          </div>
+        ) : dailyTrips.length === 0 ? (
+          <p>Aucun trajet disponible.</p>
+        ) : (
+          <div>
+          
+
+            {/* Table for assigned trips */}
+            <Card className="shadow-sm">
+  <CardContent className="p-0">
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="min-w-[180px]">Trajet Principal</TableHead>
+            <TableHead className="min-w-[150px]">Bus</TableHead>
+            {/* Changed "Chauffeur" to "Période" */}
+            <TableHead className="min-w-[150px]">Période</TableHead>
+            <TableHead className="min-w-[120px]">Statut</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {dailyTrips.map((dTrip) => (
+            <TableRow
+              key={dTrip.id}
+              className={cn(
+                selectedTripId === dTrip.id ? "bg-muted" : "hover:bg-default-50",
+                "cursor-pointer"
+              )}
+              onClick={() => setSelectedTripId(dTrip.id)}
+            >
+              <TableCell>
+                <div className="space-y-1">
+                  <div className="font-medium text-default-800">{dTrip.trip?.name || 'N/A'}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {dTrip.trip?.route?.name || 'N/A'}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  <div className="font-medium text-default-800">{dTrip.trip?.bus?.plateNumber || 'N/A'}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {dTrip.trip?.bus?.marque || 'N/A'}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  {/* Displaying "Matin" or "Soir" based on dTrip.timeSlot */}
+                  <div className="font-medium text-default-800">
+                    {dTrip.timeSlot ? (dTrip.timeSlot.toLowerCase() === 'morning' ? 'Matin' : 'Soir') : 'N/A'}
+                  </div>
+                  {/* If you had a different piece of data to display here for "Période" secondary info, you'd put it here */}
+                  <div className="text-sm text-muted-foreground">
+                    {/* You could add more detail here, e.g., actual time, if available */}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-sm font-medium",
+                    mapStatusColorToTailwind(getTripStatusColor(dTrip.status))
+                  )}
+                >
+                  <Icon icon="heroicons:signal" className="h-3 w-3 mr-1" />
+                  {getTripStatusText(dTrip.status)}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+          {dailyTrips.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                Aucun trajet assigné pour le moment.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  </CardContent>
+</Card>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Affichage erreur
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen text-center">
+        <div>
+          <Icon icon="heroicons:exclamation-triangle" className="h-8 w-8 text-red-500 mx-auto" />
+          <p className="mt-2 text-red-600">{error}</p>
+          <Button className="mt-4" onClick={() => window.location.reload()}>Recharger</Button>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  // Affichage si loading
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-red-500">
-          <Icon icon="heroicons:exclamation-triangle" className="h-8 w-8 mx-auto" />
-          <p className="mt-2">{error}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Réessayer
-          </Button>
+      <div className="flex items-center justify-center h-screen text-center">
+        <div>
+        <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin mx-auto" />
+        <p className="mt-2">Chargement du trajet...</p>
         </div>
       </div>
     );
   }
+
+ 
 
   if (!dailyTrip) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-4">
-          {onGoBackToDashboard && (
-            <Button onClick={onGoBackToDashboard} variant="ghost" size="icon">
+       
+           <Button onClick={() => setSelectedTripId(null)} variant="ghost" size="icon">
               <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
             </Button>
-          )}
+       
           <div>
             <h1 className="text-3xl font-bold text-default-900">Mon Trajet du Jour</h1>
             <p className="text-default-600">Détails du trajet actuel et actions.</p>
@@ -245,11 +342,9 @@ export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {onGoBackToDashboard && (
-            <Button onClick={onGoBackToDashboard} variant="ghost" size="icon">
+        <Button onClick={() => setSelectedTripId(null)} variant="ghost" size="icon">
               <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
             </Button>
-          )}
           <div>
             <h1 className="text-3xl font-bold text-default-900">Mon Trajet du Jour</h1>
             <p className="text-default-600">Gestion complète du trajet et des élèves</p>
@@ -632,7 +727,7 @@ export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
       <MarkAttendanceModal
         isOpen={isAttendanceModalOpen}
         setIsOpen={setIsAttendanceModalOpen}
-        dailyTripId={dailyTrip.id}
+        dailyTripId={selectedTripId}
         studentId={attendanceModalStudentId}
         currentStatus={attendanceModalCurrentStatus}
         onAttendanceMarked={handleAttendanceMarked}
@@ -642,7 +737,7 @@ export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
       <ReportIncidentModal
         isOpen={isIncidentModalOpen}
         setIsOpen={setIsIncidentModalOpen}
-        dailyTripId={dailyTrip.id}
+        dailyTripId={selectedTripId}
         driverId={dailyTrip.driverId}
         onIncidentReported={handleIncidentReported}
       />

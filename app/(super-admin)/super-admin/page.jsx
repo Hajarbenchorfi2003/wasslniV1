@@ -96,14 +96,13 @@ const SuperAdminDashboardPage = () => {
 
         fetchData();
     }, []);
-
     // --- Aggregated Data for Dashboard ---
     const totalSchools = dashboardData.schools.length;
     const activeSchools = dashboardData.schools.filter(school => school.status === 'ACTIVE').length;
     const inactiveSchools = totalSchools - activeSchools;
 
     const totalEstablishments = dashboardData.establishments.length;
-    const totalStudents = dashboardData.students.length;
+    const totalStudents = dashboardData.students.data?.length || 0;
     const totalBuses = dashboardData.buses.length;
     const totalRoutes = dashboardData.routes.length;
     
@@ -353,7 +352,7 @@ const SuperAdminDashboardPage = () => {
                                     <Link href="/super-admin/routes" className="text-xs text-primary hover:underline mt-2">Voir</Link>
                                 </div>
                                 {/* Total Users */}
-                                <div className="p-4 bg-default-50 rounded-lg flex flex-col items-center justify-center col-span-full md:col-span-1 lg:col-span-1">
+                                <div className="p-4 bg-default-50 rounded-lg flex flex-col items-center justify-center">
                                     <div className="flex items-center gap-2 mb-2">
                                       <Icon icon="heroicons:user-group" className="h-6 w-6 text-purple-500 mb-2" />
                                       <span className="text-sm font-medium text-default-600">Utilisateurs</span>
@@ -444,19 +443,19 @@ const SuperAdminDashboardPage = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                <Link href="/super-admin/users?role=ADMIN" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/admins" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:user-shield" className="h-5 w-5 text-blue-500" />
                                     <span className="font-medium text-default-700">Gérer les Admins ({totalAdmins})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=RESPONSIBLE" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/responsables" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:user" className="h-5 w-5 text-teal-500" />
                                     <span className="font-medium text-default-700">Gérer les Responsables ({totalResponsible})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=DRIVER" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/drivers" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:truck" className="h-5 w-5 text-indigo-500" />
                                     <span className="font-medium text-default-700">Gérer les Chauffeurs ({totalDrivers})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=PARENT" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/parents" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:home" className="h-5 w-5 text-rose-500" />
                                     <span className="font-medium text-default-700">Gérer les Parents ({totalParents})</span>
                                 </Link>

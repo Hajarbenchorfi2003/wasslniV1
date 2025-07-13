@@ -153,12 +153,13 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
  console.log("formdata",formData)
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent  className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader className="px-6">
-          <DialogTitle className="text-base font-medium text-default-700 ">{editingTrip ? 'Modifier le Trajet' : 'Ajouter un nouveau Trajet'}</DialogTitle>
+          <DialogTitle className="text-base font-medium text-default-700 ">
+            {editingTrip ? 'Modifier le Trajet' : 'Ajouter un nouveau Trajet'}
+          </DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[70vh] px-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 px-6 max-h-[70vh] overflow-y-auto">
           <div>
             <Label htmlFor="name" className="text-right">Nom du Trajet</Label>
             <Input id="name" name="name" value={formData.name} onChange={handleChange} className="col-span-3" required />
@@ -171,12 +172,14 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Sélectionner un établissement" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent  >
+                <ScrollArea className="h-[100px]">
                   {establishments.map(est => (
                     <SelectItem key={est.id} value={String(est.id)}>
                       {est.name}
                     </SelectItem>
                   ))}
+                  </ScrollArea>
                 </SelectContent>
               </Select>
             </div>
@@ -195,7 +198,8 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
       <SelectTrigger className="col-span-3">
         <SelectValue placeholder="Sélectionner une route" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent  >
+      <ScrollArea className="max-h-[100px]">
         {filteredRoutes.length > 0 ? (
           filteredRoutes.map(route => (
             <SelectItem key={route.id} value={String(route.id)}>
@@ -205,6 +209,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
         ) : (
           <div className="text-sm text-gray-500 px-4 py-2">Aucune route disponible pour cet établissement.</div>
         )}
+        </ScrollArea>
       </SelectContent>
     </Select>
   ) : (
@@ -225,7 +230,8 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
            <SelectTrigger className="col-span-3">
            <SelectValue placeholder="Sélectionner un bus" />
            </SelectTrigger>
-          <SelectContent>
+          <SelectContent >
+          <ScrollArea className="h-[100px]">
            {filteredBuses.length === 0 ? (
              <p className="text-sm text-gray-500 pl-2">Aucun bus disponible pour cet établissement.</p>
               ) : (
@@ -235,6 +241,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
             </SelectItem>
            ))
           )}
+          </ScrollArea>
          </SelectContent>
          </Select>
        </div>
@@ -254,6 +261,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
         <SelectValue placeholder="Sélectionner un chauffeur" />
       </SelectTrigger>
       <SelectContent>
+      <ScrollArea className="h-[100px]">
         {filteredDrivers.length === 0 ? (
           <p className="text-sm text-gray-500 pl-2">Aucun chauffeur disponible pour cet établissement.</p>
         ) : (
@@ -263,6 +271,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
             </SelectItem>
           ))
         )}
+        </ScrollArea>
       </SelectContent>
     </Select>
   </div>
@@ -274,7 +283,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
           {students && students.length > 0 && (
             <div>
               <Label className="text-right mt-2">Élèves Associés</Label>
-              <div className="col-span-3 space-y-2 max-h-48 overflow-y-auto border p-2 rounded">
+              <ScrollArea className="col-span-3 space-y-2 max-h-48 overflow-y-auto border p-2 rounded">
                 {students.map(student => (
                   <div key={student.id} className="flex items-center space-x-2">
                     <Checkbox
@@ -285,7 +294,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
                     <Label htmlFor={`student-${student.id}`}>{student.fullname}</Label>
                   </div>
                 ))}
-              </div>
+              </ScrollArea>
             </div>
           )}
 
@@ -293,7 +302,6 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
             <Button type="submit">Sauvegarder</Button>
           </DialogFooter>
         </form>
-        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ModalTrip } from '@/components/models/ModalTrip';
 import TripCard from './TripCard';
 import {fetchAllEstablishments} from '@/services/etablissements';
@@ -334,12 +335,15 @@ useEffect(() => {
       <SelectValue placeholder="Filtrer par Route" />
     </SelectTrigger>
     <SelectContent>
+    <ScrollArea className="h-[150px]">
       <SelectItem value="all">Toutes les Routes</SelectItem>
+      
       {allRoutes.map(route => (
         <SelectItem key={route.id} value={String(route.id)}>
           {route.name}
         </SelectItem>
       ))}
+      </ScrollArea>
     </SelectContent>
   </Select>
 
@@ -349,12 +353,14 @@ useEffect(() => {
       <SelectValue placeholder="Filtrer par Bus" />
     </SelectTrigger>
     <SelectContent>
+    <ScrollArea className="h-[150px]">
       <SelectItem value="all">Tous les Bus</SelectItem>
       {allBuses.map(bus => (
         <SelectItem key={bus.id} value={String(bus.id)}>
           {bus.plateNumber}
         </SelectItem>
       ))}
+      </ScrollArea>
     </SelectContent>
   </Select>
 
@@ -363,13 +369,14 @@ useEffect(() => {
     <SelectTrigger className="w-full">
       <SelectValue placeholder="Filtrer par Chauffeur" />
     </SelectTrigger>
-    <SelectContent>
+    <SelectContent className="max-h-[100px] overflow-y-auto">
       <SelectItem value="all">Tous les Chauffeurs</SelectItem>
       {allDrivers.map(driver => (
         <SelectItem key={driver.id} value={String(driver.id)}>
           {driver.fullname}
         </SelectItem>
       ))}
+      
     </SelectContent>
   </Select>
 
@@ -379,12 +386,14 @@ useEffect(() => {
       <SelectValue placeholder="Filtrer par Établissement" />
     </SelectTrigger>
     <SelectContent>
+    <ScrollArea className="h-[150px]">
       <SelectItem value="all">Tous les Établissements</SelectItem>
       {allEstablishments.map(est => (
         <SelectItem key={est.id} value={String(est.id)}>
           {est.name}
         </SelectItem>
       ))}
+      </ScrollArea>
     </SelectContent>
   </Select>
 </div>

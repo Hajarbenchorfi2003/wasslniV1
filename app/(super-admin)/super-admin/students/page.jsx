@@ -27,22 +27,20 @@ const StudentsPage = () => {
 
   useEffect(() => {
 
-  let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
+  let isMounted = true;  
 
   async function Establishments() {
     if (loading || establishments.length > 0) {
-      // 🚫 Évite de recharger si déjà en cours ou déjà chargé
       return;
     }
 
     setLoading(true);
     try {
-      const data = await fetchAllEstablishments(); // Assurez-vous que cette fonction renvoie bien un tableau
+      const data = await fetchAllEstablishments(); 
       console.log("Données reçues depuis l'API:", data);
 
      
-        // Met à jour la liste des responsables
-        setEstablishments(data);
+         setEstablishments(data);
 
        
     } catch (error) {
@@ -50,15 +48,14 @@ const StudentsPage = () => {
       toast.error("Impossible de charger les etablisments");
     } finally {
       if (isMounted) {
-        setLoading(false); // 🔄 Fin du chargement
+        setLoading(false);  
       }
     }
   }
 
   Establishments();
 
-  // Nettoyage pour éviter les mises à jour sur un composant non monté
-  return () => {
+   return () => {
     isMounted = false;
   };
 }, [loading]); 

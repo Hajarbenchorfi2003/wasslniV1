@@ -287,8 +287,10 @@ const getAttendanceColor = (status) => ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen text-center">
+        <div>
         <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin mx-auto" />
         <p className="mt-2">Chargement du trajet...</p>
+        </div>
       </div>
     );
   }

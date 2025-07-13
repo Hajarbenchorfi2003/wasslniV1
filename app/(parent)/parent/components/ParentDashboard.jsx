@@ -315,7 +315,7 @@ const refreshParentData = useCallback(async () => {
               className="text-primary"
             >
               <Icon icon="heroicons:check-circle" className="h-4 w-4 mr-1" />
-              Tout marquer comme lu
+              Marquer comme lu
             </Button>
           </div>
         </CardHeader>

@@ -86,7 +86,7 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
                 <Icon icon="heroicons:truck" className="h-5 w-5 text-blue-500" />
                 Informations du Bus & Chauffeur
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Bus Info */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">

@@ -335,11 +335,7 @@ export default function DriverDashboardPage() {
             <div>
               <p>Trajets aujourd'hui</p>
               <p className="text-2xl font-bold">
-                {dailyTrips.filter(
-                  (t) =>
-                    new Date(t.date).toDateString() ===
-                    new Date().toDateString()
-                ).length}
+              {dailyTrips.length}
               </p>
             </div>
           </CardContent>

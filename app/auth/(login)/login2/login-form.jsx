@@ -159,7 +159,7 @@ const LogInForm = () => {
         )}
 
         <div className="mt-5  mb-8 flex flex-wrap gap-2">
-          <div className="flex-1 flex  items-center gap-1.5 ">
+          {/* <div className="flex-1 flex  items-center gap-1.5 ">
             <Checkbox
               size="sm"
               className="border-default-300 mt-[1px]"
@@ -171,7 +171,7 @@ const LogInForm = () => {
             >
               Remember me
             </Label>
-          </div>
+          </div> */}
           <Link href="/auth/forgot2" className="flex-none text-sm text-primary">
             Forget Password?
           </Link>

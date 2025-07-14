@@ -1,5 +1,7 @@
-"use client";
 
+// pages/driver/DailyTripDetailsPage.jsx
+'use client';
+import { io } from 'socket.io-client';
 import React, { useState, useEffect, useCallback } from 'react';
 import driverService from '@/services/driverService';
 import { MarkAttendanceModal } from '../MarkAttendanceModal';
@@ -27,7 +29,8 @@ import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
- 
+import {getToken, isAuthenticated } from '@/utils/auth';
+
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -36,9 +39,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow.src,
 });
 
+
+export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
+    console.log("🧪 Component mounted");
+
 export const DailyTripDetailsPage = () => {
   const [dailyTrips, setDailyTrips] = useState([]);
   const [selectedTripId, setSelectedTripId] = useState(null);
+
   const [dailyTrip, setDailyTrip] = useState(null);
   const [students, setStudents] = useState([]);
   const [stops, setStops] = useState([]);
@@ -46,20 +54,71 @@ export const DailyTripDetailsPage = () => {
   const [isTrackingActive, setIsTrackingActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dailyTrips, setDailyTrips] = useState([]);
+  const [socket, setSocket] = useState(null);
+const [isConnected, setIsConnected] = useState(false);
+const [positionInterval, setPositionInterval] = useState(null);
+
 
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [attendanceModalStudentId, setAttendanceModalStudentId] = useState(null);
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] = useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+console.log("Token JWT:", getToken());
+// Vérifiez que le token est valide et non expiré
+useEffect(() => {
+  console.log("je suis dans connect server");
+  const newSocket = io('https://wasslni-backend.onrender.com/', {
+    auth: {
+      token: getToken()
+    }
+  });
+
+  setSocket(newSocket);
+
+  newSocket.on('connect', () => {
+    setIsConnected(true);
+    toast.success('Connecté au serveur de suivi');
+  });
+
+  newSocket.on('connect_error', (err) => {
+    toast.error(`Erreur de connexion: ${err.message}`);
+  });
+
+  newSocket.on('disconnect', () => {
+    setIsConnected(false);
+    toast.error('Déconnecté du serveur de suivi');
+  });
+
+  return () => {
+    newSocket.disconnect();
+    if (positionInterval) clearInterval(positionInterval);
+  };
+}, []);
+
+
 
   const fetchDailyTripData = useCallback(async () => {
     try {
       setLoading(true);
+
+      
+      // Fetch all daily trips first
+      const tripsResponse = await driverService.getDailyTrips();
+      setDailyTrips(tripsResponse);
+      
+      
+      // If no specific trip ID is provided, use the first one
+      const tripIdToFetch = dailyTripId || (tripsResponse.length > 0 ? tripsResponse[0].id : null);
+      
+      if (tripIdToFetch) {
+        const tripDetails = await driverService.getTripDetails(tripIdToFetch);=======
       const trips = await driverService.getDailyTrips();
       setDailyTrips(trips);
       console.log("Current dailyTrips:", trips);
       if (selectedTripId) {
         const tripDetails = await driverService.getTripDetails(selectedTripId);
+
         setDailyTrip(tripDetails);
         setStudents(tripDetails.trip?.tripStudents?.map(ts => ts.student) || []);
         setStops(tripDetails.trip?.route?.stops || []);
@@ -75,7 +134,12 @@ export const DailyTripDetailsPage = () => {
       setError(err.message);
       setLoading(false);
     }
+  }, [dailyTripId]);
+  
+console.log("all dailytrip",dailyTrips);
+
   }, [selectedTripId]);
+
 
   useEffect(() => {
     fetchDailyTripData();
@@ -163,7 +227,82 @@ const getAttendanceColor = (status) => ({
     setIsIncidentModalOpen(true);
   };
 
-  
+// Ajoutez ce useEffect pour écouter les mises à jour de position
+useEffect(() => {
+  if (!socket) return;
+
+  const handlePositionUpdate = (data) => {
+    console.log('📡 Reçu position-update:', data);
+    if (data.position) {
+      setBusPosition({
+        lat: data.position.lat,
+        lng: data.position.lng
+      });
+    }
+  };
+
+  socket.on('position-update', handlePositionUpdate);
+
+  return () => {
+    socket.off('position-update', handlePositionUpdate);
+  };
+}, [socket, dailyTrip?.id]);
+
+// Modifiez la fonction handleToggleTracking comme ceci :
+const handleToggleTracking = () => {
+  if (!isTrackingActive) {
+    if (!navigator.geolocation) {
+      toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
+      return;
+    }
+
+    // Vérifiez que le socket et le trip sont bien disponibles
+    if (!socket || !dailyTrip?.id) {
+      toast.error('Connexion au serveur non établie ou trajet non sélectionné');
+      return;
+    }
+
+    const interval = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude: lat, longitude: lng } = position.coords;
+          console.log("Envoi position pour le trajet:", dailyTrip.id);
+          
+          socket.emit('bus-position', {
+            dailyTripId: dailyTrip.id,
+            lat,
+            lng,
+            timestamp: new Date().toISOString()
+          }, (ack) => {
+            console.log('Accusé de réception du serveur:', ack);
+          });
+          
+          setBusPosition({ lat, lng });
+        },
+        (err) => {
+          console.error('Erreur GPS:', err);
+          toast.error(`Erreur GPS: ${err.message}`);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    }, 3000);
+
+    setPositionInterval(interval);
+    setIsTrackingActive(true);
+    toast.success('Suivi GPS activé');
+  } else {
+    if (positionInterval) clearInterval(positionInterval);
+    setIsTrackingActive(false);
+    toast.success('Suivi GPS désactivé');
+  }
+};
+console.log(dailyTrip)
+
+  if (loading) {
 
   const handleToggleTracking = () => {
     setIsTrackingActive(prev => !prev);
@@ -499,14 +638,25 @@ const getAttendanceColor = (status) => ({
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg text-default-700">Actions rapides</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button 
-                    onClick={handleToggleTracking} 
-                    variant={isTrackingActive ? "destructive" : "default"}
-                    className="flex gap-2"
-                  >
-                    <Icon icon="heroicons:map-pin" className="h-6 w-6" />
-                    {isTrackingActive ? 'Désactiver GPS' : 'Activer GPS'}
-                  </Button>
+                  {/* Dans la section "Suivi GPS en Temps Réel" */}
+<div className="p-4 bg-blue-50 rounded-lg">
+  <div className="flex items-center gap-2 mb-2">
+    <Icon icon="heroicons:information-circle" className="h-5 w-5 text-blue-600" />
+    <span className="font-medium text-blue-800">Statut du suivi</span>
+  </div>
+  <p className="text-sm text-blue-700">
+    {isTrackingActive 
+      ? "Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel."
+      : "Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus."
+    }
+  </p>
+  <p className="text-sm mt-2">
+    Statut WebSocket: 
+    <Badge variant="outline" className="ml-2">
+      {isConnected ? 'Connecté' : 'Déconnecté'}
+    </Badge>
+  </p>
+</div>
                   <Button 
                     onClick={handleOpenIncidentModal} 
                     variant="outline"

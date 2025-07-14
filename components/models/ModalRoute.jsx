@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
+import { ScrollArea } from "@/components/ui/scroll-area";
 export const ModalRoute = ({ isOpen, onClose, editingRoute, onSave, establishments }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -85,11 +85,13 @@ export const ModalRoute = ({ isOpen, onClose, editingRoute, onSave, establishmen
                   <SelectValue placeholder="Sélectionner un établissement" />
                 </SelectTrigger>
                 <SelectContent>
+                <ScrollArea className="h-[100px]">
                   {establishments.map(est => (
                     <SelectItem key={est.id} value={String(est.id)}>
                       {est.name}
                     </SelectItem>
                   ))}
+                  </ScrollArea>
                 </SelectContent>
               </Select>
             </div>

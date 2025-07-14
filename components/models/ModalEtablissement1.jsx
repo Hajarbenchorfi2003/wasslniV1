@@ -11,6 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import EtablissementResponsableForm from "./EtablissementResponsableForm"; // Assurez-vous du chemin correct
 import { demoData } from '@/data/data'; // Importez vos données de démonstration
 import toast from 'react-hot-toast'; // Pour les notifications
+  import {fetchResponsibles,register} from '@/services/user';
+  import {createEstablishments,updateEstablishments} from '@/services/etablissements';
 
 const ModalEtablissement = ({
   isOpen,
@@ -21,12 +23,46 @@ const ModalEtablissement = ({
   fixedSchoolId, // ID de l'école si l'établissement est lié à une école spécifique
 }) => {
   const [existingResponsables, setExistingResponsables] = useState([]);
+   const[loading,setLoading] = useState(false);
+useEffect(() => {
+  let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
 
+  async function loadResponsibles() {
+    if (loading || existingResponsables.length > 0) {
+      // 🚫 Évite de recharger si déjà en cours ou déjà chargé
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await fetchResponsibles(); // Assurez-vous que cette fonction renvoie bien un tableau
+      console.log("Données reçues depuis l'API:", data);
+
+     
+        // Met à jour la liste des responsables
+        setExistingResponsables(data);
+
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des responsables', error);
+      toast.error("Impossible de charger les responsables");
+    } finally {
+      if (isMounted) {
+        setLoading(false); // 🔄 Fin du chargement
+      }
+    }
+  }
+
+  loadResponsibles();
+ 
+  // Nettoyage pour éviter les mises à jour sur un composant non monté
+  return () => {
+    isMounted = false;
+  };
+}, [loading,existingResponsables]);
+console.log("responsable",existingResponsables)
   // Récupérer tous les responsables existants (rôle 'RESPONSIBLE')
-  useEffect(() => {
-    const responsables = demoData.users.filter(u => u.role === 'RESPONSIBLE');
-    setExistingResponsables(responsables);
-  }, [demoData.users]); 
+
 
   // Fonction pour déterminer les valeurs par défaut initiales pour EtablissementResponsableForm
   const getInitialDefaultValues = () => {
@@ -91,93 +127,59 @@ const ModalEtablissement = ({
     };
   };
 
-  const handleSave = (formData) => {
+  const handleSave = async (formData) => {
+     console.log("formData",formData)
     try {
-        let updatedEtablissement = { ...formData.etablissement };
-        let linkedResponsableId = null; // Sera mis à jour en fonction du choix
-        let etablissementSchoolId = formData.schoolId; // ID de l'école choisi dans le formulaire ou fixe
+      let responsableId=null;
+      console.log(!formData.existingResponsableId);
+          if (!formData.existingResponsableId) {
+            
+               const responsableAdd={...formData.responsable,
+                    role: 'RESPONSIBLE',
+                  ecolId:formData.schoolId}
+                  console.log("usrs",responsableAdd)
+                 const addNewResponsable=await register(responsableAdd)
+                 responsableId=addNewResponsable.id
+            }else{
+             responsableId = formData.existingResponsableId;
+            }
+             const updatedata = {
+             ...formData.etablissement,
+               ecoleId: formData.schoolId,
+              responsableId,
+    }; 
+    console.log("data updated",updatedata);
 
         if (editingEtablissement) {
-            // --- MODIFICATION D'UN ÉTABLISSEMENT EXISTANT ---
-            const etablissementIndex = demoData.establishments.findIndex(e => e.id === editingEtablissement.id);
-            if (etablissementIndex !== -1) {
-                updatedEtablissement = {
-                    ...demoData.establishments[etablissementIndex], // Garde l'ID existant
-                    ...formData.etablissement, // Met à jour les champs du formulaire
-                    schoolId: etablissementSchoolId ? parseInt(etablissementSchoolId) : null, // Assurez-vous que c'est un nombre ou null
-                };
-            } else {
-                console.warn("Établissement à modifier non trouvé:", editingEtablissement.id);
-                toast.error("Erreur: Établissement à modifier non trouvé.");
-                return;
-            }
-
-            // Gère le responsable : création ou lien existant
-            if (formData.addNewResponsable) {
-                // Créer un nouveau responsable
-                const newResponsableId = Math.max(...demoData.users.map(u => u.id), 0) + 1;
-                const newResponsable = { 
-                    id: newResponsableId,
-                    ...formData.responsable, 
-                    role: 'RESPONSIBLE',
-                    firstName: formData.responsable.fullname.split(' ')[0] || '',
-                    lastName: formData.responsable.fullname.split(' ').slice(1).join(' ') || '',
-                    // Ajoutez d'autres champs par défaut si nécessaire (e.g., isActive)
-                    isActive: formData.responsable.isActive !== undefined ? formData.responsable.isActive : true,
-                };
-                demoData.users.push(newResponsable);
-                linkedResponsableId = newResponsableId;
-            } else if (formData.existingResponsableId) {
-                // Lier à un responsable existant
-                linkedResponsableId = parseInt(formData.existingResponsableId);
-            }
-            updatedEtablissement.responsableId = linkedResponsableId;
-            demoData.establishments[etablissementIndex] = updatedEtablissement; // Met à jour l'objet dans demoData
+          
+            await updateEstablishments(editingEtablissement.id,updatedata)
 
             toast.success('Établissement modifié avec succès');
 
         } else {
+
+            
             // --- AJOUT D'UN NOUVEL ÉTABLISSEMENT ---
-            const newEtablissementId = Math.max(...demoData.establishments.map(e => e.id), 0) + 1;
-            updatedEtablissement = {
-                id: newEtablissementId,
-                ...formData.etablissement,
-                isActive: true, // Par défaut, actif pour un nouvel établissement
-                schoolId: etablissementSchoolId ? parseInt(etablissementSchoolId) : null,
-            };
+           
             
-            // Gère le responsable pour le nouvel établissement
-            if (formData.addNewResponsable) {
-                const newResponsableId = Math.max(...demoData.users.map(u => u.id), 0) + 1;
-                const newResponsable = {
-                    id: newResponsableId,
-                    ...formData.responsable,
-                    role: 'RESPONSIBLE',
-                    firstName: formData.responsable.fullname.split(' ')[0] || '',
-                    lastName: formData.responsable.fullname.split(' ').slice(1).join(' ') || '',
-                    isActive: formData.responsable.isActive !== undefined ? formData.responsable.isActive : true,
-                };
-                demoData.users.push(newResponsable);
-                linkedResponsableId = newResponsableId;
-            } else if (formData.existingResponsableId) {
-                linkedResponsableId = parseInt(formData.existingResponsableId);
-            }
-            updatedEtablissement.responsableId = linkedResponsableId;
-            
-            demoData.establishments.push(updatedEtablissement); // Ajoute le nouvel établissement à demoData
+            await createEstablishments(updatedata)
+           
             toast.success('Établissement ajouté avec succès');
         }
 
-        onSave(updatedEtablissement); // Notifie le parent que la sauvegarde est terminée
+        onSave(updatedata); // Notifie le parent que la sauvegarde est terminée
         setIsOpen(false); // Ferme le modal
 
     } catch (error) {
-        console.error('Erreur lors de la sauvegarde:', error);
-        toast.error('Erreur lors de la sauvegarde');
-    }
+  console.error('Erreur lors de la sauvegarde:', error);
+  toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde');
+  toast.error(error.response?.data?.message || 'Erreur lors de la sauvegarde');
+
+}
   };
 
   const currentDefaultValues = getInitialDefaultValues();
+ 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

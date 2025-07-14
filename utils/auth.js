@@ -1,4 +1,5 @@
-//utils/auth.js
+
+
  import axios from 'axios';
 
 // Récupérer l'utilisateur depuis le localStorage
@@ -55,7 +56,6 @@ export const getToken = () => {
 
 // Service d'authentification avec API backend
 export const authAPI = {
-  // ✅ Connexion à l'API : http://localhost:5000/api/user/login
   async login(email, password) {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_SITE_URL}/user/login`, {
@@ -112,7 +112,7 @@ export const userAPI = {
   async getProfile() {
     try {
       const token = getToken();
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_SITE_URL}/api/user/voirmonprofil`, {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_SITE_URL}/user/voirmonprofil`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
@@ -125,7 +125,7 @@ export const userAPI = {
   async updateProfile(userData) {
     try {
       const token = getToken();
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/api/user/voirmonprofil`, userData, {
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/voirmonprofil`, userData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
@@ -138,13 +138,66 @@ export const userAPI = {
   async changePassword(passwordData) {
     try {
       const token = getToken();
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/modifier-mot-de-passe`, passwordData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/user/modifier-mot-de-passe`,
+        {
+          ancienPassword: passwordData.currentPassword,
+          nouveauPassword: passwordData.newPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('❌ Failed to change password:', error);
       throw error.response?.data || { message: 'Erreur lors du changement de mot de passe' };
     }
   }
+  
+};
+
+// Vérifier si l'utilisateur a un rôle spécifique
+export const hasRole = (requiredRole) => {
+  const user = getUser();
+  if (!user) return false;
+  return user.role === requiredRole;
+};
+
+// Vérifier si l'utilisateur a un des rôles requis
+export const hasAnyRole = (requiredRoles) => {
+  const user = getUser();
+  if (!user) return false;
+  return requiredRoles.includes(user.role);
+};
+ 
+// Vérifier si l'utilisateur est super admin
+export const isSuperAdmin = () => {
+  return hasRole('SUPER_ADMIN');
+};
+
+// Vérifier si l'utilisateur est admin
+export const isAdmin = () => {
+  return hasRole('ADMIN');
+};
+
+// Vérifier si l'utilisateur est driver
+export const isDriver = () => {
+  return hasRole('DRIVER');
+};
+
+// Vérifier si l'utilisateur est parent
+export const isParent = () => {
+  return hasRole('PARENT');
+};
+
+// Vérifier si l'utilisateur est responsable
+export const isResponsible = () => {
+  return hasRole('RESPONSIBLE');
+};
+
+// Obtenir le rôle de l'utilisateur actuel
+export const getCurrentUserRole = () => {
+  const user = getUser();
+  return user ? user.role : null;
 };

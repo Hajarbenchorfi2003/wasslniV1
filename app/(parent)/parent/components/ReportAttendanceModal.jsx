@@ -1,4 +1,3 @@
-// components/parent/ReportAttendanceModal.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -15,88 +14,82 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import toast from 'react-hot-toast';
-import { addConcernOrFeedback, getUserById, getTripById, getDailyTripsForDriver } from '@/data/data';
-import { demoData, getChildren } from '@/data/data';
+import parentService from '@/services/parentService';
 
-export const ReportAttendanceModal = ({ isOpen, setIsOpen, parentId, childId, dailyTripId, onAttendanceReported }) => {
+export const ReportAttendanceModal = ({ isOpen, setIsOpen, childId, dailyTripId, onAttendanceReported }) => {
   const [status, setStatus] = useState('ABSENT');
   const [description, setDescription] = useState('');
   const [childName, setChildName] = useState('');
   const [tripName, setTripName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-console.log(childId);
+
   useEffect(() => {
-    if (isOpen && childId && dailyTripId) {
-      // Récupérer les détails de l'enfant et du trajet
-      const numericDailyTripId = typeof dailyTripId === 'string' ? parseInt(dailyTripId) : dailyTripId;
-      const children = getChildren(childId);
-      const child = children.length > 0 ? children[0] : null;
-      // Récupérer directement depuis demoData.dailyTrips
-    const dailyTrip = demoData.dailyTrips.find(dt => dt.id === numericDailyTripId);
-    
-    // Récupérer les infos du trajet
-    const trip = dailyTrip ? demoData.trips.find(t => t.id === dailyTrip.tripId) : null;
-      
-      setChildName(child ? child.fullname : 'Enfant inconnu');
-      if (dailyTrip && trip) {
-        setTripName(`${trip.name} (${new Date(dailyTrip.date).toLocaleDateString()})`);
-      } else {
-        setTripName('Trajet inconnu');
+    const fetchData = async () => {
+      if (isOpen && childId && dailyTripId) {
+        try {
+          // Récupérer les détails de l'enfant (avec tripStudents + dailyTrips)
+          const childDetails = await parentService.getChildDetails(childId);
+          const student = childDetails?.student;
+
+          setChildName(student?.fullname || 'Enfant inconnu');
+
+          // Trouver le dailyTrip lié au dailyTripId
+          let foundDailyTrip = null;
+          for (const ts of student?.tripStudents || []) {
+            foundDailyTrip = ts.trip.dailyTrips?.find(dt => dt.id === parseInt(dailyTripId));
+            if (foundDailyTrip) {
+              foundDailyTrip.trip = ts.trip;
+              break;
+            }
+          }
+
+          if (foundDailyTrip) {
+            setTripName(`${foundDailyTrip.trip?.name || 'Trajet inconnu'} (${new Date(foundDailyTrip.date).toLocaleDateString()})`);
+          } else {
+            setTripName('Trajet non trouvé');
+          }
+
+          setDescription('');
+          setStatus('ABSENT');
+          setIsSubmitting(false);
+        } catch (error) {
+          console.error("Erreur lors de la récupération des données :", error);
+          setChildName('Erreur de chargement');
+          setTripName('Erreur de chargement');
+        }
       }
-      setDescription('');
-      setStatus('ABSENT');
-      setIsSubmitting(false);
-    }
+    };
+
+    fetchData();
   }, [isOpen, childId, dailyTripId]);
-  console.log('childId:', childId, typeof childId);
-  console.log('getChildren result:', getChildren(childId));
+
   const handleReport = async () => {
     if (!status) {
       toast.error("Veuillez sélectionner un statut (Absent ou Retard).");
       return;
     }
-
+  
     if (!childId || !dailyTripId) {
       toast.error("Informations manquantes pour le signalement.");
       return;
     }
-
+  
     setIsSubmitting(true);
   
-
     try {
-      // Trouver un responsable ou admin pour recevoir la notification
-      const adminOrResponsible = demoData.users.find(u => u.role === 'ADMIN' || u.role === 'RESPONSIBLE');
-      const recipientUserId = adminOrResponsible?.id;
-
-      if (!recipientUserId) {
-        toast.error("Impossible d'envoyer le rapport : aucun administrateur disponible.");
-        return;
+      // Ici, tu appelles directement ton backend qui crée l'absence
+      const response = await parentService.declareChildAbsence(childId);
+  
+      toast.success("L'absence a été déclarée avec succès.");
+  
+      if (onAttendanceReported) {
+        onAttendanceReported();
       }
-
-      // Appel de la fonction pour ajouter le rapport
-      const result = addConcernOrFeedback({
-        parentId: parentId || 5, // Fallback au MOCK_PARENT_ID
-        type: `ABSENCE_RETARD_${status}`,
-        title: `${childName} : Statut ${status} pour le trajet ${tripName}`,
-        message: `L'élève ${childName} a été signalé comme ${status} pour le trajet "${tripName}".\nDescription: ${description || 'Aucune.'}`,
-        recipientUserId: recipientUserId,
-      });
-
-      if (result) {
-        toast.success("Statut d'absence/retard signalé avec succès !");
-        
-        if (onAttendanceReported) {
-          onAttendanceReported();
-        }
-        
-        setIsOpen(false);
-      } else {
-        toast.error("Impossible d'envoyer le rapport. Veuillez réessayer.");
-      }
+  
+      setIsOpen(false);
     } catch (error) {
       console.error('Erreur lors du signalement:', error);
-      toast.error("Une erreur est survenue lors du signalement.");
+      toast.error("Erreur lors de la déclaration d'absence.");
     } finally {
       setIsSubmitting(false);
     }
@@ -138,13 +131,14 @@ console.log(childId);
               value={status} 
               onValueChange={setStatus} 
               className="flex space-x-6"
+              disabled={isSubmitting}
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="ABSENT" id="absent" disabled={isSubmitting} />
+                <RadioGroupItem value="ABSENT" id="absent" />
                 <Label htmlFor="absent" className="cursor-pointer">Absent</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="LATE" id="late" disabled={isSubmitting} />
+                <RadioGroupItem value="LATE" id="late" />
                 <Label htmlFor="late" className="cursor-pointer">En Retard</Label>
               </div>
             </RadioGroup>
@@ -192,3 +186,5 @@ console.log(childId);
     </Dialog>
   );
 };
+
+export default ReportAttendanceModal;

@@ -1,52 +1,46 @@
 // pages/driver/DriverDashboardPage.jsx
 'use client';
-
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  demoData,
-  getDailyTripsForDriver,
-  getStudentsByTrip,
-  getStopsByRoute,
-  getAttendanceForDailyTripAndStudent,
-  getNotificationsForUser,
-  markNotificationAsRead,
-  getUserById,
-  getTripById,
-  getBusById,
-  getRouteById,
-  updateDailyTripStatus,
-  addBusPosition,
-  getLatestBusPosition,
-} from '@/data/data';
+import driverService  from '@/services/driverService';
 
 import { AssignedTripsList } from './AssignedTripsList';
-import { TripDetailsCard } from './TripDetailsCard';
 import { MarkAttendanceModal } from './MarkAttendanceModal';
 import { ReportIncidentModal } from './ReportIncidentModal';
 import { NotificationsList } from './NotificationsList';
-
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import DatePickerWithRange from "@/components/date-picker-with-range";
+import DatePickerWithRange from '@/components/date-picker-with-range';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-// Import Leaflet components for the embedded map
+// Leaflet + Map
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-
-// Fix for default Leaflet marker icons
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -56,10 +50,8 @@ L.Icon.Default.mergeOptions({
 });
 
 const ITEMS_PER_PAGE = 5;
-const MOCK_DRIVER_ID = 4; // Chauffeur Ali
 
-const DriverDashboardPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState(demoData);
+export default function DriverDashboardPage() {
   const [driver, setDriver] = useState(null);
   const [dailyTrips, setDailyTrips] = useState([]);
   const [selectedDailyTrip, setSelectedDailyTrip] = useState(null);
@@ -69,145 +61,105 @@ const DriverDashboardPage = () => {
   const [busPosition, setBusPosition] = useState(null);
   const [isTrackingActive, setIsTrackingActive] = useState(false);
 
-  // Pagination for daily trips list
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [dailyTripsFilteredAndPaginated, setDailyTripsFilteredAndPaginated] = useState([]);
+  const [dailyTripsFilteredAndPaginated, setDailyTripsFilteredAndPaginated] =
+    useState([]);
   const [totalDailyTripPages, setTotalDailyTripPages] = useState(1);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // Modals state
+  // Modals
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [attendanceModalStudentId, setAttendanceModalStudentId] = useState(null);
   const [attendanceModalDailyTripId, setAttendanceModalDailyTripId] = useState(null);
-  const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] = useState(null);
+  const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] =
+    useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
-
-  // Fetch initial driver data and all assigned daily trips
+ 
+  // Load driver & trips on mount
   useEffect(() => {
-    const driverUser = getUserById(MOCK_DRIVER_ID);
-    setDriver(driverUser);
+    const fetchInitialData = async () => {
+      try {
+        const trips = await driverService.getDailyTrips();
+        setDailyTrips(trips);
 
-    const fetchedDailyTrips = getDailyTripsForDriver(MOCK_DRIVER_ID);
-    setDailyTrips(fetchedDailyTrips);
+        if (trips.length > 0 && trips[0].trip?.driver) {
+          setDriver(trips[0].trip.driver);
+         }
+         const fetchedNotifications = await driverService.getNotfication();
+         setNotifications(fetchedNotifications);
+      } catch (error) {
+      
+        toast.error("Impossible de charger les données");
+      }
+    };
 
-    const fetchedNotifications = getNotificationsForUser(MOCK_DRIVER_ID);
-    setNotifications(fetchedNotifications);
-  }, [currentDemoData]);
+    fetchInitialData();
+  }, []);
 
-  // Filter and paginate daily trips
+  // Filter and paginate dailyTrips
   useEffect(() => {
-    let filteredTrips = dailyTrips;
+    let filtered = [...dailyTrips];
 
     if (selectedDate) {
       const selectedDateString = selectedDate.toISOString().split('T')[0];
-      filteredTrips = filteredTrips.filter(dTrip => dTrip.simpleDate === selectedDateString);
+      filtered = filtered.filter(
+        (dTrip) =>
+          new Date(dTrip.date).toISOString().split('T')[0] === selectedDateString
+      );
     }
 
     if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      filteredTrips = filteredTrips.filter(dTrip => {
+      const lower = searchTerm.toLowerCase();
+      filtered = filtered.filter((dTrip) => {
         const trip = dTrip.trip;
-        const bus = trip?.bus;
-        const route = trip?.route;
-        const driver = trip?.driver;
-
-        const studentsAssigned = getStudentsByTrip(trip.id);
-        const studentNameMatch = studentsAssigned.some(student =>
-          student.fullname.toLowerCase().includes(lowerCaseSearchTerm)
-        );
-
         return (
-          trip?.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-          bus?.plateNumber.toLowerCase().includes(lowerCaseSearchTerm) ||
-          bus?.marque.toLowerCase().includes(lowerCaseSearchTerm) ||
-          route?.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-          driver?.fullname.toLowerCase().includes(lowerCaseSearchTerm) ||
-          studentNameMatch
+          trip.name?.toLowerCase().includes(lower) ||
+          trip.bus?.plateNumber?.toLowerCase().includes(lower) ||
+          trip.route?.name?.toLowerCase().includes(lower)
         );
       });
     }
+   
 
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    setDailyTripsFilteredAndPaginated(filteredTrips.slice(startIndex, endIndex));
-    setTotalDailyTripPages(Math.ceil(filteredTrips.length / ITEMS_PER_PAGE));
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+    setTotalDailyTripPages(totalPages);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    setDailyTripsFilteredAndPaginated(filtered.slice(start, start + ITEMS_PER_PAGE));
+  }, [dailyTrips, currentPage, searchTerm, selectedDate]);
 
-    if (selectedDailyTrip && !filteredTrips.some(dTrip => dTrip.id === selectedDailyTrip.id)) {
-      setSelectedDailyTrip(null);
-    }
-
-    const newTotalPages = Math.ceil(filteredTrips.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (filteredTrips.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  }, [dailyTrips, currentPage, searchTerm, selectedDate, selectedDailyTrip]);
-
-  // When a daily trip is selected, fetch its detailed data
+  // Load trip details when selected
   useEffect(() => {
-    if (selectedDailyTrip) {
-      setStudentsInSelectedTrip(getStudentsByTrip(selectedDailyTrip.trip.id));
-      setStopsInSelectedRoute(getStopsByRoute(selectedDailyTrip.trip.route.id));
-      
-      // Get current bus position
-      const position = getLatestBusPosition(selectedDailyTrip.id);
-      setBusPosition(position);
-    } else {
-      setStudentsInSelectedTrip([]);
-      setStopsInSelectedRoute([]);
-      setBusPosition(null);
-    }
+    const loadTripDetails = async () => {
+      if (!selectedDailyTrip) {
+        setStudentsInSelectedTrip([]);
+        setStopsInSelectedRoute([]);
+        setBusPosition(null);
+        return;
+      }
+
+      try {
+        const tripDetails = await driverService.getTripDetails(
+          selectedDailyTrip.id
+        );
+        const students = tripDetails.trip?.tripStudents?.map(ts => ts.student) || [];
+         const attendance = tripDetails.attendances?.map(ts => ts.student) || [];
+    
+       const stops = tripDetails.trip?.route?.stops || [];
+        setStudentsInSelectedTrip(students);
+        setStopsInSelectedRoute(stops);
+        setBusPosition(tripDetails.currentPosition || null);
+      } catch (error) {
+        toast.error("Erreur lors du chargement des détails du trajet");
+         
+      }
+    };
+
+    loadTripDetails();
   }, [selectedDailyTrip]);
-
-  // Helper Functions
-  const getAttendanceStatusForStudent = useCallback((studentId) => {
-    if (!selectedDailyTrip) return null;
-    const attendance = getAttendanceForDailyTripAndStudent(selectedDailyTrip.id, studentId);
-    const departStatus = attendance.find(att => att.type === 'DEPART')?.status;
-    return departStatus || 'ABSENT';
-  }, [selectedDailyTrip]);
-
-  const getAttendanceText = (status) => {
-    switch (status) {
-      case 'PRESENT': return 'Présent';
-      case 'ABSENT': return 'Absent';
-      case 'LATE': return 'En Retard';
-      default: return 'Non marqué';
-    }
-  };
-
-  const getAttendanceColor = (status) => {
-    switch (status) {
-      case 'PRESENT': return 'green';
-      case 'ABSENT': return 'red';
-      case 'LATE': return 'yellow';
-      default: return 'gray';
-    }
-  };
-
-  const getTripStatusColor = (s) => {
-    switch (s) {
-      case 'PLANNED': return 'blue';
-      case 'ONGOING': return 'yellow';
-      case 'COMPLETED': return 'green';
-      case 'CANCELED': return 'red';
-      default: return 'gray';
-    }
-  };
-
-  const getTripStatusText = (s) => {
-    switch (s) {
-      case 'PLANNED': return 'Planifié';
-      case 'ONGOING': return 'En cours';
-      case 'COMPLETED': return 'Terminé';
-      case 'CANCELED': return 'Annulé';
-      default: return 'Inconnu';
-    }
-  };
 
   // Handlers
   const handleSelectDailyTrip = (dTrip) => {
@@ -222,105 +174,142 @@ const DriverDashboardPage = () => {
     setCurrentPage(page);
   };
 
-  const handleOpenAttendanceModal = (sId) => {
-    if (!selectedDailyTrip) {
-      toast.error("Veuillez sélectionner un trajet quotidien avant de marquer la présence.");
-      return;
-    }
-    setAttendanceModalDailyTripId(selectedDailyTrip.id);
-    setAttendanceModalStudentId(sId);
-    setAttendanceModalCurrentStatus(getAttendanceStatusForStudent(sId));
-    setIsAttendanceModalOpen(true);
-  };
-
-  const handleAttendanceMarked = () => {
-    setCurrentDemoData({ ...demoData });
-    toast.success('Présence mise à jour!');
-  };
-
-  const handleOpenIncidentModal = () => {
-    if (!selectedDailyTrip) {
-      toast.error("Veuillez sélectionner un trajet pour signaler un incident.");
-      return;
-    }
-    setIsIncidentModalOpen(true);
-  };
-
-  const handleIncidentReported = () => {
-    setCurrentDemoData({ ...demoData });
-    toast.success('Incident signalé avec succès !');
-  };
-
-  const handleMarkNotificationAsRead = (notificationId) => {
-    markNotificationAsRead(notificationId);
-    setCurrentDemoData({ ...demoData });
-    toast.success('Notification marquée comme lue.');
-  };
-
-  const handleStartTrip = () => {
+  const handleStartTrip = async () => {
     if (!selectedDailyTrip) return;
-    
     try {
-      updateDailyTripStatus(selectedDailyTrip.id, 'ONGOING');
-      setCurrentDemoData({ ...demoData });
-      toast.success('Trajet démarré avec succès !');
+      await driverService.startTrip(selectedDailyTrip.id);
+      setSelectedDailyTrip({ ...selectedDailyTrip, status: 'ONGOING' });
+      toast.success("Trajet démarré !");
     } catch (error) {
-      toast.error('Erreur lors du démarrage du trajet.');
+      toast.error("Échec du démarrage du trajet");
     }
   };
 
-  const handleCompleteTrip = () => {
+  const handleCompleteTrip = async () => {
     if (!selectedDailyTrip) return;
-    
     try {
-      updateDailyTripStatus(selectedDailyTrip.id, 'COMPLETED');
-      setCurrentDemoData({ ...demoData });
-      toast.success('Trajet terminé avec succès !');
+      await driverService.completeTrip(selectedDailyTrip.id);
+      setSelectedDailyTrip({ ...selectedDailyTrip, status: 'COMPLETED' });
+      toast.success("Trajet terminé !");
     } catch (error) {
-      toast.error('Erreur lors de la finalisation du trajet.');
+      toast.error("Échec de la finalisation du trajet");
     }
   };
 
-  const handleCancelTrip = () => {
+  const handleCancelTrip = async () => {
     if (!selectedDailyTrip) return;
-    
     try {
-      updateDailyTripStatus(selectedDailyTrip.id, 'CANCELED');
-      setCurrentDemoData({ ...demoData });
-      toast.success('Trajet annulé.');
+      await driverService.cancelTrip(selectedDailyTrip.id);
+      setSelectedDailyTrip({ ...selectedDailyTrip, status: 'CANCELLED' });
+      toast.success("Trajet annulé !");
     } catch (error) {
-      toast.error('Erreur lors de l\'annulation du trajet.');
+      toast.error("Échec de l'annulation du trajet");
     }
   };
 
   const handleToggleTracking = () => {
     if (!selectedDailyTrip) {
-      toast.error("Veuillez sélectionner un trajet pour activer le suivi.");
+      toast.error("Veuillez sélectionner un trajet.");
       return;
     }
+    setIsTrackingActive(!isTrackingActive);
+    toast.success(`Suivi GPS ${isTrackingActive ? 'désactivé' : 'activé'}`);
+  };
 
-    if (isTrackingActive) {
-      setIsTrackingActive(false);
-      toast.success('Suivi GPS désactivé.');
-    } else {
-      setIsTrackingActive(true);
-      toast.success('Suivi GPS activé ! Les parents peuvent maintenant voir votre position.');
+  const getAttendanceStatusForStudent = useCallback(
+    (studentId) => {
+      if (!selectedDailyTrip) return 'EN_COURS';
       
-      // Simulate GPS tracking (in real app, this would be actual GPS)
-      const mockPosition = {
-        lat: 36.8065 + (Math.random() - 0.5) * 0.01,
-        lng: 10.1815 + (Math.random() - 0.5) * 0.01
-      };
+      const attendance = selectedDailyTrip.attendances?.find(
+        att => att.studentId === studentId && att.type === 'DEPART'
+      );
       
-      addBusPosition(selectedDailyTrip.id, mockPosition.lat, mockPosition.lng);
-      setBusPosition(mockPosition);
+      // Return the status if found, otherwise return 'EN_COURS'
+      return attendance?.status || 'EN_COURS';
+    },
+    [selectedDailyTrip]
+  );
+  const handleOpenIncidentModal = () => {
+    if (!selectedDailyTrip) {
+      toast.error("Veuillez sélectionner un trajet.");
+      return;
+    }
+    setIsIncidentModalOpen(true);
+  };
+  const handleOpenAttendanceModal = (studentId) => {
+    if (!selectedDailyTrip) {
+      toast.error("Veuillez sélectionner un trajet.");
+      return;
+    }
+    setAttendanceModalStudentId(studentId);
+    setAttendanceModalDailyTripId(selectedDailyTrip.id);
+    setAttendanceModalCurrentStatus(getAttendanceStatusForStudent(studentId));
+    setIsAttendanceModalOpen(true);
+  };
+
+  const getTripStatusColor = (status) => {
+    switch (status) {
+      case 'PLANNED':
+        return 'blue';
+      case 'ONGOING':
+        return 'yellow';
+      case 'COMPLETED':
+        return 'green';
+      case 'CANCELLED':
+        return 'red';
+      default:
+        return 'gray';
     }
   };
 
-  if (!driver) {
+  const getTripStatusText = (status) => {
+    switch (status) {
+      case 'PLANNED':
+        return 'Planifié';
+      case 'ONGOING':
+        return 'En cours';
+      case 'COMPLETED':
+        return 'Terminé';
+      case 'CANCELLED':
+        return 'Annulé';
+      default:
+        return 'Inconnu';
+    }
+  };
+  const getAttendanceColor = (status) => {
+    switch (status) {
+      case 'PRESENT':
+        return 'green';
+      case 'ABSENT':
+        return 'red';
+      case 'LATE':
+        return 'yellow';
+      case 'EN_COURS':
+        return 'blue';
+      default:
+        return 'gray';
+    }
+  };
+  
+  const getAttendanceText = (status) => {
+    switch (status) {
+      case 'PRESENT':
+        return 'Présent';
+      case 'ABSENT':
+        return 'Absent';
+      case 'LATE':
+        return 'En retard';
+      case 'EN_COURS':
+        return 'En cours';
+      default:
+        return 'Inconnu';
+    }
+  };
+
+  if (!dailyTrips) {
     return (
-      <div className="flex justify-center items-center h-screen text-xl text-default-600">
-        Chargement des informations du chauffeur...
+      <div className="flex justify-center items-center h-screen">
+        Chargement des informations...
       </div>
     );
   }
@@ -330,95 +319,43 @@ const DriverDashboardPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-default-900">Tableau de bord Conducteur</h1>
-          <p className="text-default-600">Bienvenue, {driver.fullname}</p>
+          <h1 className="text-3xl font-bold">Tableau de bord Conducteur</h1>
+          <p>Bienvenue!</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-green-600 border-green-600">
-            <Icon icon="heroicons:signal" className="h-4 w-4 mr-1" />
-            En ligne
-          </Badge>
-        </div>
+        <Badge variant="outline" color="success">
+          En ligne
+        </Badge>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Icon icon="heroicons:truck" className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Trajets aujourd'hui</p>
-                <p className="text-2xl font-bold">{dailyTrips.filter(t => t.simpleDate === new Date().toISOString().split('T')[0]).length}</p>
-              </div>
+          <CardContent className="p-4 flex items-center space-x-2">
+            <Icon icon="heroicons:truck" className="text-blue-500" />
+            <div>
+              <p>Trajets aujourd'hui</p>
+              <p className="text-2xl font-bold">
+              {dailyTrips.length}
+              </p>
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Icon icon="heroicons:users" className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Élèves transportés</p>
-                <p className="text-2xl font-bold">{studentsInSelectedTrip.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Icon icon="heroicons:bell" className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Nouvelles notifications</p>
-                <p className="text-2xl font-bold">{notifications.filter(n => !n.read).length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Icon icon="heroicons:map-pin" className="h-5 w-5 text-purple-500" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Suivi GPS</p>
-                <p className="text-2xl font-bold">{isTrackingActive ? 'Actif' : 'Inactif'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Add other stats cards similarly */}
       </div>
 
-      {/* Filter and Search Section */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative w-full max-w-sm">
-            <Input
-              type="text"
-              placeholder="Rechercher un trajet..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-md w-full"
-            />
-            <Icon
-              icon="heroicons:magnifying-glass"
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-            />
-          </div>
-          <DatePickerWithRange
-            date={selectedDate}
-            setDate={setSelectedDate}
-            placeholder="Sélectionner une date"
-          />
-        </div>
+      {/* Filter/Search Section */}
+      <div className="flex items-center gap-4">
+        <Input
+          placeholder="Rechercher..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <DatePickerWithRange date={selectedDate} setDate={setSelectedDate} />
       </div>
-
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          {selectedDailyTrip ? (
+        {selectedDailyTrip ? (
             <Card className="shadow-sm border border-gray-200 h-full flex flex-col">
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
@@ -467,7 +404,7 @@ const DriverDashboardPage = () => {
 
                   <TabsContent value="overview" className="space-y-4">
                  {/* Bus & Route Info */}
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-default-50 rounded-lg">
                   <div>
                         <h4 className="font-semibold text-sm mb-2">Informations Bus</h4>
                         <p className="text-sm"><strong>Plaque:</strong> {selectedDailyTrip.trip?.bus?.plateNumber || 'N/A'}</p>
@@ -483,7 +420,7 @@ const DriverDashboardPage = () => {
                 </div>
 
                     {/* Quick Actions */}
-                    {selectedDailyTrip.status === 'PLANNED' && (
+                    {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING')&& (
                       <div className="grid grid-cols-2 gap-4">
                        <Button 
                        onClick={handleToggleTracking} 
@@ -508,43 +445,45 @@ const DriverDashboardPage = () => {
                   </TabsContent>
 
                   <TabsContent value="students" className="space-y-4">
-                    <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Élèves & Présence</h3>
-                {studentsInSelectedTrip.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                              <TableHead>Élève</TableHead>
-                          <TableHead>Classe</TableHead>
-                          <TableHead>Quartier</TableHead>
-                              <TableHead>Statut</TableHead>
-                          <TableHead className="text-right">Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {studentsInSelectedTrip.map(student => {
-                          const studentAttendanceStatus = getAttendanceStatusForStudent(student.id);
-                          return (
-                            <TableRow key={student.id}>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <Avatar className="h-8 w-8">
-                                        <AvatarFallback>{student.fullname.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="font-medium">{student.fullname}</span>
-                                    </div>
-                                  </TableCell>
-                              <TableCell>{student.class}</TableCell>
-                              <TableCell>{student.quartie}</TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant="soft"
-                                  color={getAttendanceColor(studentAttendanceStatus)}
-                                  className="capitalize"
-                                >
-                                  {getAttendanceText(studentAttendanceStatus)}
-                                </Badge>
-                              </TableCell>
+  <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Élèves & Présence</h3>
+  {studentsInSelectedTrip.length > 0 ? (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Élève</TableHead>
+            <TableHead>Classe</TableHead>
+            <TableHead>Quartier</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {studentsInSelectedTrip.map(student => {
+            const studentAttendanceStatus = getAttendanceStatusForStudent(student.id);
+            const isStatusUndefined = !studentAttendanceStatus || studentAttendanceStatus === 'EN_COURS';
+            
+            return (
+              <TableRow key={student.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>{student.fullname.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{student.fullname}</span>
+                  </div>
+                </TableCell>
+                <TableCell>{student.class}</TableCell>
+                <TableCell>{student.quartie}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="soft"
+                    color={getAttendanceColor(studentAttendanceStatus)}
+                    className="capitalize"
+                  >
+                    {isStatusUndefined ? 'En cours' : getAttendanceText(studentAttendanceStatus)}
+                  </Badge>
+                </TableCell>
                               <TableCell className="text-right">
                                 <Button
                                   size="sm"
@@ -693,46 +632,19 @@ const DriverDashboardPage = () => {
 
         <div className="lg:col-span-1 space-y-6">
           {/* GPS Tracking Card */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-medium text-default-800 flex items-center gap-2">
-                <Icon icon="heroicons:map-pin" className="h-5 w-5 text-green-500" />
-                Suivi GPS
-              </CardTitle>
+          <Card>
+            <CardHeader>
+              <CardTitle>Suivi GPS</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Statut</span>
-                <Badge variant={isTrackingActive ? "default" : "secondary"}>
-                  {isTrackingActive ? 'Actif' : 'Inactif'}
-                </Badge>
-              </div>
-              
-              {selectedDailyTrip && (
-                <Button 
-                  onClick={handleToggleTracking} 
-                  variant={isTrackingActive ? "destructive" : "default"}
-                  className="w-full"
-                  disabled={!selectedDailyTrip}
-                >
-                  <Icon icon={isTrackingActive ? "heroicons:stop" : "heroicons:play"} className="h-5 w-5 mr-2" />
-                  {isTrackingActive ? 'Arrêter' : 'Démarrer'} le suivi
-                </Button>
-              )}
-              
-              {!selectedDailyTrip && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Sélectionnez un trajet pour activer le suivi GPS
-                </p>
-              )}
+            <CardContent>
+              <Button onClick={handleToggleTracking}>
+                {isTrackingActive ? 'Arrêter' : 'Démarrer'} le suivi
+              </Button>
             </CardContent>
           </Card>
 
           {/* Notifications */}
-          <NotificationsList
-            notifications={notifications}
-            onMarkAsRead={handleMarkNotificationAsRead}
-          />
+          <NotificationsList notifications={notifications} />
         </div>
       </div>
 
@@ -744,9 +656,6 @@ const DriverDashboardPage = () => {
           dailyTripId={attendanceModalDailyTripId}
           studentId={attendanceModalStudentId}
           currentStatus={attendanceModalCurrentStatus}
-          onAttendanceMarked={handleAttendanceMarked}
-          driverId={MOCK_DRIVER_ID}
-          initialDemoData={currentDemoData}
         />
       )}
 
@@ -755,12 +664,8 @@ const DriverDashboardPage = () => {
           isOpen={isIncidentModalOpen}
           setIsOpen={setIsIncidentModalOpen}
           dailyTripId={selectedDailyTrip?.id}
-          driverId={MOCK_DRIVER_ID}
-          onIncidentReported={handleIncidentReported}
         />
       )}
     </div>
   );
-};
-
-export default DriverDashboardPage;
+}

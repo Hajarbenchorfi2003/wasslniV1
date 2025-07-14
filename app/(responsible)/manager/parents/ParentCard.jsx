@@ -49,6 +49,13 @@ const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
               <CardTitle className="text-base font-semibold text-default-900 leading-tight">
                 {parent.fullname}
               </CardTitle>
+              <h5 className="text-sm text-default-600 leading-tight">
+             {parent.children && parent.children.length > 0 ? (
+              parent.children.map((child) => child.student.fullname).join(', ')
+              ) : (
+              'Aucun enfant associé'
+               )}
+              </h5>
             </div>
           </div>
           <DropdownMenu>
@@ -79,10 +86,7 @@ const ParentCard = ({ parent, onEditParent, onDeleteParent }) => {
             <Icon icon="heroicons:phone" className="w-4 h-4 opacity-70" />
             {parent.phone}
           </p>
-          <p className="flex items-center gap-2">
-            <Icon icon="heroicons:identification" className="w-4 h-4 opacity-70" />
-            {parent.cin}
-          </p>
+         
         </CardContent>
       </Card>
       <ModalSuppression

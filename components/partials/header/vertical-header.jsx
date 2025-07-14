@@ -2,7 +2,6 @@ import React from "react";
 import { useSidebar, useThemeStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
-import { Search } from "lucide-react";
 import { SiteLogo } from "@/components/svg";
 import Link from "next/link";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -54,33 +53,20 @@ const MenuBar = ({ collapsed, setCollapsed }) => {
   );
 };
 
-const VerticalHeader = ({ handleOpenSearch }) => {
+const VerticalHeader = () => {
   const { collapsed, setCollapsed, subMenu, sidebarType } = useSidebar();
   const { layout } = useThemeStore();
   const isDesktop = useMediaQuery("(min-width: 1280px)");
   const isMobile = useMediaQuery("(min-width: 768px)");
   let LogoContent = null;
   let menuBarContent = null;
-  let searchButtonContent = null;
 
   const MainLogo = (
     <Link href="/dashboard" className=" text-primary ">
       <SiteLogo className="h-7 w-7" />
     </Link>
   );
-  const SearchButton = (
-    <div>
-      <button
-        className=" inline-flex  gap-2 items-center text-default-600 text-sm"
-        onClick={handleOpenSearch}
-      >
-        <span>
-          <Search className=" h-4 w-4" />
-        </span>
-        <span className=" md:block hidden"> Search...</span>
-      </button>
-    </div>
-  );
+
   if (layout === "semibox" && !isDesktop) {
     LogoContent = MainLogo;
   }
@@ -113,18 +99,12 @@ const VerticalHeader = ({ handleOpenSearch }) => {
   if (subMenu && isDesktop) {
     menuBarContent = null;
   }
-  if (sidebarType === "module" && isMobile) {
-    searchButtonContent = SearchButton;
-  }
-  if (sidebarType === "classic" || sidebarType === "popover") {
-    searchButtonContent = SearchButton;
-  }
+
   return (
     <>
       <div className="flex items-center md:gap-6 gap-3">
         {LogoContent}
         {menuBarContent}
-        {searchButtonContent}
       </div>
     </>
   );

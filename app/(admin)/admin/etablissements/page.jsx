@@ -1,102 +1,143 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { demoData, getSchoolEstablishments, getUserById } from '@/data/data'; // Import getUserById
-import EtablissementResponsibleFormModal from '@/components/models/ModalEtablissement1'; // Adjust path and renamed for clarity
-import TableEtablissement from './tableEtablissement'; // Create this component as shown below
+import { demoData } from '@/data/data'; // Make sure this path is correct
+import ModalEtablissement from '@/components/models/ModalEtablissement1'; // Adjust path if necessary
+import TableEtablissement from './tableEtablissement'; // You'll need to create this component
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input'; // Import Input component
+import {fetchUserEstablishments,deletePremently} from '@/services/etablissements';
+import{fetchSchools}from '@/services/school';
 
 const ITEMS_PER_PAGE = 5;
-const FIXED_SCHOOL_ID = 1; // Assuming you want to manage establishments for a fixed school (e.g., School ID 1)
 
 const EtablissementsPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState(demoData); // Keep demoData in state if it's mutable
-  const [etablissements, setEtablissements] = useState([]);
+  const [etablissements, setEtablissements] = useState(demoData.establishments);
+  const[establishments,setEstablishments]= useState([]);
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
-  const [editingEtablissement, setEditingEtablissement] = useState(null);
+  const [editingEtablissement, setEditingEtablissement] = useState(null); // Holds data for editing
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // New state for search query
+   const [establishmentsLoading, setEstablishmentsLoading] = useState(false);
+    const [schoolsLoading, setSchoolsLoading] = useState(false);
+       const [schools, setSchools] = useState([]);
+   
+     useEffect(() => {
+     let isMounted = true; // Variable locale pour suivre le statut de montage
+   
+     async function loadschools() {
+       setSchoolsLoading(true);
+       try {
+         const data = await fetchSchools();
+       
+   
+         if (isMounted) {
+           setSchools(data); // Mise à jour conditionnelle si le composant est toujours monté
+           
+         }
+       } catch (error) {
+         console.error('Erreur lors du chargement des établissements', error);
+         toast.error("Impossible de charger les établissements");
+       } finally {
+         if (isMounted) {
+           setSchoolsLoading(false);
+         }
+       }
+     }
+   
+     // Charger seulement si non encore chargés
+     if (schools.length === 0) {
+       loadschools();
+     }
+   
+     return () => {
+       isMounted = false; // Nettoyage : indique que le composant n'est plus monté
+     };
+   }, [schools]);
 
-  // Use useEffect to fetch and filter data when dependencies change
+ const loadEstablishments = async () => {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchUserEstablishments();
+      console.log("etablisement",data)
+      setEstablishments(data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      setEstablishmentsLoading(false);
+    }
+  };
+
+  // Utiliser useEffect pour charger initialement si nécessaire
   useEffect(() => {
-    // 1. Get all establishments for the fixed school (or adjust based on your logic)
-    let initialEtbs = getSchoolEstablishments(FIXED_SCHOOL_ID);
+    let isMounted = true;
 
-    // 2. Enrich establishments with responsible name for display and search
-    initialEtbs = initialEtbs.map(etab => {
-      const responsible = currentDemoData.users.find(user => user.id === etab.responsableId);
-      return {
-        ...etab,
-        responsableName: responsible ? responsible.fullname : 'N/A',
-      };
-    });
+    const loadIfNotLoaded = async () => {
+      if (!isMounted) return;
+      if (establishments.length === 0) {
+        await loadEstablishments();
+      }
+    };
 
-    // 3. Apply search filter
-    let filtered = initialEtbs;
-    if (searchQuery) {
-      const lowerCaseSearch = searchQuery.toLowerCase();
-      filtered = initialEtbs.filter(etab =>
-        etab.name.toLowerCase().includes(lowerCaseSearch) ||
-        etab.email.toLowerCase().includes(lowerCaseSearch) ||
-        etab.city.toLowerCase().includes(lowerCaseSearch) ||
-        (etab.responsableName && etab.responsableName.toLowerCase().includes(lowerCaseSearch))
-      );
-    }
+    loadIfNotLoaded();
 
-    setEtablissements(filtered);
+    return () => {
+      isMounted = false;
+    };
+  }, [establishments]); // ⚠️ Attention ici, voir plus bas
+  console.log("etablisment",establishments)
+  // Filter establishments based on search query
+  const filteredEtablissements = establishments.filter(etablissement =>
+    etablissement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    etablissement.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    etablissement.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    etablissement.responsable.fullname.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-    // Reset pagination to 1 if the filter changes significantly
-    // Only reset if the current page is out of bounds or there are results but currentPage is 0
-    const newTotalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-        setCurrentPage(newTotalPages);
-    } else if (filtered.length > 0 && currentPage === 0) { // This might happen if initial load is empty then data arrives
-        setCurrentPage(1);
-    } else if (filtered.length === 0 && currentPage !== 1) { // If no results, go to page 1
-        setCurrentPage(1);
-    }
-
-  }, [currentDemoData.establishments, currentDemoData.users, searchQuery, currentPage]); // Re-run when demoData or search query changes
-
-  const totalPages = Math.ceil(etablissements.length / ITEMS_PER_PAGE);
-  const paginatedEtablissements = etablissements.slice(
+  const totalPages = Math.ceil(filteredEtablissements.length / ITEMS_PER_PAGE);
+  const paginatedEtablissements = filteredEtablissements.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
+  // Function to handle opening the modal for editing
   const handleEditEtablissement = (etablissementToEdit) => {
     // Find the associated responsible from demoData.users
-    const associatedResponsable = currentDemoData.users.find(u => u.id === etablissementToEdit.responsableId);
+    const associatedResponsable = demoData.users.find(u => u.id === etablissementToEdit.responsableId);
 
-    // Structure the default values for the EtablissementResponsibleFormModal
+    // Structure the default values for the EtablissementResponsableForm
     const defaultValuesForForm = {
-      id: etablissementToEdit.id,
+      id: etablissementToEdit.id, // Keep the ID for modification lookup
       etablissement: {
         name: etablissementToEdit.name || '',
         email: etablissementToEdit.email || '',
         phone: etablissementToEdit.phone || '',
         address: etablissementToEdit.address || '',
-        quartie: etablissementToEdit.quartie || '',
+        quartie: etablissementToEdit.quartie || '', // Include quartie
         city: etablissementToEdit.city || '',
         isActive: etablissementToEdit.isActive !== undefined ? etablissementToEdit.isActive : true
       },
+      // If a responsible is associated, pre-fill their details for the 'new responsible' section
+      // and set 'existing' mode. Otherwise, it will default to 'new responsible' empty fields.
       responsable: associatedResponsable ? {
         fullname: associatedResponsable.fullname || '',
         email: associatedResponsable.email || '',
         phone: associatedResponsable.phone || '',
-        password: '', // Always keep password empty for security on edit
+        password: '', // Always keep password empty for security
         cin: associatedResponsable.cin || '',
         isActive: associatedResponsable.isActive !== undefined ? associatedResponsable.isActive : true
-      } : undefined,
+      } : undefined, // Undefined means it won't pre-fill the 'new responsible' fields initially
 
       // Set the ID of the existing responsible if found
       existingResponsableId: associatedResponsable ? associatedResponsable.id.toString() : '',
 
       // Set the initial state of the 'addNewResponsable' toggle
+      // If there's an associated responsible, we default to 'false' (select existing)
+      // Otherwise, default to 'true' (add new)
       addNewResponsable: !associatedResponsable,
 
       // Pass the schoolId of the establishment
@@ -107,100 +148,106 @@ const EtablissementsPage = () => {
     setIsAddEditDialogOpen(true);
   };
 
-  const handleDeleteEtablissement = (id) => {
+  // Function to handle deleting an establishment
+  const handleDeleteEtablissement = async(id) => {
     try {
-      // Find the establishment to be deleted to get its responsibleId
-      const etablissementToDelete = currentDemoData.establishments.find(etb => etb.id === id);
-      const responsibleIdToDelete = etablissementToDelete?.responsableId;
-
-      // 1. Remove establishment from demoData
-      const updatedEstablishments = currentDemoData.establishments.filter(etab => etab.id !== id);
-
-      // 2. Potentially remove the responsible user if they are no longer linked to ANY establishment
-      let updatedUsers = [...currentDemoData.users];
-      if (responsibleIdToDelete) {
-        const isResponsibleStillLinked = updatedEstablishments.some(etab => etab.responsableId === responsibleIdToDelete);
-        if (!isResponsibleStillLinked) {
-          // If the responsible is not linked to any other establishment, remove them
-          updatedUsers = updatedUsers.filter(user => user.id !== responsibleIdToDelete);
-          toast('Responsable également supprimé car non lié à d\'autres établissements.', { icon: 'ℹ️' });
-        }
-      }
-
-      // Update the main demoData object
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        establishments: updatedEstablishments,
-        users: updatedUsers, // Update users as well
-      }));
+      await deletePremently(id)
+     loadEstablishments();
+     
 
       toast.success('Établissement supprimé avec succès');
-      // No need to setEtablissements here, useEffect will react to currentDemoData change
     } catch (error) {
       toast.error('Erreur lors de la suppression de l\'établissement');
       console.error(error);
     }
   };
 
-  const handleSaveEtablissement = (updatedDemoData) => {
-    // This function is now called by the modal with the new demoData after a save
-    setCurrentDemoData(updatedDemoData); // Update the main data state
+  // Function to handle saving (add or edit) an establishment
+  const handleSaveEtablissement = (updatedata) => {
+    consol.log("data frome save",updatedata)
+    
+     loadEstablishments();
     setIsAddEditDialogOpen(false);
     setEditingEtablissement(null); // Clear editing state after save
-    toast.success('Établissement sauvegardé avec succès');
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
+  // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
-    // setCurrentPage will be handled by useEffect's logic
+    setCurrentPage(1); // Reset to first page on new search
   };
-
+console.log(editingEtablissement)
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h2 className="text-2xl font-medium text-default-800">
-          Gestion des Établissements
+        Gestion des Établissements
         </h2>
       </div>
-
-      {/* Search & Add Button */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        {/* Search Input */}
+     {/* Search & Add Button */}
+     <div className="flex items-center justify-between flex-wrap gap-4">
+         {/* Search Input */}
         <div className="relative w-full max-w-md">
-          <Input
-            type="text"
-            placeholder="Rechercher un établissement..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="pl-10 pr-4 py-2 border rounded-md w-full"
-          />
-          <Icon
-            icon="heroicons:magnifying-glass"
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-          />
-        </div>
-
-        {/* Add Establishment Button */}
-        <Button onClick={() => {
-          setEditingEtablissement(null); // Ensure no previous editing state
-          setIsAddEditDialogOpen(true);
-        }}>
-          <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
-          Ajouter un établissement
-        </Button>
+        <Input
+          type="text"
+          placeholder="Rechercher un établissement..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 pr-4 py-2 border rounded-md w-full"
+        />
+        <Icon
+          icon="heroicons:magnifying-glass"
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+        />
       </div>
 
-      <EtablissementResponsibleFormModal
+        {/* Add Admin Button */}
+        <Button onClick={() => {
+            setEditingEtablissement(null); // Ensure no previous editing state
+            setIsAddEditDialogOpen(true);
+          }}>
+            <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
+            Ajouter un établissement
+          </Button>
+     </div>
+{/*       <div className="flex items-center flex-wrap justify-between gap-4">
+        <div className="text-2xl font-medium text-default-800">
+          Gestion des Établissements
+        </div>
+        <div className="flex items-center gap-4">
+          
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Rechercher un établissement..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="pl-10 pr-4 py-2 border rounded-md w-full"
+              />
+            <Icon icon="heroicons:magnifying-glass" className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          </div>
+
+          <Button onClick={() => {
+            setEditingEtablissement(null); // Ensure no previous editing state
+            setIsAddEditDialogOpen(true);
+          }}>
+            <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
+            Ajouter un établissement
+          </Button>
+        </div>
+      </div> */}
+
+      <ModalEtablissement
         isOpen={isAddEditDialogOpen}
         setIsOpen={setIsAddEditDialogOpen}
-        editingEtablissement={editingEtablissement}
-        onSave={handleSaveEtablissement} // Pass the handler
-        initialDemoData={currentDemoData} // Pass the mutable demoData
-        fixedSchoolId={FIXED_SCHOOL_ID} // Pass the fixed school ID for new establishments
+        editingEtablissement={editingEtablissement} // Pass the structured editing data
+        onSave={handleSaveEtablissement} // This handles refreshing the list
+        allSchools={schools} // Pass all schools for the dropdown
+        fixedSchoolId={null} // Set to a specific ID (e.g., 1) if you want to fix the school, otherwise null
       />
 
       <TableEtablissement
@@ -210,7 +257,7 @@ const EtablissementsPage = () => {
       />
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {totalPages > 1 && ( // Only show pagination if there's more than one page
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
             variant="outline"

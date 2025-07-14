@@ -19,9 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {studentbyetablishment} from '@/services/students';
 
 
-export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses, drivers, establishments, students, tripStudents }) => {
+
+export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses, drivers, establishments,tripStudents }) => {
   const [formData, setFormData] = useState({
     name: '',
     routeId: null,
@@ -30,13 +32,19 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
     establishmentId: null,
     studentIds: [], // For linking students to this trip
   });
+  console.log("drivers",drivers)
+   const [students, setStudents] = useState([]);
+     const [loadingStudents, setLoadingStudents] = useState(false);
+     const[filteredRoutes,setFilteredRoute] = useState([]);
+     const[filteredBuses,setFiilteredBuses] = useState([]);
+    const[filteredDrivers,setFilteredDrivers] = useState([]);
+       console.log("drivers",drivers)
 
   useEffect(() => {
     if (editingTrip) {
-      const linkedStudentIds = tripStudents
-        .filter(ts => ts.tripId === editingTrip.id)
-        .map(ts => ts.studentId);
-
+      console.log("edit trip fourni",editingTrip);
+      const linkedStudentIds = editingTrip.tripStudents.map(ts => ts.studentId);
+      console.log("link student",linkedStudentIds)
       setFormData({
         name: editingTrip.name || '',
         routeId: editingTrip.routeId || null,
@@ -56,7 +64,64 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
       });
     }
   }, [editingTrip, tripStudents]);
+  console.log(formData.establishmentId);
+  useEffect(() => {
+  const loadStudentsForEstablishment = async () => {
+    if (!formData.establishmentId) {
+      setStudents([]);
+      return;
+    }
 
+    setLoadingStudents(true);
+    try {
+      const data = await studentbyetablishment(formData.establishmentId);
+      setStudents(data);
+    } catch (err) {
+      console.error('Erreur lors du chargement des élèves', err);
+      setStudents([]);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  // --- Nouveau : Filtrer les routes et les bus ---
+  const filterRoutes = routes.filter(
+    route => route.establishmentId === formData.establishmentId
+  );
+   const finalRoutes = filterRoutes.length > 0 ? filterRoutes : [];
+
+  setFilteredRoute(finalRoutes);
+
+  const filterBuses = buses.filter(
+    bus => bus.establishmentId === formData.establishmentId
+  );
+  const finalBus = filterBuses.length > 0 ? filterBuses :[];
+  setFiilteredBuses(finalBus)
+
+  const filterDrivers= drivers.filter(driver =>
+    driver.establishmentsLink?.some(
+      link => link.establishmentId === formData.establishmentId
+    )
+  );
+  const finalDrivers = filterDrivers.length > 0 ? filterDrivers : [];
+ setFilteredDrivers(finalDrivers)
+  // Si l'établissement change, on remet à zéro routeId et busId pour éviter des valeurs invalides
+  if (filterRoutes.length === 0 && formData.routeId !== null) {
+    setFormData(prev => ({ ...prev, routeId: null }));
+  }
+
+  if (filterBuses.length === 0 && formData.busId !== null) {
+    setFormData(prev => ({ ...prev, busId: null }));
+  }
+    if (filterDrivers.length === 0 && formData.driverId !== null) {
+    setFormData(prev => ({ ...prev, driverId: null }));
+  }
+ console.log("filtered",filterDrivers)
+  // -----------------------------------------------
+
+  loadStudentsForEstablishment();
+}, [formData.establishmentId, routes, buses,drivers]);
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -84,78 +149,22 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
     }
     onSave(formData);
   };
-
+ console.log("fromdata students",formData.studentIds);
+ console.log("formdata",formData)
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent  className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader className="px-6">
-          <DialogTitle className="text-base font-medium text-default-700 ">{editingTrip ? 'Modifier le Trajet' : 'Ajouter un nouveau Trajet'}</DialogTitle>
+          <DialogTitle className="text-base font-medium text-default-700 ">
+            {editingTrip ? 'Modifier le Trajet' : 'Ajouter un nouveau Trajet'}
+          </DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-[70vh] px-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 px-6 max-h-[70vh] overflow-y-auto">
           <div>
             <Label htmlFor="name" className="text-right">Nom du Trajet</Label>
             <Input id="name" name="name" value={formData.name} onChange={handleChange} className="col-span-3" required />
           </div>
-
-          {/* Route Selection */}
-          {routes && routes.length > 0 && (
-            <div>
-              <Label htmlFor="route" className="text-right">Route</Label>
-              <Select onValueChange={(value) => handleSelectChange('routeId', value)} value={formData.routeId ? String(formData.routeId) : ''} required>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner une route" />
-                </SelectTrigger>
-                <SelectContent>
-                  {routes.map(route => (
-                    <SelectItem key={route.id} value={String(route.id)}>
-                      {route.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Bus Selection */}
-          {buses && buses.length > 0 && (
-            <div>
-              <Label htmlFor="bus" className="text-right">Bus</Label>
-              <Select onValueChange={(value) => handleSelectChange('busId', value)} value={formData.busId ? String(formData.busId) : ''} required>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un bus" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buses.map(bus => (
-                    <SelectItem key={bus.id} value={String(bus.id)}>
-                      {bus.plateNumber} ({bus.marque})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Driver Selection */}
-          {drivers && drivers.length > 0 && (
-            <div>
-              <Label htmlFor="driver" className="text-right">Chauffeur</Label>
-              <Select onValueChange={(value) => handleSelectChange('driverId', value)} value={formData.driverId ? String(formData.driverId) : ''} required>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionner un chauffeur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {drivers.map(driver => (
-                    <SelectItem key={driver.id} value={String(driver.id)}>
-                      {driver.fullname}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Establishment Selection (assuming a trip belongs to one establishment) */}
+           {/* Establishment Selection (assuming a trip belongs to one establishment) */}
           {establishments && establishments.length > 0 && (
             <div>
               <Label htmlFor="establishment" className="text-right">Établissement</Label>
@@ -163,22 +172,118 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Sélectionner un établissement" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent  >
+                <ScrollArea className="h-[100px]">
                   {establishments.map(est => (
                     <SelectItem key={est.id} value={String(est.id)}>
                       {est.name}
                     </SelectItem>
                   ))}
+                  </ScrollArea>
                 </SelectContent>
               </Select>
             </div>
           )}
 
+          {/* Route Selection */}
+        <div>
+  <Label htmlFor="route" className="text-right">Route</Label>
+
+  {routes && routes.length > 0 ? (
+    <Select
+      onValueChange={(value) => handleSelectChange('routeId', value)}
+      value={formData.routeId ? String(formData.routeId) : ''}
+      required
+    >
+      <SelectTrigger className="col-span-3">
+        <SelectValue placeholder="Sélectionner une route" />
+      </SelectTrigger>
+      <SelectContent  >
+      <ScrollArea className="max-h-[100px]">
+        {filteredRoutes.length > 0 ? (
+          filteredRoutes.map(route => (
+            <SelectItem key={route.id} value={String(route.id)}>
+              {route.name}
+            </SelectItem>
+          ))
+        ) : (
+          <div className="text-sm text-gray-500 px-4 py-2">Aucune route disponible pour cet établissement.</div>
+        )}
+        </ScrollArea>
+      </SelectContent>
+    </Select>
+  ) : (
+    <p className="text-sm text-gray-500 mt-2">Aucune route disponible.</p>
+  )}
+</div>
+
+
+          {/* Bus Selection */}
+         {buses && buses.length > 0 && (
+         <div>
+          <Label htmlFor="bus" className="text-right">Bus</Label>
+          <Select 
+           onValueChange={(value) => handleSelectChange('busId', value)} 
+           value={formData.busId ? String(formData.busId) : ''} 
+           required
+          >
+           <SelectTrigger className="col-span-3">
+           <SelectValue placeholder="Sélectionner un bus" />
+           </SelectTrigger>
+          <SelectContent >
+          <ScrollArea className="h-[100px]">
+           {filteredBuses.length === 0 ? (
+             <p className="text-sm text-gray-500 pl-2">Aucun bus disponible pour cet établissement.</p>
+              ) : (
+             filteredBuses.map(bus => (
+            <SelectItem key={bus.id} value={String(bus.id)}>
+              {bus.plateNumber} ({bus.marque})
+            </SelectItem>
+           ))
+          )}
+          </ScrollArea>
+         </SelectContent>
+         </Select>
+       </div>
+ 
+)}
+
+          {/* Driver Selection */}
+          {drivers && drivers.length > 0 && (
+  <div>
+    <Label htmlFor="driver" className="text-right">Chauffeur</Label>
+    <Select 
+      onValueChange={(value) => handleSelectChange('driverId', value)} 
+      value={formData.driverId ? String(formData.driverId) : ''} 
+      required
+    >
+      <SelectTrigger className="col-span-3">
+        <SelectValue placeholder="Sélectionner un chauffeur" />
+      </SelectTrigger>
+      <SelectContent>
+      <ScrollArea className="h-[100px]">
+        {filteredDrivers.length === 0 ? (
+          <p className="text-sm text-gray-500 pl-2">Aucun chauffeur disponible pour cet établissement.</p>
+        ) : (
+          filteredDrivers.map(driver => (
+            <SelectItem key={driver.id} value={String(driver.id)}>
+              {driver.fullname}
+            </SelectItem>
+          ))
+        )}
+        </ScrollArea>
+      </SelectContent>
+    </Select>
+  </div>
+)}
+
+         
+
           {/* Students Multi-Selection */}
           {students && students.length > 0 && (
             <div>
               <Label className="text-right mt-2">Élèves Associés</Label>
-              <div className="col-span-3 space-y-2 max-h-48 overflow-y-auto border p-2 rounded">
+              <ScrollArea className="col-span-3 space-y-2 max-h-48 overflow-y-auto border p-2 rounded">
                 {students.map(student => (
                   <div key={student.id} className="flex items-center space-x-2">
                     <Checkbox
@@ -189,7 +294,7 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
                     <Label htmlFor={`student-${student.id}`}>{student.fullname}</Label>
                   </div>
                 ))}
-              </div>
+              </ScrollArea>
             </div>
           )}
 
@@ -197,7 +302,6 @@ export const ModalTrip = ({ isOpen, onClose, editingTrip, onSave, routes, buses,
             <Button type="submit">Sauvegarder</Button>
           </DialogFooter>
         </form>
-        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

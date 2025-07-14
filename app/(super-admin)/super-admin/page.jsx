@@ -1,8 +1,6 @@
-// app/dashboard/super-admin/page.jsx
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { demoData } from '@/data/data'; // Corrected path to your data file
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +15,14 @@ import {
     getXAxisConfig,
     getYAxisConfig,
 } from "@/lib/appex-chart-options";
+import { fetchSchools } from '@/services/school';
+import { fetchAllEstablishments } from '@/services/etablissements';
+import { fetchAllStudents } from '@/services/students';
+import { fetchAllBuses } from '@/services/bus';
+import { fetchroute } from '@/services/route';
+import { fetchAdmins, fetchDrivers, fetchParents, fetchResponsibles } from '@/services/user';
+import attendanceService from '@/services/attendanceService';
+import { useEffect, useState } from 'react';
 
 const SuperAdminDashboardPage = () => {
     const router = useRouter();
@@ -24,21 +30,87 @@ const SuperAdminDashboardPage = () => {
     const { theme: mode } = useTheme();
     const theme = themes.find((t) => t.name === config);
 
-    // --- Aggregated Data for Dashboard ---
-    const totalSchools = demoData.schools.length;
-    const activeSchools = demoData.schools.filter(school => school.isActive).length;
-    const inactiveSchools = totalSchools - activeSchools; // More robust calculation
+    // State for all data
+    const [dashboardData, setDashboardData] = useState({
+        schools: [],
+        establishments: [],
+        students: [],
+        buses: [],
+        routes: [],
+        admins: [],
+        drivers: [],
+        parents: [],
+        responsibles: [],
+        loading: true,
+        error: null
+    });
 
-    const totalEstablishments = demoData.establishments.length;
-    const totalStudents = demoData.students.length;
-    const totalBuses = demoData.buses.length;
-    const totalTrips = demoData.trips.length;
-    const totalRoutes = demoData.routes.length;
-    const totalUsers = demoData.users.length;
-    const totalParents = demoData.users.filter(user => user.role === 'PARENT').length;
-    const totalDrivers = demoData.users.filter(user => user.role === 'DRIVER').length;
-    const totalAdmins = demoData.users.filter(user => user.role === 'ADMIN').length;
-    const totalResponsible = demoData.users.filter(user => user.role === 'RESPONSIBLE').length;
+    // Fetch all data on component mount
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [
+                    schools, 
+                    establishments, 
+                    students, 
+                    buses, 
+                    routes, 
+                    admins, 
+                    drivers, 
+                    parents, 
+                    responsibles
+                ] = await Promise.all([
+                    fetchSchools(),
+                    fetchAllEstablishments(),
+                    fetchAllStudents(),
+                    fetchAllBuses(),
+                    fetchroute(),
+                    fetchAdmins(),
+                    fetchDrivers(),
+                    fetchParents(),
+                    fetchResponsibles()
+                ]);
+
+                setDashboardData({
+                    schools,
+                    establishments,
+                    students,
+                    buses,
+                    routes,
+                    admins,
+                    drivers,
+                    parents,
+                    responsibles,
+                    loading: false,
+                    error: null
+                });
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                setDashboardData(prev => ({
+                    ...prev,
+                    loading: false,
+                    error: error.message
+                }));
+            }
+        };
+
+        fetchData();
+    }, []);
+    // --- Aggregated Data for Dashboard ---
+    const totalSchools = dashboardData.schools.length;
+    const activeSchools = dashboardData.schools.filter(school => school.status === 'ACTIVE').length;
+    const inactiveSchools = totalSchools - activeSchools;
+
+    const totalEstablishments = dashboardData.establishments.length;
+    const totalStudents = dashboardData.students.data?.length || 0;
+    const totalBuses = dashboardData.buses.length;
+    const totalRoutes = dashboardData.routes.length;
+    
+    const totalAdmins = dashboardData.admins.length;
+    const totalDrivers = dashboardData.drivers.length;
+    const totalParents = dashboardData.parents.length;
+    const totalResponsible = dashboardData.responsibles.length;
+    const totalUsers = totalAdmins + totalDrivers + totalParents + totalResponsible;
 
     // --- Chart Data Preparation ---
 
@@ -87,9 +159,6 @@ const SuperAdminDashboardPage = () => {
                     colors: `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
                 }
             },
-            tooltip: {
-                theme: mode === "dark" ? "dark" : "light",
-            },
             plotOptions: {
                 pie: {
                     donut: {
@@ -114,30 +183,20 @@ const SuperAdminDashboardPage = () => {
     };
 
     // Data for User Role Distribution Chart (Pie Chart)
-    // Aggregate user roles
-    const roleCounts = demoData.users.reduce((acc, user) => {
-        acc[user.role] = (acc[user.role] || 0) + 1;
-        return acc;
-    }, {});
-
-    const roleLabels = Object.keys(roleCounts);
-    const roleSeries = Object.values(roleCounts);
-
     const userRoleChartData = {
-        series: roleSeries,
+        series: [totalAdmins, totalDrivers, totalParents, totalResponsible],
         options: {
             chart: {
                 type: 'pie',
                 height: 250,
                 toolbar: { show: false },
             },
-            labels: roleLabels,
+            labels: ['Admins', 'Chauffeurs', 'Parents', 'Responsables'],
             colors: [
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].primary})`, // SUPER_ADMIN
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].info})`,    // ADMIN
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].secondary})`, // RESPONSIBLE
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].destructive})`, // DRIVER
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].success})` // PARENT
+                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].primary})`,
+                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].info})`,
+                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].secondary})`,
+                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].success})`
             ],
             responsive: [{
                 breakpoint: 480,
@@ -171,11 +230,11 @@ const SuperAdminDashboardPage = () => {
     };
 
     // Example of a simple line chart for growth (placeholder data)
-    // This could be updated with actual data on new school sign-ups or total active users over time
+    // In a real app, you would fetch historical data from your API
     const monthlyGrowthData = {
         series: [{
             name: 'Nouvelles Écoles',
-            data: [1, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6] // Example: cumulative count of schools over 12 months
+            data: [1, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 6] // Replace with real data
         }],
         options: {
             chart: {
@@ -206,6 +265,23 @@ const SuperAdminDashboardPage = () => {
         }
     };
 
+    if (dashboardData.loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (dashboardData.error) {
+        return (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong className="font-bold">Erreur ! </strong>
+                <span className="block sm:inline">{dashboardData.error}</span>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Header Section */}
@@ -218,7 +294,6 @@ const SuperAdminDashboardPage = () => {
                     Gérer les Écoles
                 </Button>
             </div>
-
 
             {/* Global Stats Section */}
             <div className="grid grid-cols-12 gap-6">
@@ -277,7 +352,7 @@ const SuperAdminDashboardPage = () => {
                                     <Link href="/super-admin/routes" className="text-xs text-primary hover:underline mt-2">Voir</Link>
                                 </div>
                                 {/* Total Users */}
-                                <div className="p-4 bg-default-50 rounded-lg flex flex-col items-center justify-center col-span-full md:col-span-1 lg:col-span-1">
+                                <div className="p-4 bg-default-50 rounded-lg flex flex-col items-center justify-center">
                                     <div className="flex items-center gap-2 mb-2">
                                       <Icon icon="heroicons:user-group" className="h-6 w-6 text-purple-500 mb-2" />
                                       <span className="text-sm font-medium text-default-600">Utilisateurs</span>
@@ -314,7 +389,6 @@ const SuperAdminDashboardPage = () => {
                     </Card>
                 </div>
             </div>
-
 
             {/* Charts Section: User Roles and Growth */}
             <div className="grid grid-cols-12 gap-6">
@@ -360,8 +434,7 @@ const SuperAdminDashboardPage = () => {
                 </div>
             </div>
 
-
-            {/* Quick Access Section (optional, could add more specific links here) */}
+            {/* Quick Access Section */}
             <div className="grid grid-cols-12 gap-6">
                 <div className="col-span-12">
                     <Card>
@@ -370,19 +443,19 @@ const SuperAdminDashboardPage = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                <Link href="/super-admin/users?role=ADMIN" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/admins" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:user-shield" className="h-5 w-5 text-blue-500" />
                                     <span className="font-medium text-default-700">Gérer les Admins ({totalAdmins})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=RESPONSIBLE" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/responsables" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:user" className="h-5 w-5 text-teal-500" />
                                     <span className="font-medium text-default-700">Gérer les Responsables ({totalResponsible})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=DRIVER" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/drivers" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:truck" className="h-5 w-5 text-indigo-500" />
                                     <span className="font-medium text-default-700">Gérer les Chauffeurs ({totalDrivers})</span>
                                 </Link>
-                                <Link href="/super-admin/users?role=PARENT" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+                                <Link href="/super-admin/parents" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                                     <Icon icon="heroicons:home" className="h-5 w-5 text-rose-500" />
                                     <span className="font-medium text-default-700">Gérer les Parents ({totalParents})</span>
                                 </Link>

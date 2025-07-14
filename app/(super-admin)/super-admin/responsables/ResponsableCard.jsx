@@ -24,6 +24,7 @@ const ResponsableCard = ({ responsable, onEditResponsable, onDeleteResponsable }
   const getResponsibleEstablishments = (responsibleId) => {
     return demoData.establishments.filter(etb => etb.responsableId === responsibleId);
   };
+  const dataetablisements=responsable.establishments
 
   useEffect(() => {
     // Fetch establishments when the responsible's ID changes
@@ -74,32 +75,32 @@ const ResponsableCard = ({ responsable, onEditResponsable, onDeleteResponsable }
                   <Icon icon="heroicons:phone" className="w-4 h-4 opacity-70" />
                   {responsable.phone}
                 </p>
-                <p className="flex items-center gap-2 text-sm  text-default-600">
-                  <Icon icon="heroicons:identification" className="w-4 h-4 opacity-70" />
-                  {responsable.cin}
-                </p>
-                {establishments.length > 0 && (
-                  <div className="mt-4">
-                  <h4 className="font-semibold text-sm mb-2">Établissements associés:</h4>
-                  <ul className="space-y-1">
-                    {establishments.map(establishment => (
-                       <li key={establishment.id} className="flex items-center justify-between text-sm text-gray-700">
-                       <span>{establishment.name}</span>
-                       <Link
-                          href={`/${locale}/super-admin/etablissements/${establishment.id}`}
-                          className="text-primary inline-flex font-medium text-sm items-center"
-                        >
-                          Voir details
-                        <Icon icon="heroicons:arrow-right" className="ml-1 w-4 h-4" />
-                        </Link>
-                    </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {establishments.length === 0 && (
-            <p className="text-sm text-muted-foreground mt-4">Aucun établissement associé.</p>
-          )}
+              {dataetablisements ? (
+  dataetablisements.length > 0 ? (
+    <div className="mt-4">
+      <h4 className="font-semibold text-sm mb-2">Établissements associés:</h4>
+      <ul className="space-y-1">
+        {dataetablisements.map(establishment => (
+          <li key={establishment.id} className="flex items-center justify-between text-sm text-gray-700">
+            <span>{establishment.name}</span>
+            <Link
+              href={`/super-admin/etablissements/${establishment.id}`}
+              className="text-primary inline-flex font-medium text-sm items-center"
+            >
+              Voir détails
+              <Icon icon="heroicons:arrow-right" className="ml-1 w-4 h-4" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : (
+    <p className="text-sm text-muted-foreground mt-4">Aucun établissement associé.</p>
+  )
+) : (
+  <p className="text-sm text-muted-foreground mt-4">Chargement des établissements...</p>
+)}
+        
               </div>
           
               <div className="border border-dashed border-default-200 my-5"></div>

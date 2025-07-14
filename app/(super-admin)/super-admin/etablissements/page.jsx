@@ -9,22 +9,93 @@ import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { Input } from '@/components/ui/input'; // Import Input component
+import {fetchAllEstablishments,deletePremently} from '@/services/etablissements';
+import{fetchSchools}from '@/services/school';
 
 const ITEMS_PER_PAGE = 5;
 
 const EtablissementsPage = () => {
   const [etablissements, setEtablissements] = useState(demoData.establishments);
+  const[establishments,setEstablishments]= useState([]);
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
   const [editingEtablissement, setEditingEtablissement] = useState(null); // Holds data for editing
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState(''); // New state for search query
+   const [establishmentsLoading, setEstablishmentsLoading] = useState(false);
+    const [schoolsLoading, setSchoolsLoading] = useState(false);
+       const [schools, setSchools] = useState([]);
+   
+     useEffect(() => {
+     let isMounted = true; // Variable locale pour suivre le statut de montage
+   
+     async function loadschools() {
+       setSchoolsLoading(true);
+       try {
+         const data = await fetchSchools();
+       
+   
+         if (isMounted) {
+           setSchools(data); // Mise à jour conditionnelle si le composant est toujours monté
+           
+         }
+       } catch (error) {
+         console.error('Erreur lors du chargement des établissements', error);
+         toast.error("Impossible de charger les établissements");
+       } finally {
+         if (isMounted) {
+           setSchoolsLoading(false);
+         }
+       }
+     }
+   
+     // Charger seulement si non encore chargés
+     if (schools.length === 0) {
+       loadschools();
+     }
+   
+     return () => {
+       isMounted = false; // Nettoyage : indique que le composant n'est plus monté
+     };
+   }, [schools]);
 
+ const loadEstablishments = async () => {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchAllEstablishments();
+      
+      setEstablishments(data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      setEstablishmentsLoading(false);
+    }
+  };
+
+  // Utiliser useEffect pour charger initialement si nécessaire
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadIfNotLoaded = async () => {
+      if (!isMounted) return;
+      if (establishments.length === 0) {
+        await loadEstablishments();
+      }
+    };
+
+    loadIfNotLoaded();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [establishments]); // ⚠️ Attention ici, voir plus bas
+  console.log("etablisment",establishments)
   // Filter establishments based on search query
-  const filteredEtablissements = etablissements.filter(etablissement =>
+  const filteredEtablissements = establishments.filter(etablissement =>
     etablissement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     etablissement.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     etablissement.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (demoData.users.find(u => u.id === etablissement.responsableId)?.fullname || '').toLowerCase().includes(searchQuery.toLowerCase())
+    etablissement.responsable.fullname.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredEtablissements.length / ITEMS_PER_PAGE);
@@ -78,19 +149,11 @@ const EtablissementsPage = () => {
   };
 
   // Function to handle deleting an establishment
-  const handleDeleteEtablissement = (id) => {
+  const handleDeleteEtablissement = async(id) => {
     try {
-      // Remove from demoData
-      demoData.establishments = demoData.establishments.filter(etablissement => etablissement.id !== id);
-      // You might also want to handle orphan responsibles if they are no longer linked to any establishment
-
-      // Update local state
-      setEtablissements([...demoData.establishments]);
-
-      // Adjust pagination if the current page becomes empty
-      if (paginatedEtablissements.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
+      await deletePremently(id)
+     loadEstablishments();
+     
 
       toast.success('Établissement supprimé avec succès');
     } catch (error) {
@@ -100,10 +163,10 @@ const EtablissementsPage = () => {
   };
 
   // Function to handle saving (add or edit) an establishment
-  const handleSaveEtablissement = (updatedEtablissementData) => {
-    // ModalEtablissement is now responsible for modifying demoData directly.
-    // We just need to refresh our local state after it's done.
-    setEtablissements([...demoData.establishments]);
+  const handleSaveEtablissement = (updatedata) => {
+    consol.log("data frome save",updatedata)
+    
+     loadEstablishments();
     setIsAddEditDialogOpen(false);
     setEditingEtablissement(null); // Clear editing state after save
   };
@@ -183,7 +246,7 @@ console.log(editingEtablissement)
         setIsOpen={setIsAddEditDialogOpen}
         editingEtablissement={editingEtablissement} // Pass the structured editing data
         onSave={handleSaveEtablissement} // This handles refreshing the list
-        allSchools={demoData.schools} // Pass all schools for the dropdown
+        allSchools={schools} // Pass all schools for the dropdown
         fixedSchoolId={null} // Set to a specific ID (e.g., 1) if you want to fix the school, otherwise null
       />
 

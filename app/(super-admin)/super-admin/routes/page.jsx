@@ -9,42 +9,73 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalRoute } from '@/components/models/ModalRoute'; // Create this
 import RouteCard from './RouteCard'; // Create this
+import {fetchroute,createroute,updateroute,deleteroute}  from '@/services/route';
+import {fetchAllEstablishments} from '@/services/etablissements';
+import { sync } from 'framer-motion';
 
-const ITEMS_PER_PAGE = 3;
+const ITEMS_PER_PAGE = 9;
+
 
 const RoutesPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
+  const [currentDemoData, setCurrentDemoData] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRoute, setEditingRoute] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+   const [loading, setLoading] = useState(false);
+   const [establishments, setEstablishments] = useState([]);
+      const [establishmentsLoading, setEstablishmentsLoading] = useState(false);
 
-  useEffect(() => {
-    console.log("currentDemoData updated, filtering routes...");
-    const allRoutes = currentDemoData.routes;
+ useEffect(() => {
+  let isMounted = true;
 
-    // Enrich routes with establishment name
-    const enrichedRoutes = allRoutes.map(route => {
-      const establishment = currentDemoData.establishments.find(est => est.id === route.establishmentId);
-      const stopsCount = currentDemoData.stops.filter(stop => stop.routeId === route.id).length;
-      return {
-        ...route,
-        establishmentName: establishment ? establishment.name : 'Non attribué',
-        stopsCount: stopsCount,
-      };
-    });
+  async function loadEstablishments() {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchAllEstablishments();
+      console.log("Établissements reçus :", data);
 
-    setRoutes(enrichedRoutes);
-
-    const newTotalPages = Math.ceil(enrichedRoutes.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && enrichedRoutes.length > 0) {
-      setCurrentPage(1);
-    } else if (enrichedRoutes.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
+      if (isMounted && data && Array.isArray(data)) {
+        setEstablishments(data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      if (isMounted) {
+        setEstablishmentsLoading(false);
+      }
     }
-  }, [currentDemoData, currentPage]);
+  }
+
+  // Charger seulement si non encore chargés
+  if (establishments.length === 0) {
+    loadEstablishments();
+  }
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
+ const loadRoute = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchroute(); // Récupère les données depuis l'API
+      setRoutes(data || []); // Met à jour l'état local
+      setCurrentDemoData(data);
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les routes");
+    } finally {
+      setLoading(false);
+    }
+  };
+useEffect(() => {
+  loadRoute();
+}, []);
+
+ 
 
   const totalPages = Math.ceil(routes.length / ITEMS_PER_PAGE);
   const paginatedRoutes = routes.slice(
@@ -61,22 +92,10 @@ const RoutesPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteRoute = (id) => {
+  const handleDeleteRoute = async(id) => {
     try {
-      console.log(`Attempting to delete route with ID: ${id}`);
-      const updatedRoutes = currentDemoData.routes.filter(route => route.id !== id);
-
-      // Also remove associated stops and trips using this route
-      const updatedStops = currentDemoData.stops.filter(stop => stop.routeId !== id);
-      const updatedTrips = currentDemoData.trips.filter(trip => trip.routeId !== id);
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        routes: updatedRoutes,
-        stops: updatedStops,
-        trips: updatedTrips,
-      }));
-
+      await deleteroute(id);
+      await loadRoute();
       toast.success('Route supprimée avec succès');
     } catch (error) {
       console.error('Error deleting route:', error);
@@ -84,49 +103,52 @@ const RoutesPage = () => {
     }
   };
 
-  const handleSaveRoute = async (routeData) => {
-    try {
-      let message = '';
-      let updatedRoutesArray = [...currentDemoData.routes];
+ const handleSaveRoute = async (routeData) => {
+  try {
+    let message = '';
 
-      if (editingRoute) {
-        const index = updatedRoutesArray.findIndex(r => r.id === editingRoute.id);
-        if (index !== -1) {
-          const routeToUpdate = updatedRoutesArray[index];
-          const updatedRoute = {
-            ...routeToUpdate,
-            ...routeData,
-            id: editingRoute.id,
-          };
-          updatedRoutesArray[index] = updatedRoute;
-          message = 'Route modifiée avec succès';
-        } else {
-          throw new Error("Route à modifier non trouvée.");
-        }
-      } else {
-        const newId = Math.max(...currentDemoData.routes.map(r => r.id), 0) + 1;
-        const newRoute = {
-          ...routeData,
-          id: newId,
-        };
-        updatedRoutesArray.push(newRoute);
-        message = 'Route ajoutée avec succès';
-      }
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        routes: updatedRoutesArray,
-      }));
-
-      toast.success(message);
-      setIsModalOpen(false);
-      setEditingRoute(null);
-
-    } catch (error) {
-      console.error('Error saving route:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+    if (editingRoute) {
+      await updateroute(editingRoute.id, routeData);
+      message = 'Route mise à jour avec succès';
+    } else {
+      await createroute(routeData);
+      message = 'Route ajoutée avec succès';
     }
-  };
+
+    await loadRoute(); // recharge les routes
+    toast.success(message);
+    setIsModalOpen(false);
+    setEditingRoute(null);
+
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde de la route :', error);
+
+    if (error.response) {
+      // Erreur côté serveur avec réponse HTTP
+      const { status, data } = error.response;
+
+      if (status === 400 && data.error) {
+        // Affiche l'erreur spécifique pour Bad Request
+        toast.error(`Erreur : ${data.error}`, {
+          position: "bottom-right",
+          autoClose: 5000,
+        });
+      } else {
+        // Autres erreurs serveur (ex: 500)
+        toast.error(`Erreur serveur (${status}) : Veuillez réessayer plus tard.`, {
+          position: "bottom-right",
+          autoClose: 5000,
+        });
+      }
+    } else {
+      // Erreurs réseau ou autre
+      toast.error(`Erreur réseau : ${error.message}`, {
+        position: "bottom-right",
+        autoClose: 5000,
+      });
+    }
+  }
+};
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -153,7 +175,7 @@ const RoutesPage = () => {
         onClose={handleCloseModal}
         editingRoute={editingRoute}
         onSave={handleSaveRoute}
-        establishments={currentDemoData.establishments}
+        establishments={establishments}
       />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

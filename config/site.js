@@ -1,7 +1,7 @@
 export const siteConfig = {
-  name: "DashTail Next js Admin Template",
+  name: "Wasslni",
   description: null,
-  theme: "yellown",
+  theme: "yellow",
   layout: "vertical",
   // semi-box, horizontal, vertical
   hideSideBar: false,

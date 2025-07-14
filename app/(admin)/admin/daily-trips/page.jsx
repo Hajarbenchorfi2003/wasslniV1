@@ -1,10 +1,21 @@
-// app/[lang]/(admin)/admin/daily-trips/page.jsx
+// components/DailyTripsPage.jsx
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@iconify/react";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { demoData as initialDemoData } from '@/data/data';
+import { Button } from '@/components/ui/button';
+import { Icon } from '@iconify/react';
+import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
+import { ModalDailyTrip } from '@/components/models/ModalDailyTrip';
+import DailyTripCard from './DailyTripCard'; // Create this
+import{fetchdailytrip,createDailyTrip,updateDailyTrip,deleteDailyTrip} from '@/services/dailyTrip';
+import {fetchUserEstablishments} from '@/services/etablissements';
+import {fetchDrivers} from '@/services/user';
+import {fetchAlltrip} from '@/services/trips';
+
+ 
+// Import shadcn/ui Select and Input components
 import {
   Select,
   SelectContent,
@@ -12,347 +23,430 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import toast from "react-hot-toast";
+import { Input } from "@/components/ui/input"; // Make sure you have this installed: npx shadcn-ui@latest add input
+import { date } from 'zod';
 
-// Import the full demoData
-import { demoData as initialDemoData } from '@/data/data';
 
-// Import the separated components
-import { DailyTripsTable } from './DailyTripsTable';
-import { TripDetailsPanel } from './TripDetailsPanel';
-import { ModalDailyTrip } from '@/components/models/ModalDailyTrip';
-import ModalSuppression from '@/components/models/ModalSuppression';
-
-const ITEMS_PER_PAGE = 5;
 
 const DailyTripsPage = () => {
   const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
-  const [enrichedDailyTrips, setEnrichedDailyTrips] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // For Add/Edit Modal
+  const [dailyTrips, setDailyTrips] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDailyTrip, setEditingDailyTrip] = useState(null);
-  const [selectedTripDetails, setSelectedTripDetails] = useState(null); // This state will control the layout
 
-  // States for Deletion Confirmation Modal
-  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
-  const [dailyTripToDeleteId, setDailyTripToDeleteId] = useState(null);
-
-  // Filter and search states
+const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const ITEMS_PER_PAGE = 10;
+  // States for existing filters
+  const [filterTripId, setFilterTripId] = useState('all');
+  const [filterDriverId, setFilterDriverId] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [filterEstablishmentsId, setFilterEstablishmentsId] = useState('all');
 
-  // --- Data Enrichment and Filtering Logic ---
+  // New states for search functionality
+ 
+  const [searchDate, setSearchDate] = useState(''); // For specific date search (YYYY-MM-DD)
+  const[establishments,setEstablishments]=useState([]);
+ const [error, setError] = useState(null);
+  const [drivers, setDrivers] = useState([]);
+  const [trips, setTrips] = useState([]);
+  const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
+   
+    const [loadingtrip, setLoadingtrip] = useState(false);
+    const [loadingdriver, setLoadingdriver] = useState(false);
+   
+    const loadtrip = async () => {
+    try {
+     setLoadingtrip(true);
+      
+      const data = await fetchAlltrip();
+     
+      setTrips(data.data);
+    } catch (err) {
+      console.error("Erreur lors du chargement des bus :", err);
+      
+      toast.error("Erreur lors du chargement des buses");
+    } finally {
+      setLoadingtrip(false);
+    }
+  };
+  
+  // Charge les bus au montage du composant
   useEffect(() => {
-    let tripsToProcess = currentDemoData.dailyTrips;
-
-    // Enrich data
-    const enriched = tripsToProcess.map(dTrip => {
-      const trip = currentDemoData.trips.find(t => t.id === dTrip.tripId);
-      if (!trip) {
-        console.warn(`Trip with ID ${dTrip.tripId} not found for dailyTrip ${dTrip.id}`);
-        return null;
+    loadtrip();
+  }, []); 
+    
+    const loadDriver = async () => {
+      try {
+        setLoadingdriver(true);
+        
+        const data = await fetchDrivers();
+       
+        setDrivers(data);
+      } catch (err) {
+        console.error("Erreur lors du chargement des bus :", err);
+        
+        toast.error("Erreur lors du chargement des buses");
+      } finally {
+        setLoadingdriver(false);
       }
-      const bus = currentDemoData.buses.find(b => b.id === trip.busId);
-      const driver = currentDemoData.users.find(u => u.id === trip.driverId && u.role === 'DRIVER');
-      const route = currentDemoData.routes.find(r => r.id === trip.routeId);
-      const stops = route ? currentDemoData.stops.filter(s => s.routeId === route.id) : [];
-      const attendance = currentDemoData.attendances.filter(a => a.dailyTripId === dTrip.id).map(att => ({
-        ...att,
-        student: currentDemoData.students.find(s => s.id === att.studentId),
-        markedBy: currentDemoData.users.find(u => u.id === att.markedById)
-      }));
-      const positions = currentDemoData.positions.filter(p => p.dailyTripId === dTrip.id);
-      const incidents = currentDemoData.incidents.filter(i => i.dailyTripId === dTrip.id).map(inc => ({
-        ...inc,
-        reportedBy: currentDemoData.users.find(u => u.id === inc.reportedById)
-      }));
-
-      return {
-        ...dTrip,
-        trip: {
-          ...trip,
-          bus: bus || {},
-          driver: driver || {},
-          route: { ...route, stops: stops } || {}
-        },
-        attendance,
-        positions,
-        incidents,
+    };
+    
+    // Charge les bus au montage du composant
+    useEffect(() => {
+      loadDriver();
+    }, []);
+       useEffect(() => {
+      let isMounted = true;
+    
+      async function loadEstablishments() {
+        setEstablishmentsLoading(true);
+        try {
+          const data = await fetchUserEstablishments();
+          console.log("Établissements reçus :", data);
+    
+          if (isMounted && data && Array.isArray(data)) {
+            setEstablishments(data);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des établissements', error);
+          toast.error("Impossible de charger les établissements");
+        } finally {
+          if (isMounted) {
+            setEstablishmentsLoading(false);
+          }
+        }
+      }
+    
+      // Charger seulement si non encore chargés
+      if (establishments.length === 0) {
+        loadEstablishments();
+      }
+    
+      return () => {
+        isMounted = false;
       };
-    }).filter(Boolean);
+    }, []);
 
-    let filteredTrips = enriched;
 
-    // Apply status filter
-    if (filterStatus !== 'all') {
-      filteredTrips = filteredTrips.filter(dTrip => dTrip.status === filterStatus);
+const fetchDailyTripsWithFilters = async () => {
+        setLoading(true);
+       setError(null);
+
+  try {
+    const filters = {};
+
+    if (filterTripId !== 'all') filters.tripId = parseInt(filterTripId);
+    if (filterEstablishmentsId !== 'all') filters.establishmentId = parseInt(filterEstablishmentsId);
+    if (filterDriverId !== 'all') filters.driverId = parseInt(filterDriverId);
+    if (filterStatus !== 'all') filters.status = filterStatus;
+    if (searchDate) filters.date = searchDate;
+    
+
+    // Appel vers le backend
+    const data = await fetchdailytrip(filters);
+    
+    console.log("Données reçues depuis l'API :", data);
+
+    // ✅ Extraction des données avec gestion robuste
+    const tripsData = Array.isArray(data.data) ? data.data : [];
+    const pagination = data.pagination || {};
+    console.log(pagination)
+
+    setDailyTrips(tripsData);
+    setTotalPages(pagination.totalPages|| 1);
+    setCurrentPage(pagination.page || 1);
+
+  } catch (err) {
+    let errorMessage = "Erreur lors du chargement des trajets quotidiens";
+
+    if (err.response?.data?.error || err.response?.data?.message) {
+      errorMessage = err.response.data.error || err.response.data.message;
+    } else if (err.request) {
+      errorMessage = "Aucune réponse du serveur";
+    } else if (err.message) {
+      errorMessage = err.message;
     }
 
-    // Apply search query filter
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase();
-      filteredTrips = filteredTrips.filter(dTrip => {
-        const tripName = dTrip.trip?.name?.toLowerCase() || '';
-        const busPlate = dTrip.trip?.bus?.plateNumber?.toLowerCase() || '';
-        const driverName = dTrip.trip?.driver?.fullname?.toLowerCase() || '';
-        const routeName = dTrip.trip?.route?.name?.toLowerCase() || '';
-        const date = dTrip.date?.toLowerCase() || '';
+    setError(errorMessage);
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right"
+    });
 
-        return tripName.includes(lowerCaseQuery) ||
-               busPlate.includes(lowerCaseQuery) ||
-               driverName.includes(lowerCaseQuery) ||
-               routeName.includes(lowerCaseQuery) ||
-               date.includes(lowerCaseQuery);
-      });
-    }
+    setDailyTrips([]);
 
-    setEnrichedDailyTrips(filteredTrips);
+  } finally {
+    setLoading(false);
+  }
+  };
+    useEffect(() => {
+     fetchDailyTripsWithFilters();
+    }, [
+      filterTripId,
+      filterEstablishmentsId,
+      filterDriverId,
+      filterStatus,
+      searchDate,
+      currentPage,
+    ]);
 
-    const newTotalPages = Math.ceil(filteredTrips.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (filteredTrips.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
-    } else if (currentPage === 0 && newTotalPages > 0) {
-      setCurrentPage(1);
-    }
-  }, [currentDemoData, filterStatus, searchQuery, currentPage]);
-
-  const totalPages = Math.ceil(enrichedDailyTrips.length / ITEMS_PER_PAGE);
-  const paginatedDailyTrips = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return enrichedDailyTrips.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [enrichedDailyTrips, currentPage]);
+ 
+ 
+  const paginatedDailyTrips = dailyTrips.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  const handleEditDailyTrip = (trip) => {
-    setEditingDailyTrip(trip);
+  const handleEditDailyTrip = (dailyTrip) => {
+    setEditingDailyTrip(dailyTrip);
     setIsModalOpen(true);
   };
 
-  const handleDeleteRequest = (id) => {
-    setDailyTripToDeleteId(id);
-    setIsDeleteConfirmModalOpen(true);
-  };
+  const handleDeleteDailyTrip =async (id) => {
+    try {
+      await deleteDailyTrip(id)
+     
+      await fetchDailyTripsWithFilters();
+      toast.success('Trajet quotidien supprimé avec succès');
+    } catch (error) {
+    let errorMessage = 'Erreur inconnue';
 
-  const confirmDelete = () => {
-    if (dailyTripToDeleteId === null) return;
-
-    setCurrentDemoData(prevData => ({
-      ...prevData,
-      dailyTrips: prevData.dailyTrips.filter(dTrip => dTrip.id !== dailyTripToDeleteId),
-      attendances: prevData.attendances.filter(att => att.dailyTripId !== dailyTripToDeleteId),
-      positions: prevData.positions.filter(pos => pos.dailyTripId !== dailyTripToDeleteId),
-      incidents: prevData.incidents.filter(inc => inc.dailyTripId !== dailyTripToDeleteId),
-    }));
-    toast.success('Trajet quotidien supprimé avec succès.');
-    setSelectedTripDetails(null); // Clear details if deleted
-    setIsDeleteConfirmModalOpen(false);
-    setDailyTripToDeleteId(null);
-  };
-
-  const cancelDelete = () => {
-    setIsDeleteConfirmModalOpen(false);
-    setDailyTripToDeleteId(null);
-  };
-
-  const handleSaveDailyTrip = (formData) => {
-    let message = '';
-    let updatedDailyTrips = [...currentDemoData.dailyTrips];
-
-    const tripExists = currentDemoData.trips.some(t => t.id === formData.tripId);
-    if (!tripExists) {
-      toast.error(`L'ID du trajet '${formData.tripId}' n'existe pas. Veuillez utiliser un ID de trajet valide.`);
-      return;
+    // ✅ Récupère l'erreur depuis le serveur si possible
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.request) {
+      errorMessage = 'Aucune réponse du serveur';
+    } else if (error.message) {
+      errorMessage = error.message;
     }
+
+    console.error('Erreur lors de la sauvegarde :', errorMessage);
+    
+    // Affichage de l'erreur utilisateur
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right", // Notification en bas à droite
+      duration: 5000,
+    });
+  }
+  };
+
+  const handleSaveDailyTrip = async (dailyTripData) => {
+  try {
+    let message = '';
 
     if (editingDailyTrip) {
-      const index = updatedDailyTrips.findIndex(dTrip => dTrip.id === editingDailyTrip.id);
-      if (index !== -1) {
-        updatedDailyTrips[index] = {
-          ...updatedDailyTrips[index],
-          tripId: formData.tripId,
-          date: formData.date,
-          status: formData.status,
-        };
-        message = 'Trajet quotidien modifié avec succès.';
-      } else {
-        toast.error('Erreur: Trajet quotidien à modifier non trouvé.');
-        return;
-      }
+      const status = {status:dailyTripData.status};
+      console.log(status)
+      await updateDailyTrip(editingDailyTrip.id, status);
+      message = 'Trajet quotidien modifié avec succès';
     } else {
-      const newId = Math.max(...currentDemoData.dailyTrips.map(d => d.id), 0) + 1;
-      updatedDailyTrips.push({
-        id: newId,
-        tripId: formData.tripId,
-        date: formData.date,
-        status: formData.status,
-      });
-      message = 'Nouveau trajet quotidien ajouté avec succès.';
+      console.log("data",dailyTripData)
+      await createDailyTrip(dailyTripData);
+      message = 'Trajet quotidien ajouté avec succès';
     }
 
-    setCurrentDemoData(prevData => ({
-      ...prevData,
-      dailyTrips: updatedDailyTrips,
-    }));
+    await fetchDailyTripsWithFilters();
+
     toast.success(message);
     setIsModalOpen(false);
     setEditingDailyTrip(null);
-  };
+
+  } catch (error) {
+    let errorMessage = 'Erreur inconnue';
+
+    // ✅ Récupère l'erreur depuis le serveur si possible
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.request) {
+      errorMessage = 'Aucune réponse du serveur';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    console.error('Erreur lors de la sauvegarde :', errorMessage);
+    
+    // Affichage de l'erreur utilisateur
+    toast.error(`Erreur : ${errorMessage}`, {
+      position: "bottom-right", // Notification en bas à droite
+      duration: 5000,
+    });
+  }
+};
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingDailyTrip(null);
   };
 
-  const handleOpenAddModal = () => {
-    setEditingDailyTrip(null);
-    setIsModalOpen(true);
-  };
+  // Extract unique trips and drivers for filter options
+  const uniqueTrips = [...new Map(currentDemoData.trips.map(trip => [trip.id, trip])).values()];
+  const uniqueDrivers = [...new Map(currentDemoData.users
+    .filter(user => user.role === 'DRIVER')
+    .map(driver => [driver.id, driver])).values()];
 
-  // --- Helper Functions for Display (Passed to children) ---
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'PLANNED': return 'default';
-      case 'ONGOING': return 'warning';
-      case 'COMPLETED': return 'success';
-      default: return 'default';
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'PLANNED': return 'Planifié';
-      case 'ONGOING': return 'En cours';
-      case 'COMPLETED': return 'Terminé';
-      default: return status;
-    }
-  };
-
-  const getAttendanceStatusColor = (status) => {
-    switch (status) {
-      case 'PRESENT': return 'success';
-      case 'ABSENT': return 'destructive';
-      default: return 'default';
-    }
-  };
-
-  const getAttendanceStatusText = (status) => {
-    switch (status) {
-      case 'PRESENT': return 'Présent';
-      case 'ABSENT': return 'Absent';
-      default: return status;
-    }
-  };
-
-  const getAttendanceTypeText = (type) => {
-    switch (type) {
-      case 'DEPART': return 'Départ';
-      case 'RETOUR': return 'Retour';
-      default: return type;
-    }
-  };
+  const tripStatuses = Object.values(currentDemoData.enums.TripStatus);
 
   return (
-    <div className="space-y-6 p-6 md:p-8 lg:p-10">
-      {/* Header Section */}
-      <div className="flex items-center justify-between flex-wrap gap-4 pb-4 border-b border-border">
-        <h1 className="text-3xl font-bold text-default-900">Gestion des Trajets Quotidiens</h1>
-        <Button onClick={handleOpenAddModal} className="shrink-0">
+    <div className="space-y-6">
+      <div className="flex items-center flex-wrap justify-between gap-4">
+        <div className="text-2xl font-medium text-default-800">
+          Gestion des Trajets Quotidiens
+        </div>
+        <Button onClick={() => {
+          setEditingDailyTrip(null);
+          setIsModalOpen(true);
+        }}>
           <Icon icon="heroicons:plus" className="h-5 w-5 mr-2" />
-          Ajouter un trajet
+          Ajouter un Trajet Quotidien
         </Button>
       </div>
 
-      {/* Filters and Search Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrer par statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les Statuts</SelectItem>
-            {currentDemoData.enums.TripStatus.map(status => (
-              <SelectItem key={status} value={status}>
-                {getStatusText(status)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* --- Filters and Search Section --- */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  {/* Search by Text */}
+  
+    {/* Filter by Driver */}
+  <Select onValueChange={setFilterEstablishmentsId} value={filterEstablishmentsId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Establishments" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Establishments</SelectItem>
+      {establishments.map((establishment) => (
+        <SelectItem key={establishment.id} value={String(establishment.id)}>
+          {establishment.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
-        <Input
-          type="text"
-          placeholder="Rechercher par nom du trajet, matricule bus, chauffeur..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="col-span-1 md:col-span-2"
-        />
-      </div>
+  {/* Search by Date */}
+  <Input
+    type="date"
+    value={searchDate}
+    onChange={(e) => setSearchDate(e.target.value)}
+    className="w-full"
+  />
 
-      {/* Main Content Area: Table and (conditionally) Details Panels */}
-      <div className={`grid gap-6 ${selectedTripDetails ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
-        {/* Daily Trips Table */}
-        <div className={selectedTripDetails ? 'lg:col-span-1' : 'lg:col-span-full'}>
-            <DailyTripsTable
-              dailyTrips={paginatedDailyTrips}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              onEditDailyTrip={handleEditDailyTrip}
-              onDeleteDailyTrip={handleDeleteRequest}
-              selectedTripDetails={selectedTripDetails}
-              onSelectTrip={setSelectedTripDetails}
-              getStatusColor={getStatusColor}
-              getStatusText={getStatusText}
-              getAttendanceStatusColor={getAttendanceStatusColor}
-              getAttendanceStatusText={getAttendanceStatusText}
-              getAttendanceTypeText={getAttendanceTypeText}
-            />
-        </div>
+  {/* Filter by Trip Name */}
+  <Select onValueChange={setFilterTripId} value={filterTripId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Trajet" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Trajets</SelectItem>
+      {trips.map((trip) => (
+        <SelectItem key={trip.id} value={String(trip.id)}>
+          {trip.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
-        {/* Trip Details Panel - Conditionally rendered */}
-        {selectedTripDetails && (
-          <div className="lg:col-span-1">
-              <TripDetailsPanel
-                selectedTripDetails={selectedTripDetails}
-                getAttendanceStatusColor={getAttendanceStatusColor}
-                getAttendanceStatusText={getAttendanceStatusText}
-                getAttendanceTypeText={getAttendanceTypeText}
-              />
-          </div>
-        )}
-      </div>
+  {/* Filter by Driver */}
+  <Select onValueChange={setFilterDriverId} value={filterDriverId}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Chauffeur" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Chauffeurs</SelectItem>
+      {drivers.map((driver) => (
+        <SelectItem key={driver.id} value={String(driver.id)}>
+          {driver.fullname}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
 
-      {/* Modal for Add/Edit Daily Trip */}
+
+  {/* Filter by Status */}
+  <Select onValueChange={setFilterStatus} value={filterStatus}>
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Filtrer par Statut" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Tous les Statuts</SelectItem>
+      {tripStatuses.map((status) => (
+        <SelectItem key={status} value={status}>
+          {status}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
+
+
       <ModalDailyTrip
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         editingDailyTrip={editingDailyTrip}
         onSave={handleSaveDailyTrip}
-        trips={currentDemoData.trips.map(trip => {
-          const bus = currentDemoData.buses.find(b => b.id === trip.busId);
-          const driver = currentDemoData.users.find(u => u.id === trip.driverId && u.role === 'DRIVER');
-          return {
-            ...trip,
-            name: `${trip.name} (Bus: ${bus?.plateNumber || 'N/A'}, Chauffeur: ${driver?.fullname || 'N/A'})`
-          };
-        })}
+        trips={trips}
         tripStatuses={currentDemoData.enums.TripStatus}
       />
 
-      {/* Deletion Confirmation Modal */}
-      <ModalSuppression
-        isOpen={isDeleteConfirmModalOpen}
-        onClose={cancelDelete}
-        onConfirm={confirmDelete}
-        title="Confirmer la suppression du trajet"
-        description="Êtes-vous sûr de vouloir supprimer ce trajet quotidien ? Cette action supprimera également les présences et incidents associés et est irréversible."
-        confirmText="Supprimer le trajet"
-        cancelText="Annuler"
-      />
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {paginatedDailyTrips.length > 0 ? (
+          paginatedDailyTrips.map((dailyTrip) => (
+            <DailyTripCard
+              key={dailyTrip.id}
+              dailyTrip={dailyTrip}
+              onEditDailyTrip={handleEditDailyTrip}
+              onDeleteDailyTrip={handleDeleteDailyTrip}
+            />
+          ))
+        ) : (
+          <p className="col-span-full text-center text-gray-500">Aucun trajet quotidien trouvé.</p>
+        )}
+      </div>
+
+      {totalPages >1 && (
+        <div className="flex gap-2 items-center mt-4 justify-center">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+            disabled={currentPage === 1}
+            className="h-8 w-8"
+          >
+            <Icon icon="heroicons:chevron-left" className="w-5 h-5 rtl:rotate-180" />
+          </Button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <Button
+              key={`page-${page}`}
+              onClick={() => handlePageChange(page)}
+              variant={page === currentPage ? "default" : "outline"}
+              className={cn("w-8 h-8")}
+            >
+              {page}
+            </Button>
+          ))}
+
+          <Button
+            onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+          >
+            <Icon icon="heroicons:chevron-right" className="w-5 h-5 rtl:rotate-180" />
+          </Button>
+        </div>
+      )}
+
+     
+ 
+
     </div>
   );
 };

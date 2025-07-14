@@ -1,11 +1,23 @@
 import { create } from "zustand";
 import { siteConfig } from "@/config/site";
 import { persist, createJSONStorage } from "zustand/middleware";
+
+// Liste des thèmes valides
+const validThemes = [
+  'zinc', 'slate', 'stone', 'gray', 'neutral', 'red', 'rose', 
+  'orange', 'green', 'blue', 'yellow', 'violet'
+];
+
+// Fonction pour valider le thème
+const validateTheme = (theme) => {
+  return validThemes.includes(theme) ? theme : siteConfig.theme;
+};
+
 export const useThemeStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       theme: siteConfig.theme,
-      setTheme: (theme) => set({ theme }),
+      setTheme: (theme) => set({ theme: validateTheme(theme) }),
       radius: siteConfig.radius,
       setRadius: (value) => set({ radius: value }),
       layout: siteConfig.layout,
@@ -34,7 +46,29 @@ export const useThemeStore = create(
     }),
     {
       name: "theme-store",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        // Vérifier si localStorage est disponible
+        if (typeof window !== 'undefined') {
+          return localStorage;
+        }
+        return {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        };
+      }),
+      // Initialiser avec les valeurs par défaut si aucune donnée n'est trouvée
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // S'assurer que le thème est toujours défini et valide
+          if (!state.theme || !validThemes.includes(state.theme)) {
+            state.theme = siteConfig.theme;
+          }
+          if (!state.radius) {
+            state.radius = siteConfig.radius;
+          }
+        }
+      },
     }
   )
 );
@@ -59,7 +93,17 @@ export const useSidebar = create(
     }),
     {
       name: "sidebar-store",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        // Vérifier si localStorage est disponible
+        if (typeof window !== 'undefined') {
+          return localStorage;
+        }
+        return {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+        };
+      }),
     }
   )
 );

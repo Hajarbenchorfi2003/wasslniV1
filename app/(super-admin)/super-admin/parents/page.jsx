@@ -9,8 +9,9 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalParent } from '@/components/models/ModalParent'; // Create this
 import ParentCard from './ParentCard'; // Create this
-
-const ITEMS_PER_PAGE = 3;
+import {fetchAllEstablishments} from '@/services/etablissements';
+import {fetchParents,register,updateUser,deleteUser} from '@/services/user';
+const ITEMS_PER_PAGE = 9;
 
 const ParentsPage = () => {
   const [currentDemoData, setCurrentDemoData] = useState(initialDemoData);
@@ -18,39 +19,60 @@ const ParentsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParent, setEditingParent] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+   const [establishments, setEstablishments] = useState([]);
+   const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
+    const [loading, setLoading] = useState(false);
+    
+  
+ useEffect(() => {
+  let isMounted = true;
 
-  useEffect(() => {
-    console.log("currentDemoData updated, filtering parents...");
-    const allParents = currentDemoData.users.filter(user => user.role === 'PARENT');
+  async function loadEstablishments() {
+    setEstablishmentsLoading(true);
+    try {
+      const data = await fetchAllEstablishments();
+      console.log("Établissements reçus :", data);
 
-    // Enrich parents with student names they are associated with
-    const enrichedParents = allParents.map(parent => {
-      const associatedStudentIds = currentDemoData.parentStudents
-        .filter(ps => ps.parentId === parent.id)
-        .map(ps => ps.studentId);
-
-      const studentNames = associatedStudentIds.map(studentId => {
-        const student = currentDemoData.students.find(s => s.id === studentId);
-        return student ? student.fullname : 'N/A';
-      });
-
-      return {
-        ...parent,
-        studentNames: studentNames.length > 0 ? studentNames.join(', ') : 'Aucun enfant associé'
-      };
-    });
-
-    setParents(enrichedParents);
-
-    const newTotalPages = Math.ceil(enrichedParents.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    } else if (newTotalPages === 0 && enrichedParents.length > 0) {
-      setCurrentPage(1);
-    } else if (enrichedParents.length === 0 && currentPage !== 1) {
-      setCurrentPage(1);
+      if (isMounted && data && Array.isArray(data)) {
+        setEstablishments(data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des établissements', error);
+      toast.error("Impossible de charger les établissements");
+    } finally {
+      if (isMounted) {
+        setEstablishmentsLoading(false);
+      }
     }
-  }, [currentDemoData, currentPage]);
+  }
+
+  // Charger seulement si non encore chargés
+  if (establishments.length === 0) {
+    loadEstablishments();
+  }
+
+  return () => {
+    isMounted = false;
+  };
+}, []); // ✅ seulement au montage du composant
+// 👈 pas `loading` global ici
+console.log("etablisment",establishments)
+ const loadParents = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchParents(); // Récupère les données depuis l'API
+      setParents(data || []); // Met à jour l'état local
+      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents', error);
+      toast.error("Impossible de charger les parents");
+    } finally {
+      setLoading(false);
+    }
+  };
+useEffect(() => {
+  loadParents();
+}, []);
 
   const totalPages = Math.ceil(parents.length / ITEMS_PER_PAGE);
   const paginatedParents = parents.slice(
@@ -67,90 +89,67 @@ const ParentsPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteParent = (id) => {
+  const handleDeleteParent =async (id) => {
     try {
       console.log(`Attempting to delete parent with ID: ${id}`);
-      const updatedUsers = currentDemoData.users.filter(user => user.id !== id);
-      const updatedParentStudents = currentDemoData.parentStudents.filter(ps => ps.parentId !== id);
+     await deleteUser(id);
 
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        users: updatedUsers,
-        parentStudents: updatedParentStudents,
-      }));
+      await loadParents();
+      
 
       toast.success('Parent supprimé avec succès');
     } catch (error) {
       console.error('Error deleting parent:', error);
       toast.error('Erreur lors de la suppression du parent');
+       const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      'Erreur inconnue, veuillez réessayer.';
+
+       toast.error(`Erreur : ${errorMessage}`, {
+       position: 'bottom-right',
+       });
+
     }
   };
 
-  const handleSaveParent = async (parentData) => {
-    try {
-      let message = '';
-      let updatedUsersArray = [...currentDemoData.users];
-      let updatedParentStudentsArray = [...currentDemoData.parentStudents];
-
-      if (editingParent) {
-        const index = updatedUsersArray.findIndex(u => u.id === editingParent.id);
-        if (index !== -1) {
-          const userToUpdate = updatedUsersArray[index];
-          const updatedUser = {
-            ...userToUpdate,
-            ...parentData,
-            id: editingParent.id,
-            role: 'PARENT',
-            password: parentData.password && parentData.password.trim() !== '' ? parentData.password : userToUpdate.password
-          };
-          updatedUsersArray[index] = updatedUser;
-          message = 'Parent modifié avec succès';
-
-          // Update parent-student links
-          updatedParentStudentsArray = updatedParentStudentsArray.filter(ps => ps.parentId !== updatedUser.id);
-          if (parentData.studentIds && parentData.studentIds.length > 0) {
-            parentData.studentIds.forEach(studentId => {
-              updatedParentStudentsArray.push({ parentId: updatedUser.id, studentId: parseInt(studentId) });
-            });
-          }
-        } else {
-          throw new Error("Parent à modifier non trouvé.");
-        }
-      } else {
-        const newId = Math.max(...currentDemoData.users.map(u => u.id), 0) + 1;
-        const newUser = {
-          ...parentData,
-          id: newId,
-          createdAt: new Date().toISOString(),
-          role: 'PARENT',
-          isActive: true,
-        };
-        updatedUsersArray.push(newUser);
-        message = 'Parent ajouté avec succès';
-
-        // Add parent-student links for new parent
-        if (parentData.studentIds && parentData.studentIds.length > 0) {
-          parentData.studentIds.forEach(studentId => {
-            updatedParentStudentsArray.push({ parentId: newId, studentId: parseInt(studentId) });
-          });
-        }
-      }
-
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        users: updatedUsersArray,
-        parentStudents: updatedParentStudentsArray,
-      }));
-
-      toast.success(message);
-      setIsModalOpen(false);
-      setEditingParent(null);
-
-    } catch (error) {
-      console.error('Error saving parent:', error);
-      toast.error(`Erreur lors de la sauvegarde: ${error.message || 'Vérifiez les données.'}`);
+ const handleSaveParent = async (parentData) => {
+  try {
+    let message = '';
+    
+    if (editingParent) {
+      await updateUser(editingParent.id, parentData);
+      message = 'Parent modifié avec succès';
+    } else {
+      console.log("Data to register:", parentData);
+      await register(parentData);
+      message = 'Parent ajouté avec succès';
     }
-  };
+
+    // ✅ Recharge les parents depuis l'API
+    await loadParents();
+
+    // ✅ Ferme la modal et remet à zéro
+    toast.success(message);
+    setIsModalOpen(false);
+    setEditingParent(null);
+
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde du parent:', error);
+
+    // ✅ Gestion intelligente du message d’erreur
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      'Erreur inconnue, veuillez réessayer.';
+
+    toast.error(`Erreur : ${errorMessage}`, {
+  position: 'bottom-right',
+});
+
+  }
+};
+
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -179,6 +178,7 @@ const ParentsPage = () => {
         onSave={handleSaveParent}
         students={currentDemoData.students} // Pass students for selection
         parentStudents={currentDemoData.parentStudents} // Pass current links to pre-select
+        establishments={establishments}
       />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

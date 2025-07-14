@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Updated Zod Schema for Etablissement (quartie already added)
 const etablissementSchema = z.object({
@@ -40,7 +41,6 @@ const newResponsableSchema = z.object({
   email: z.string().email("Email invalide"),
   phone: z.string().min(10, "Numéro trop court"),
   password: z.string().min(6, "Minimum 6 caractères"),
-  cin: z.string().min(4, "CIN requis"),
   isActive: z.boolean().default(true),
 });
 
@@ -63,11 +63,25 @@ export default function EtablissementResponsableForm({
   // NEW PROP: If schoolId is fixed and shouldn't be chosen by the user
   fixedSchoolId = null 
 }) {
-  console.log(defaultValues)
+  console.log("onSubmit", onSubmit); 
   const [addNewResponsable, setAddNewResponsable] = useState(defaultValues?.addNewResponsable !== undefined ? defaultValues.addNewResponsable : true);
-  
+
   // Determine if school selection is required
   const isSchoolSelectRequired = fixedSchoolId === null;
+  const [filteredResponsables, setFilteredResponsables] = useState(existingResponsables);
+  const [selectedSchoolId, setSelectedSchoolId] = useState(fixedSchoolId ? fixedSchoolId.toString() : '');
+const filterResponsablesBySchool = (schoolId) => {
+  if (!schoolId || !existingResponsables.length) {
+    return existingResponsables;
+  }
+
+  const filtered = existingResponsables.filter(responsable =>
+    responsable.establishments?.some(est => est.schoolId?.toString() === schoolId)
+  );
+
+  return filtered;
+};
+
 
   const [schema, setSchema] = useState(createEtablissementResponsableSchema(addNewResponsable, isSchoolSelectRequired));
 
@@ -79,6 +93,14 @@ export default function EtablissementResponsableForm({
         schoolId: fixedSchoolId ? fixedSchoolId.toString() : defaultValues?.schoolId || ''
     }
   });
+    useEffect(() => {
+  const subscription = form.watch((value, { name }) => {
+   
+  });
+  return () => subscription.unsubscribe();
+}, [form.watch]);
+console.log("form.formState.isValid", form.formState.isValid);
+console.log("form.formState.errors", form.formState.errors);
 
   useEffect(() => {
     form.reset({
@@ -89,7 +111,23 @@ export default function EtablissementResponsableForm({
     setAddNewResponsable(defaultValues?.addNewResponsable !== undefined ? defaultValues.addNewResponsable : true);
   }, [defaultValues, form, fixedSchoolId]); // Add fixedSchoolId to dependency array
 
+useEffect(() => {
+  const subscription = form.watch((value, { name }) => {
+    if (name === 'schoolId') {
+      const selectedSchoolId = value.schoolId;
+      const filtered = filterResponsablesBySchool(selectedSchoolId);
+      setFilteredResponsables(filtered);
 
+      // Optionnel : Si on veut vérifier si le responsable sélectionné appartient encore à cette école
+      const currentResponsableId = value.existingResponsableId;
+      if (currentResponsableId && !filtered.some(r => r.id.toString() === currentResponsableId)) {
+        form.setValue('existingResponsableId', '');
+      }
+    }
+  });
+
+  return () => subscription.unsubscribe();
+}, [form, existingResponsables]);
   useEffect(() => {
     const newSchema = createEtablissementResponsableSchema(addNewResponsable, isSchoolSelectRequired);
     setSchema(newSchema);
@@ -102,7 +140,6 @@ export default function EtablissementResponsableForm({
         form.setValue("responsable.email", defaultValues.responsable.email || '');
         form.setValue("responsable.phone", defaultValues.responsable.phone || '');
         form.setValue("responsable.password", ''); 
-        form.setValue("responsable.cin", defaultValues.responsable.cin || '');
         form.setValue("responsable.isActive", defaultValues.responsable.isActive !== undefined ? defaultValues.responsable.isActive : true);
       }
     } else {
@@ -110,7 +147,7 @@ export default function EtablissementResponsableForm({
       form.setValue('responsable.email', '');
       form.setValue('responsable.phone', '');
       form.setValue('responsable.password', '');
-      form.setValue('responsable.cin', '');
+     
       form.setValue('responsable.isActive', true);
       if (defaultValues?.existingResponsableId) {
         form.setValue('existingResponsableId', defaultValues.existingResponsableId);
@@ -126,17 +163,18 @@ export default function EtablissementResponsableForm({
 
   }, [addNewResponsable, form, defaultValues, fixedSchoolId, isSchoolSelectRequired]); // Add new dependencies
 
+console.log("form",form)
+const handleSubmit = (data) => {
+  const errors = form.formState.errors;
+  if (Object.keys(errors).length > 0) {
+    console.error("Erreurs de validation:", errors);
+    toast.error("Corrigez les erreurs avant de continuer");
+    return;
+  }
 
-  const handleSubmit = (data) => {
-    onSubmit({
-      etablissement: data.etablissement,
-      responsable: addNewResponsable ? { ...data.responsable, role: 'RESPONSIBLE' } : null,
-      existingResponsableId: addNewResponsable ? null : data.existingResponsableId,
-      addNewResponsable: addNewResponsable,
-      // Pass the schoolId from the form's data, or the fixedSchoolId if available
-      schoolId: fixedSchoolId ? fixedSchoolId : (data.schoolId ? parseInt(data.schoolId) : null),
-    });
-  };
+  console.log("formData", data); // ✅ Devrait s'afficher ici
+  onSubmit(data);
+};
 
   const etablissementFields = [
     { name: "etablissement.name", label: "Nom de l'établissement", placeholder: "Nom de l'établissement" },
@@ -178,7 +216,8 @@ export default function EtablissementResponsableForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>École affiliée</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionnez une école" />
@@ -234,11 +273,13 @@ export default function EtablissementResponsableForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {existingResponsables.map((responsable) => (
+                    <ScrollArea className="h-[100px]">
+                      {filteredResponsables.map((responsable) => (
                         <SelectItem key={responsable.id} value={responsable.id.toString()}>
                           {responsable.firstName} {responsable.lastName} ({responsable.email})
                         </SelectItem>
                       ))}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   <FormMessage />

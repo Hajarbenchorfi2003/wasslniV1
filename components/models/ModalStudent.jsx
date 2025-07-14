@@ -20,8 +20,11 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {getparentsEtablismente} from '@/services/etablissements';
 
-export const ModalStudent = ({ isOpen, onClose, editingStudent, onSave, establishments, parents, parentStudents }) => {
+export const ModalStudent = ({ isOpen, onClose, editingStudent, onSave, establishments, parentStudents }) => {
+  const [filteredParents, setFilteredParents] = useState([]);
+  const [loadingParents, setLoadingParents] = useState(false);
   const [formData, setFormData] = useState({
     fullname: '',
     dateOfBirth: '',
@@ -32,13 +35,12 @@ export const ModalStudent = ({ isOpen, onClose, editingStudent, onSave, establis
     establishmentId: null,
     parentIds: [], // Array to hold IDs of associated parents
   });
-
+  console.log("edit students",editingStudent)
   useEffect(() => {
     if (editingStudent) {
+     
       const dob = editingStudent.dateOfBirth ? new Date(editingStudent.dateOfBirth).toISOString().split('T')[0] : '';
-      const linkedParentIds = parentStudents
-        .filter(ps => ps.studentId === editingStudent.id)
-        .map(ps => ps.parentId);
+       const linkedParentIds = editingStudent.parentLinks.map((link) => link.parent.id);
 
       setFormData({
         fullname: editingStudent.fullname || '',
@@ -63,7 +65,37 @@ export const ModalStudent = ({ isOpen, onClose, editingStudent, onSave, establis
       });
     }
   }, [editingStudent, parentStudents]);
+  // Charger les parents quand l'établissement change
+// Chargement des parents quand l'établissement change
+useEffect(() => {
+  const loadParents = async () => {
+    if (!formData.establishmentId) {
+      setFilteredParents([]);
+      return;
+    }
 
+    setLoadingParents(true);
+    try {
+      const response = await getparentsEtablismente(formData.establishmentId);
+      const parentsData = Array.isArray(response?.data) ? response.data : [];
+
+      setFilteredParents(parentsData);
+      console.log("Parents chargés :", parentsData); // ✅ Vérifie ici
+    } catch (error) {
+      console.error("Erreur lors du chargement des parents", error);
+      setFilteredParents([]);
+    } finally {
+      setLoadingParents(false);
+    }
+  };
+
+  loadParents();
+}, [formData.establishmentId]); // ⚠️ Ne charge que si establishmentId change
+
+// Afficher les parents
+useEffect(() => {
+  console.log("filteredParents mis à jour :", filteredParents);
+}, [filteredParents]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -138,34 +170,41 @@ export const ModalStudent = ({ isOpen, onClose, editingStudent, onSave, establis
                   <SelectValue placeholder="Sélectionner un établissement" />
                 </SelectTrigger>
                 <SelectContent>
+                <ScrollArea className="h-[100px]">
                   {establishments.map(est => (
                     <SelectItem key={est.id} value={String(est.id)}>
                       {est.name}
                     </SelectItem>
                   ))}
+                  </ScrollArea>
                 </SelectContent>
               </Select>
             </div>
           )}
+          {filteredParents?.length === 0 && formData.establishmentId && !loadingParents && (
+           <p className="text-sm text-gray-500 mt-2">Aucun parent trouvé pour cet établissement.</p>
+           )}
 
           {/* Parents Multi-Selection */}
-          {parents && parents.length > 0 && (
-            <div>
-              <Label className="text-right mt-2">Parents</Label>
-              <div className="col-span-3 space-y-2 max-h-48 overflow-y-auto border p-2 rounded">
-                {parents.map(parent => (
-                  <div key={parent.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`parent-${parent.id}`}
-                      checked={formData.parentIds.includes(parent.id)}
-                      onCheckedChange={(checked) => handleParentCheckboxChange(parent.id, checked)}
-                    />
-                    <Label htmlFor={`parent-${parent.id}`}>{parent.fullname}</Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+       {filteredParents?.length > 0 && formData.establishmentId && (
+  <div>
+    <Label className="text-right mt-2">Parents</Label>
+    <div className="col-span-3 space-y-2 max-h-48 overflow-y-auto border p-2 rounded">
+      {filteredParents.map((parent) => (
+        <div key={parent.id} className="flex items-center space-x-2">
+          <Checkbox
+            id={`parent-${parent.id}`}
+            checked={formData.parentIds.includes(parent.id)} // ✅ Bonne vérification
+            onCheckedChange={(checked) =>
+              handleParentCheckboxChange(parent.id, checked)
+            }
+          />
+          <Label htmlFor={`parent-${parent.id}`}>{parent.fullname}</Label>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
           <DialogFooter>
             <Button type="submit">Sauvegarder</Button>

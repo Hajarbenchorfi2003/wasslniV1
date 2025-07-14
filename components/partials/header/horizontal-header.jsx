@@ -1,31 +1,57 @@
 import React from "react";
-import { Search } from "lucide-react";
 import { SiteLogo } from "@/components/svg";
 import Link from "next/link";
-const horizontalHeader = ({ handleOpenSearch }) => {
+ // Get user from localStorage
+
+
+const horizontalHeader = () => {
+  const getUser = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr || userStr === 'undefined' || userStr === 'null') return null;
+      return JSON.parse(userStr);
+    } catch (err) {
+      console.error('Failed to parse user:', err);
+      return null;
+    }
+  };
+  
+  const user = getUser();
+  
+  const getHrefBasedOnRole = () => {
+    const role = user?.role?.toLowerCase();
+    switch (role) {
+      case "admin":
+        return "/admin/notfications";
+      case "super_admin":
+        return "/super-admin/notifications";
+      case "parent":
+        return "/parent/notifications";
+      case "responsible":
+        return "/manager/incidents-notifications";
+      case "driver":
+        return "/driver/notifications";
+      default:
+        return "/";
+    }
+  };
+  
+  const href = getHrefBasedOnRole();
   return (
       <div className="flex items-center lg:gap-12 gap-3 ">
         <div>
           <Link
-            href="/dashboard"
+            href={href}
             className=" text-primary flex items-center gap-2"
           >
             <SiteLogo className="h-7 w-7" />
             <span className=" text-xl font-semibold lg:inline-block hidden">
               {" "}
-              DashTail
+              Wasslni
             </span>
           </Link>
         </div>
-        <button
-          onClick={handleOpenSearch}
-          className=" inline-flex lg:gap-2 lg:mr-0 mr-2 items-center text-default-600 text-sm"
-        >
-          <span>
-            <Search className=" h-4 w-4" />
-          </span>
-          <span className=" lg:inline-block hidden"> Search...</span>
-        </button>
       </div>
   );
 };

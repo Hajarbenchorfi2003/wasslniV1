@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/react";
-import { mockDailyTrips } from "@/app/[lang]/(admin)/admin/daily-trips/data";
+import { mockDailyTrips } from "@/app/(admin)/admin/daily-trips/data";
 import TripsList from "./components/TripsList";
 import TripDetails from "./components/TripDetails";
 import IncidentDialog from "./components/IncidentDialog";

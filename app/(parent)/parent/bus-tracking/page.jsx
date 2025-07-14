@@ -1,5 +1,5 @@
 'use client';
-
+import { io } from 'socket.io-client';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { Card, CardContent } from '@/components/ui/card';
 import parentService from '@/services/parentService';
+import { getToken } from '@/utils/auth';
 
 // Import dynamique du composant Map
 const BusTrackingMap = dynamic(
@@ -41,6 +42,7 @@ const BusTrackingPage = () => {
           setError("Enfant non trouvé avec l'ID fourni.");
         } else {
           setChild(found);
+          console.log('child',child)
         }
       } catch (err) {
         console.error(err);
@@ -52,7 +54,7 @@ const BusTrackingPage = () => {
 
     fetchChildInfo();
   }, [childId]);
-
+console.log('child',child)
   const handleGoBackToOverview = () => {
     router.push('/parent/children-overview');
   };

@@ -100,6 +100,7 @@ const refreshParentData = useCallback(async () => {
 
   const handleTrackBus = (childId) => {
     setTrackingChildId(childId);
+    console.log("trip id", childDailyTripDetails[trackingChildId]?.id);
     setIsBusTrackingModalOpen(true);
   };
 
@@ -180,7 +181,10 @@ const refreshParentData = useCallback(async () => {
       default: return 'Inconnu';
     }
   };
-
+ console.log("trackingChildId",trackingChildId)
+ console.log("tripDetailsMap",childDailyTripDetails)
+ console.log("trip id",childDailyTripDetails.id)
+console.log("trip id", childDailyTripDetails[trackingChildId]?.id);
   if (!children) return <div>Chargement...</div>;
 
   const selectedChild = children.find(c => c.student.id === selectedChildId)?.student;
@@ -196,8 +200,7 @@ const refreshParentData = useCallback(async () => {
         </Button>
       </div>
 
-      // Remplacer les cartes statistiques par ce code :
-<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+ <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
   <Card><CardContent className="p-4"><div className="flex items-center space-x-2">
     <Icon icon="heroicons:users" className="h-5 w-5 text-blue-500" />
     <div><p className="text-sm font-medium text-muted-foreground">Enfants</p><p className="text-2xl font-bold">{children.length}</p></div>
@@ -344,6 +347,7 @@ const refreshParentData = useCallback(async () => {
         isOpen={isBusTrackingModalOpen}
         setIsOpen={setIsBusTrackingModalOpen}
         childId={trackingChildId}
+        dailyTripchild={childDailyTripDetails}
       />
 
       <ReportAttendanceModal

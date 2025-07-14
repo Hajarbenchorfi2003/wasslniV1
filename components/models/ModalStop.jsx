@@ -10,6 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -94,25 +96,30 @@ export const ModalStop = ({ isOpen, onClose, editingStop, onSave, routes }) => {
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3 w-full" required />
           </div>
 
-          <div className=" items-center gap-4">
-            <Label htmlFor="routeId" className="text-right mb-2">Route</Label>
-            <Select value={routeId} onValueChange={setRouteId} className="col-span-3" required>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Sélectionnez une route" />
-              </SelectTrigger>
-              <SelectContent>
-                {routes.length > 0 ? (
-                  routes.map(route => (
-                    <SelectItem key={route.id} value={String(route.id)}>
-                      {route.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="" disabled>Aucune route disponible</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="items-center gap-4">
+  <Label htmlFor="routeId" className="text-right mb-2">Route</Label>
+  <Select value={routeId} onValueChange={setRouteId} required>
+    <SelectTrigger className="col-span-3">
+      <SelectValue placeholder="Sélectionnez une route" />
+    </SelectTrigger>
+    <SelectContent >
+      {routes.length > 0 ? (
+        <ScrollArea className="h-[100px]">
+          {routes.map(route => (
+            <SelectItem key={route.id} value={String(route.id)}>
+              {route.name}
+            </SelectItem>
+          ))}
+        </ScrollArea>
+      ) : (
+        <SelectItem value="" disabled>
+          Aucune route disponible
+        </SelectItem>
+      )}
+    </SelectContent>
+  </Select>
+</div>
+
 
           <div className="  items-center gap-4">
             <Label htmlFor="stopOrder" className="text-right mb-2">Ordre</Label>

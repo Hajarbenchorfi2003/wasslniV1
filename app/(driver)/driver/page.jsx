@@ -336,6 +336,7 @@ export default function DriverDashboardPage() {
               <p>Trajets aujourd'hui</p>
               <p className="text-2xl font-bold">
                 {dailyTrips.length}
+
               </p>
             </div>
           </CardContent>

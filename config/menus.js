@@ -920,11 +920,11 @@ export const menuSuperAdminConfig = {
       href: "/admin/notifications",
       icon: "Bell",
     },
-    {
+   /*  {
       title: "Rapports",
       href: "/super-admin/reports",
       icon: "BarChart",
-    },
+    }, */
     {
       title: "Rôles & Permissions",
       icon: "ShieldCheck",
@@ -933,11 +933,6 @@ export const menuSuperAdminConfig = {
           title: "Rôles",
           href: "/super-admin/roles",
           icon: "UserCog",
-        },
-        {
-          title: "Administrateurs",
-          href: "/super-admin/admins",
-          icon: "UserShield",
         },
         {
           title: "Abonnements",
@@ -1048,11 +1043,11 @@ export const menuSuperAdminConfig = {
         href: "/admin/notifications",
         icon: "Bell",
       },
-      {
+    /*   {
         title: "Rapports",
         href: "/super-admin/reports",
         icon: "PretentionChartLine",
-      },
+      }, */
       {
         title: "Rôles & Permissions",
         icon: "ShieldCheck",
@@ -1061,11 +1056,6 @@ export const menuSuperAdminConfig = {
             title: "Rôles",
             href: "/super-admin/roles",
             icon: "UserCog",
-          },
-          {
-            title: "Administrateurs",
-            href: "/super-admin/admins",
-            icon: "UserShield",
           },
           {
             title: "Abonnements",
@@ -1181,11 +1171,11 @@ export const menuSuperAdminConfig = {
         icon: "Bell",
         href: "/super-admin/notifications",
       },
-      {
+    /*   {
         title: "Rapports",
         icon: "BarChart",
         href: "/super-admin/reports",
-      },
+      }, */
       {
         title: "Abonnements",
         icon: "Package",
@@ -1284,11 +1274,11 @@ export const menuAdminConfig = {
         },
       ],
     },
-    {
+    /* {
       title: "Rapports",
       href: "/admin/reports",
       icon: "BarChart",
-    },
+    }, */
     {
       title: "Notifications",
       icon: "Bell",
@@ -1382,11 +1372,11 @@ export const menuAdminConfig = {
           },
         ],
       },
-      {
+     /*  {
         title: "Rapports",
         href: "/admin/reports",
         icon: "PretentionChartLine",
-      },
+      }, */
       {
         title: "Notifications",
         icon: "Bell",
@@ -1486,11 +1476,11 @@ export const menuAdminConfig = {
         isHeader: true,
         title: "Autres",
       },
-      {
+     /*  {
         title: "Rapports",
         icon: "BarChart",
         href: "/admin/reports",
-      },
+      }, */
       {
         title: "Profile",
         icon: "Bell",
@@ -1879,11 +1869,11 @@ export const menuManagerConfig = {
           href: "/manager/notifications",
           icon: "Bell",
         },
-        {
+       /*  {
           title: "Statistiques",
           href: "/manager/reports-statistics",
           icon: "Graph",
-        },
+        }, */
       ],
     },
   ],
@@ -1971,11 +1961,11 @@ export const menuManagerConfig = {
             href: "/manager/notifications",
             icon: "Bell",
           },
-          {
+         /*  {
             title: "Statistiques",
             href: "/manager/reports-statistics",
             icon: "Graph",
-          },
+          }, */
         ],
       },
       {
@@ -2072,11 +2062,11 @@ export const menuManagerConfig = {
         icon: "Bell",
         href: "/manager/notifications",
       },
-      {
+     /*  {
         title: "Statistiques",
         icon: "BarChart",
         href: "/manager/reports-statistics",
-      },
+      }, */
     ],
   },
 };

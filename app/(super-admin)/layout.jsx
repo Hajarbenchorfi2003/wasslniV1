@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashBoardLayoutProvider from "@/provider/dashboard.layout.provider";
 import { menuSuperAdminConfig } from "@/config/menus";
-import { getUser, getToken, isAuthenticated } from '@/utils/auth';
+import { getUser, getToken, isAuthenticated, isSuperAdmin } from '@/utils/auth';
+
 console.log("Raw user:", localStorage.getItem("user"));
 console.log("Parsed user:", getUser());
 console.log("Token:", getToken());
@@ -16,7 +17,6 @@ if (isAuthenticated()) {
   console.log('Role :', user.role);
 }
 
-
 const Layout = ({ children }) => {
   const router = useRouter();
   const [isAuth, setIsAuth] = useState(false);
@@ -26,6 +26,13 @@ const Layout = ({ children }) => {
     const userStr = localStorage.getItem("user");
     if (!userStr || userStr === "undefined" || userStr === "null") {
       router.push("/auth/login");
+      return;
+    }
+
+    // Vérifier si l'utilisateur a le rôle super-admin
+    if (!isSuperAdmin()) {
+      console.log('Accès refusé: Utilisateur n\'a pas le rôle super-admin');
+      router.push("/error-page/403");
       return;
     }
 

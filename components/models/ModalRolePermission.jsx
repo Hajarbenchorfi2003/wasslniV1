@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const ModalRolePermission = ({ isOpen, onClose, editingRolePermission, onSave, roles, permissions }) => {
   const [formData, setFormData] = useState({
@@ -66,11 +67,13 @@ export const ModalRolePermission = ({ isOpen, onClose, editingRolePermission, on
                   <SelectValue placeholder="Sélectionner un rôle" />
                 </SelectTrigger>
                 <SelectContent>
+                <ScrollArea className="h-[100px]">
                   {roles.map(role => (
                     <SelectItem key={role} value={role}>
                       {role}
                     </SelectItem>
                   ))}
+                  </ScrollArea>
                 </SelectContent>
               </Select>
             </div>
@@ -85,11 +88,13 @@ export const ModalRolePermission = ({ isOpen, onClose, editingRolePermission, on
                   <SelectValue placeholder="Sélectionner une permission" />
                 </SelectTrigger>
                 <SelectContent>
+                <ScrollArea className="h-[100px]">
                   {permissions.map(permission => (
                     <SelectItem key={permission.id} value={String(permission.id)}>
                       {permission.name} ({permission.description})
                     </SelectItem>
                   ))}
+                  </ScrollArea>
                 </SelectContent>
               </Select>
             </div>

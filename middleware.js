@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
 export function middleware(request) {
-  // No language redirection needed - allow direct access to routes
+  // Check for 403 errors (access denied)
+  // This is a basic example - you might want to add more specific logic
+  // based on your authentication/authorization requirements
+  
+  // For now, we'll let the request pass through
+  // You can add specific 403 handling logic here if needed
   return NextResponse.next();
 }
 

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import parentService from '@/services/parentService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Icon } from '@iconify/react';
@@ -16,7 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import toast from 'react-hot-toast';
 
+import { getUser } from '@/utils/auth'; // Assuming auth.js is the correct path for getUser
+
 export const ParentHelpPage = () => {
+  // Existing states
   const [childrenStudents, setChildrenStudents] = useState([]);
   const [associatedSchools, setAssociatedSchools] = useState([]);
   const [associatedEstablishments, setAssociatedEstablishments] = useState({});
@@ -28,42 +31,76 @@ export const ParentHelpPage = () => {
     priority: 'NORMAL'
   });
 
-  const parentId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  // NEW: Add a loading state
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const childrenLinks = await parentService.getChildren();
-        const students = childrenLinks.map(link => link.student);
-        setChildrenStudents(students);
+  const currentUser = typeof window !== 'undefined' ? getUser() : null;
+  const parentId = currentUser?.id; // Or currentUser?._id if your user object uses _id
 
-        const establishmentsMap = {};
-        const schoolIdsSet = new Set();
+  // These logs run on every render (useful for initial component mount check)
+  console.log("ParentHelpPage: Current User (on render):", currentUser);
+  console.log("ParentHelpPage: Parent ID (on render):", parentId);
 
-        for (const student of children) {
+  // Use useCallback to memoize fetchchildren and prevent infinite loops in useEffect
+  const fetchchildren = useCallback(async () => {
+    console.log("fetchchildren function invoked."); // This log should now appear
+    setLoading(true); // Set loading to true when starting data fetch
+
+    try {
+      console.log("Attempting to fetch children links from parentService...");
+      const childrenLinks = await parentService.getChildren();
+      console.log("Children Links (from API):", childrenLinks);
+
+      if (!Array.isArray(childrenLinks)) {
+        console.error("Expected childrenLinks to be an array, but received:", childrenLinks);
+        toast.error("Format de données inattendu pour les enfants.");
+        return;
+      }
+
+      const students = childrenLinks.map(link => link.student).filter(Boolean);
+      setChildrenStudents(students);
+      console.log("Students derived from childrenLinks:", students);
+
+      const establishmentsMap = {};
+      const schoolIdsSet = new Set();
+
+      for (const student of students) {
+        if (student && student.establishmentId) {
           const est = await parentService.getEstablishmentById(student.establishmentId);
           if (est) {
             establishmentsMap[est.id] = est;
             schoolIdsSet.add(est.schoolId);
           }
         }
-
-        const schools = await Promise.all(
-          Array.from(schoolIdsSet).map((schoolId) => parentService.getSchoolById(schoolId))
-        );
-
-        setAssociatedSchools(schools.filter(Boolean));
-        setAssociatedEstablishments(establishmentsMap);
-      } catch (error) {
-        console.error('Erreur de chargement des données', error);
-        toast.error("Erreur lors du chargement des données.");
       }
-    };
+
+      const schools = await Promise.all(
+        Array.from(schoolIdsSet).map((schoolId) => parentService.getSchoolById(schoolId))
+      );
+
+      setAssociatedSchools(schools.filter(Boolean));
+      setAssociatedEstablishments(establishmentsMap);
+      console.log("Data fetching completed successfully.");
+    } catch (error) {
+      console.error('Erreur lors du chargement des données dans fetchchildren:', error);
+      toast.error("Erreur lors du chargement des données.");
+    } finally {
+      setLoading(false); // Always set loading to false when fetch is complete (success or error)
+    }
+  }, [setChildrenStudents, setAssociatedSchools, setAssociatedEstablishments]); // Dependencies for useCallback
+
+  useEffect(() => {
+    // This log runs when useEffect is triggered
+    console.log("useEffect triggered. Parent ID in useEffect:", parentId);
 
     if (parentId) {
-      fetchData();
+      console.log("Parent ID is available, calling fetchchildren()...");
+      fetchchildren();
+    } else {
+      console.log("Parent ID is NOT available, skipping data fetch.");
+      setLoading(false); // If no parentId, ensure loading is false
     }
-  }, [parentId]);
+  }, [parentId, fetchchildren]); // Add fetchchildren to dependencies
 
   const handleContactSubmit = async () => {
     if (!contactForm.subject.trim() || !contactForm.message.trim()) {
@@ -75,7 +112,7 @@ export const ParentHelpPage = () => {
     }
 
     try {
-      const child = childrenStudents[0];
+      const child = childrenStudents.length > 0 ? childrenStudents[0] : null;
       let targetResponsibleId = null;
 
       if (child) {
@@ -84,7 +121,7 @@ export const ParentHelpPage = () => {
       }
 
       if (!targetResponsibleId) {
-        const admin = await parentService.getDefaultAdmin(); // API qui retourne un admin
+        const admin = await parentService.getDefaultAdmin();
         targetResponsibleId = admin?.id;
       }
 
@@ -140,7 +177,7 @@ export const ParentHelpPage = () => {
     }
   ];
 
-  const filteredFaq = faqData.filter(faq => 
+  const filteredFaq = faqData.filter(faq =>
     faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -181,6 +218,16 @@ export const ParentHelpPage = () => {
     }
   ];
 
+  // Display a loading indicator for the entire page
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-center">
+        <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin mx-auto" />
+        <p className="mt-2">Chargement des données...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -189,28 +236,41 @@ export const ParentHelpPage = () => {
         <p className="text-lg text-default-600">Trouvez des réponses à vos questions et obtenez l'aide dont vous avez besoin</p>
       </div>
 
-    
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-wrap">
+        {quickActions.map((action, index) => (
+          <Card key={index} className="cursor-pointer hover:shadow-md transition" onClick={action.action}>
+            <CardContent className="p-4 flex items-center space-x-4">
+              <div className={`flex-shrink-0 p-3 rounded-full ${action.bgColor}`}>
+                <Icon icon={action.icon} className={`h-6 w-6 ${action.color}`} />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold">{action.title}</CardTitle>
+                <CardDescription className="text-xs">{action.description}</CardDescription>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Main Content */}
       <Tabs defaultValue="faq" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="faq">FAQ</TabsTrigger>
-          <TabsTrigger value="tutorials">Tutoriels</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="info">Informations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="faq" className="space-y-6">
           <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Icon icon="heroicons:question-mark-circle" className="h-6 w-6 text-blue-500" />
-              Foire Aux Questions (FAQ)
-            </CardTitle>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon icon="heroicons:question-mark-circle" className="h-6 w-6 text-blue-500" />
+                Foire Aux Questions (FAQ)
+              </CardTitle>
               <CardDescription>
                 Trouvez rapidement des réponses aux questions fréquemment posées
               </CardDescription>
-          </CardHeader>
+            </CardHeader>
             <CardContent className="space-y-4">
               {/* Search */}
               <div className="relative">
@@ -220,14 +280,14 @@ export const ParentHelpPage = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
                 />
-                <Icon 
-                  icon="heroicons:magnifying-glass" 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" 
+                <Icon
+                  icon="heroicons:magnifying-glass"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
                 />
               </div>
 
               {/* FAQ Accordion */}
-            <Accordion type="single" collapsible className="w-full">
+              <Accordion type="single" collapsible className="w-full">
                 {filteredFaq.map((faq) => (
                   <AccordionItem key={faq.id} value={faq.id}>
                     <AccordionTrigger className="text-left">
@@ -241,10 +301,10 @@ export const ParentHelpPage = () => {
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground">
                       {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
+                    </AccordionContent>
+                  </AccordionItem>
                 ))}
-            </Accordion>
+              </Accordion>
 
               {filteredFaq.length === 0 && (
                 <div className="text-center py-8">
@@ -252,77 +312,6 @@ export const ParentHelpPage = () => {
                   <p className="text-gray-500">Aucune question trouvée pour votre recherche.</p>
                 </div>
               )}
-          </CardContent>
-        </Card>
-        </TabsContent>
-
-        <TabsContent value="tutorials" className="space-y-6">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon icon="heroicons:play-circle" className="h-6 w-6 text-green-500" />
-                Tutoriels Vidéo
-              </CardTitle>
-              <CardDescription>
-                Apprenez à utiliser toutes les fonctionnalités de l'application
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg">Fonctionnalités de base</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">Première connexion</p>
-                        <p className="text-sm text-muted-foreground">2 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">Suivre le bus</p>
-                        <p className="text-sm text-muted-foreground">3 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">Signaler une absence</p>
-                        <p className="text-sm text-muted-foreground">2 min</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg">Fonctionnalités avancées</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-green-500" />
-                      <div>
-                        <p className="font-medium">Gérer les notifications</p>
-                        <p className="text-sm text-muted-foreground">4 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-green-500" />
-                      <div>
-                        <p className="font-medium">Consulter l'historique</p>
-                        <p className="text-sm text-muted-foreground">3 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-green-500" />
-                      <div>
-                        <p className="font-medium">Modifier le profil</p>
-                        <p className="text-sm text-muted-foreground">2 min</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -331,27 +320,27 @@ export const ParentHelpPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Contact Form */}
             <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Icon icon="heroicons:chat-bubble-oval-left" className="h-6 w-6 text-purple-500" />
-              Nous Contacter
-            </CardTitle>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon icon="heroicons:chat-bubble-oval-left" className="h-6 w-6 text-purple-500" />
+                  Nous Contacter
+                </CardTitle>
                 <CardDescription>
                   Envoyez-nous un message et nous vous répondrons dans les plus brefs délais
                 </CardDescription>
-          </CardHeader>
+              </CardHeader>
               <CardContent className="space-y-4">
-                <Button 
-                  onClick={() => setIsContactModalOpen(true)} 
+                <Button
+                  onClick={() => setIsContactModalOpen(true)}
                   className="w-full"
                   size="lg"
                 >
                   <Icon icon="heroicons:envelope" className="h-5 w-5 mr-2" />
                   Envoyer un message
                 </Button>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-3">
                   <h4 className="font-semibold">Contacts d'urgence</h4>
                   <div className="space-y-2">
@@ -361,7 +350,7 @@ export const ParentHelpPage = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Icon icon="heroicons:envelope" className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm">support@schooltrans.com</span>
+                      <span>support@schooltrans.com</span>
                     </div>
                   </div>
                 </div>
@@ -382,8 +371,8 @@ export const ParentHelpPage = () => {
               <CardContent>
                 {associatedSchools.length > 0 ? (
                   <div className="space-y-4">
-                {associatedSchools.map(school => (
-                      <div key={school.id} className="p-4 bg-gray-50 rounded-lg">
+                    {associatedSchools.map(school => (
+                      <div key={school.id} className="p-4 bg-gray-50 rounded-lg"> {/* Corrected bg-gray-500 to a lighter shade if desired */}
                         <div className="flex items-center gap-3 mb-3">
                           <Avatar className="h-8 w-8">
                             <AvatarFallback>{school.name.charAt(0)}</AvatarFallback>
@@ -403,10 +392,10 @@ export const ParentHelpPage = () => {
                             <span>{school.phone}</span>
                           </div>
                         </div>
-                        
-                    {Object.values(associatedEstablishments)
-                      .filter(est => est.schoolId === school.id)
-                      .map(est => (
+
+                        {Object.values(associatedEstablishments)
+                          .filter(est => est.schoolId === school.id)
+                          .map(est => (
                             <div key={est.id} className="mt-3 pt-3 border-t border-gray-200">
                               <h5 className="font-medium text-sm mb-2">{est.name}</h5>
                               <div className="space-y-1 text-sm text-muted-foreground">
@@ -434,73 +423,6 @@ export const ParentHelpPage = () => {
             </Card>
           </div>
         </TabsContent>
-
-        <TabsContent value="info" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* App Information */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon icon="heroicons:information-circle" className="h-6 w-6 text-blue-500" />
-                  Informations Application
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Version</span>
-                    <Badge variant="outline">v2.1.0</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Dernière mise à jour</span>
-                    <span className="text-sm text-muted-foreground">15 Mars 2024</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Support</span>
-                    <span className="text-sm text-muted-foreground">24/7</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Children Info */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon icon="heroicons:users" className="h-6 w-6 text-green-500" />
-                  Mes Enfants
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {childrenStudents.length > 0 ? (
-                  <div className="space-y-3">
-                    {childrenStudents.map(child => (
-                      <div key={child.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback>{child.fullname.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{child.fullname}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {child.class} • {child.quartie}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          Actif
-                        </Badge>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Icon icon="heroicons:users" className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                    <p className="text-gray-500">Aucun enfant associé.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
 
       {/* Contact Modal */}
@@ -515,23 +437,23 @@ export const ParentHelpPage = () => {
               Remplissez le formulaire ci-dessous pour nous contacter
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="subject">Sujet *</Label>
               <Input
                 id="subject"
                 value={contactForm.subject}
-                onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
+                onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })}
                 placeholder="Ex: Problème avec le suivi GPS..."
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="priority">Priorité</Label>
-              <Select 
-                value={contactForm.priority} 
-                onValueChange={(value) => setContactForm({...contactForm, priority: value})}
+              <Select
+                value={contactForm.priority}
+                onValueChange={(value) => setContactForm({ ...contactForm, priority: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner la priorité" />
@@ -544,19 +466,19 @@ export const ParentHelpPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="message">Message *</Label>
               <Textarea
                 id="message"
                 value={contactForm.message}
-                onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
                 placeholder="Décrivez votre problème ou question..."
                 rows={4}
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsContactModalOpen(false)}>
               Annuler

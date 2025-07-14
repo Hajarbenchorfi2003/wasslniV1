@@ -119,11 +119,13 @@ export const ModalSubscriptions = ({ isOpen, onClose, editingSubscription, onSav
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                    <ScrollArea className="h-[100px]">
                       {schools.map((school) => (
                         <SelectItem key={school.id} value={school.id.toString()}>
                           {school.name}
                         </SelectItem>
                       ))}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   <FormMessage />

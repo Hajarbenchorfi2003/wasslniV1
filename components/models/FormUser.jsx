@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from 'react';
-
+import { ScrollArea } from "@/components/ui/scroll-area";
 export default function FormUser({
   control,
   setValue,
@@ -105,11 +105,13 @@ export default function FormUser({
                     <SelectValue placeholder="Sélectionner un établissement" />
                   </SelectTrigger>
                   <SelectContent>
+                  <ScrollArea className="h-[100px]">
                     {establishments.map((est) => (
                       <SelectItem key={est.id} value={est.id.toString()}>
                         {est.name}
                       </SelectItem>
                     ))}
+                    </ScrollArea>
                   </SelectContent>
                 </Select>
               </FormControl>

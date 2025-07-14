@@ -142,6 +142,40 @@ const ModuleSidebar = ({ trans , menusConfig }) => {
     }
   }, [locationName, isDesktop]);
 
+  const getUser = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr || userStr === 'undefined' || userStr === 'null') return null;
+      return JSON.parse(userStr);
+    } catch (err) {
+      console.error('Failed to parse user:', err);
+      return null;
+    }
+  };
+
+  const user = getUser();
+  
+  const getHrefBasedOnRole = () => {
+    const role = user?.role?.toLowerCase();
+    switch (role) {
+      case "admin":
+        return "/admin/";
+      case "super_admin":
+        return "/super-admin/";
+      case "parent":
+        return "/parent/";
+      case "responsible":
+        return "/manager/";
+      case "driver":
+        return "/driver/";
+      default:
+        return "/";
+    }
+  };
+
+  const href = getHrefBasedOnRole();
+
   return (
     <>
       <div className="main-sidebar  pointer-events-none fixed start-0 top-0 z-[60] flex h-full xl:z-10 print:hidden">
@@ -156,7 +190,7 @@ const ModuleSidebar = ({ trans , menusConfig }) => {
           )}
         >
           <div className=" pt-4 ">
-            <Link href="/dashboard">
+            <Link href={href}>
               <SiteLogo className=" mx-auto text-primary h-8 w-8" />
             </Link>
           </div>

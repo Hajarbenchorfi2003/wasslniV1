@@ -198,12 +198,14 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
                         <SelectValue placeholder="Sélectionnez un admin" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent  >
+                    <ScrollArea className="h-[250px]">
                       {existingAdmins.map((admin) => (
                         <SelectItem key={admin.id} value={admin.id.toString()}>
                           {admin.firstName} {admin.lastName} ({admin.email})
                         </SelectItem>
                       ))}
+                      </ScrollArea>
                     </SelectContent>
                   </Select>
                   <FormMessage />

@@ -29,8 +29,8 @@ const LoginPage = () => {
                 </span>
               </div>
               <div className="mt-5 2xl:mt-8 text-default-900 dark:text-default-200 text-2xl font-medium">
-                Offrez sécurité et tranquillité d'esprit <br />
-                à chaque trajet vers l'école.
+                Offrez sécurité et tranquillité d&apos;esprit <br />
+                à chaque trajet vers l&apos;école.
               </div>
             </div>
           </div>

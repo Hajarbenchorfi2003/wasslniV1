@@ -25,7 +25,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ITEMS_PER_PAGE = 15;
 
-export const AttendancePage = ({ managerEstablishmentId = 1 }) => {
+const AttendancePage = () => {
+    const [managerEstablishmentId] = useState(1);
     const [allAttendance, setAllAttendance] = useState([]);
     const [filteredAttendance, setFilteredAttendance] = useState([]);
     const [students, setStudents] = useState([]);
@@ -128,7 +129,7 @@ export const AttendancePage = ({ managerEstablishmentId = 1 }) => {
     if (!managerEstablishmentId) {
         return (
             <div className="flex justify-center items-center h-screen text-xl text-default-600">
-                Chargement de l'établissement...
+                Chargement de l&apos;établissement...
             </div>
         );
     }

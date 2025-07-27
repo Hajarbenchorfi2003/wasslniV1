@@ -48,7 +48,7 @@ export const ReportIncidentModal = ({
 
   const handleReportIncident = async () => {
   if (!description.trim()) {
-    toast.error("Veuillez fournir une description pour l'incident.");
+    toast.error('Veuillez fournir une description pour l&apos;incident.');
     return;
   }
 
@@ -100,7 +100,7 @@ export const ReportIncidentModal = ({
             Signaler un Incident
           </DialogTitle>
           <DialogDescription>
-            Décrivez l'incident que vous souhaitez signaler. Cette information sera transmise à l'administration.
+            Décrivez l&apos;incident que vous souhaitez signaler. Cette information sera transmise à l&apos;administration.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-[50vh] ">
@@ -195,7 +195,7 @@ export const ReportIncidentModal = ({
             ) : (
               <>
                 🚨
-                Signaler l'incident
+                Signaler l&apos;incident
               </>
             )}
           </Button>

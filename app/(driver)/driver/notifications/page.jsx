@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { useToast } from '@/components/ui/use-toast';
 
-export const NotificationsPage = () => {
+ const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -71,14 +71,14 @@ export const NotificationsPage = () => {
       
       await refreshNotifications();
       toast({
-        title: "Succès",
-        description: "Toutes les notifications ont été marquées comme lues",
+        title: 'Succès',
+        description: 'Toutes les notifications ont été marquées comme lues',
       });
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Échec de la mise à jour des notifications: " + error.message,
-        variant: "destructive",
+        title: 'Erreur',
+        description: 'Échec de la mise à jour des notifications: ' + error.message,
+        variant: 'destructive',
       });
     }
   };

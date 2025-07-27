@@ -87,7 +87,7 @@ const DriverTripsPage = () => {
       setIsAttendanceDialogOpen(false);
     } catch (error) {
       console.error('Error saving attendance:', error);
-      throw error; // Propager l'erreur pour que le composant AttendanceList puisse l'afficher
+      throw error; // Propager l&apos;erreur pour que le composant AttendanceList puisse l&apos;afficher
     }
   };
 

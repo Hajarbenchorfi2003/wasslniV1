@@ -21,7 +21,7 @@ const IncidentDialog = ({ isOpen, onOpenChange, onSubmit }) => {
         }}>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Type d'incident</label>
+              <label className="text-sm font-medium">Type d&apos;incident</label>
               <select
                 className="w-full rounded-md border border-input bg-background px-3 py-2"
                 required

@@ -51,7 +51,7 @@ L.Icon.Default.mergeOptions({
 
 const ITEMS_PER_PAGE = 5;
 
-export default function DriverDashboardPage() {
+const DriverDashboardPage =() =>{
   const [driver, setDriver] = useState(null);
   const [dailyTrips, setDailyTrips] = useState([]);
   const [selectedDailyTrip, setSelectedDailyTrip] = useState(null);
@@ -333,9 +333,10 @@ export default function DriverDashboardPage() {
           <CardContent className="p-4 flex items-center space-x-2">
             <Icon icon="heroicons:truck" className="text-blue-500" />
             <div>
-              <p>Trajets aujourd'hui</p>
+              <p>Trajets aujourd&apos;hui</p>
               <p className="text-2xl font-bold">
-              {dailyTrips.length}
+                {dailyTrips.length}
+
               </p>
             </div>
           </CardContent>
@@ -396,7 +397,7 @@ export default function DriverDashboardPage() {
               <CardContent className="flex-grow overflow-y-auto">
                 <Tabs defaultValue="overview" className="w-full">
                   <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+                    <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
                     <TabsTrigger value="students">Élèves</TabsTrigger>
                     <TabsTrigger value="route">Itinéraire</TabsTrigger>
                     <TabsTrigger value="tracking">Suivi GPS</TabsTrigger>
@@ -506,7 +507,7 @@ export default function DriverDashboardPage() {
                   </TabsContent>
 
                   <TabsContent value="route" className="space-y-4">
-                    <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l'Itinéraire</h3>
+                    <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l&apos;Itinéraire</h3>
                     {stopsInSelectedRoute.length > 0 ? (
                       <div className="w-full h-[400px] rounded-md overflow-hidden border">
                         <MapContainer
@@ -548,7 +549,7 @@ export default function DriverDashboardPage() {
                         </MapContainer>
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground">Aucun arrêt pour afficher l'itinéraire.</p>
+                      <p className="text-sm text-muted-foreground">Aucun arrêt pour afficher l&apos;itinéraire.</p>
                     )}
 
                     <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Arrêts</h3>
@@ -596,8 +597,8 @@ export default function DriverDashboardPage() {
                       </div>
                       <p className="text-sm text-blue-700">
                         {isTrackingActive 
-                          ? "Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel."
-                          : "Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus."
+                          ? 'Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel.'
+                          : 'Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus.'
                         }
                       </p>
                     </div>
@@ -668,4 +669,5 @@ export default function DriverDashboardPage() {
       )}
     </div>
   );
-}
+};
+export default DriverDashboardPage;

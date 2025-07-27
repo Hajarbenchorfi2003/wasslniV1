@@ -74,7 +74,7 @@ const TableRolePermissions = ({ rolePermissions, roles, permissions, onDeleteRol
   }, [roles, searchTerm, groupedRolePermissions]);
 
   const columns = [
-    { key: 'role', label: 'Rôle' },
+    { key: 'role' , label: 'Rôle'},
     { key: 'permissions', label: 'Permissions Associées' },
     { key: 'action', label: 'Action' },
   ];
@@ -158,7 +158,7 @@ const TableRolePermissions = ({ rolePermissions, roles, permissions, onDeleteRol
                     <TableRow>
                       <TableCell colSpan={columns.length}>
                         <div className="ltr:pl-12 rtl:pr-12 flex flex-col items-start gap-4">
-                          <h4 className="font-medium mb-2">Détails des Permissions pour "{role}"</h4>
+                          <h4 className="font-medium mb-2">Détails des Permissions pour &quot;{role}&quot;</h4>
                           {permissionsForRole.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                               {permissionsForRole.map((rp) => (

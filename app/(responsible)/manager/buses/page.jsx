@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 
 const ITEMS_PER_PAGE = 6;
 
-export const BusesPage = () => {
+ const BusesPage = () => {
   const [buses, setBuses] = useState([]);
   const [filteredBuses, setFilteredBuses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -143,8 +143,8 @@ export const BusesPage = () => {
           toast.success('Bus désassocié avec succès');
           fetchBuses(); // Rafraîchir les données
         } catch (error) {
-          console.error("Erreur lors de la désassociation :", error);
-          toast.error("Impossible de désassocier ce bus.");
+          console.error('Erreur lors de la désassociation :', error);
+          toast.error('Impossible de désassocier ce bus.');
         }
       }
     });
@@ -201,7 +201,7 @@ export const BusesPage = () => {
               ))
             ) : (
               <p className="col-span-full text-center text-gray-500">
-                {searchTerm ? "Aucun bus ne correspond à votre recherche" : "Aucun bus trouvé"}
+                {searchTerm ? 'Aucun bus ne correspond à votre recherche' : 'Aucun bus trouvé'}
               </p>
             )}
           </div>

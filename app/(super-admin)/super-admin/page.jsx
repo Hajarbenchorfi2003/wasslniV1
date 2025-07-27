@@ -170,10 +170,10 @@ const SuperAdminDashboardPage = () => {
                                 formatter: function (w) {
                                     return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
                                 },
-                                color: `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                                color: `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
                             },
                             value: {
-                                color: `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                                color: `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
                             }
                         }
                     }
@@ -193,10 +193,10 @@ const SuperAdminDashboardPage = () => {
             },
             labels: ['Admins', 'Chauffeurs', 'Parents', 'Responsables'],
             colors: [
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].primary})`,
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].info})`,
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].secondary})`,
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].success})`
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].primary})`,
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].info})`,
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].secondary})`,
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].success})`
             ],
             responsive: [{
                 breakpoint: 480,
@@ -215,16 +215,16 @@ const SuperAdminDashboardPage = () => {
                     return opts.w.config.series[opts.seriesIndex];
                 },
                 style: {
-                    colors: [`hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`]
+                    colors: [`hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`]
                 }
             },
             legend: {
                 labels: {
-                    colors: `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                    colors: `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
                 }
             },
             tooltip: {
-                theme: mode === "dark" ? "dark" : "light",
+                theme: mode === 'dark' ? 'dark' : 'light',
             },
         },
     };
@@ -246,21 +246,21 @@ const SuperAdminDashboardPage = () => {
                 curve: 'smooth',
                 width: 3,
             },
-            colors: [`hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].info})`],
+            colors: [`hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].info})`],
             tooltip: {
-                theme: mode === "dark" ? "dark" : "light",
+                theme: mode === 'dark' ? 'dark' : 'light',
             },
             grid: getGridConfig(
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartGird})`
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartGird})`
             ),
             xaxis: {
                 categories: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
                 labels: getXAxisConfig(
-                    `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                    `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
                 ),
             },
             yaxis: getYAxisConfig(
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
             ),
         }
     };

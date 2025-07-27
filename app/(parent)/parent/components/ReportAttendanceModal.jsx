@@ -114,7 +114,7 @@ export const ReportAttendanceModal = ({ isOpen, setIsOpen, childId, dailyTripId,
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Signaler l'absence/retard
+            Signaler l&apos;absence/retard
           </DialogTitle>
           <DialogDescription>
             <div className="space-y-1">

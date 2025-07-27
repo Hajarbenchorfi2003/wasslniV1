@@ -28,10 +28,10 @@ export function IncidentListItem({ incident, onSelect, isSelected, onAcknowledge
 
     const getLabelColor = (status) => {
         switch (status) {
-            case "new": return "bg-destructive"; // Red for new incidents
-            case "acknowledged": return "bg-yellow-500"; // Yellow for acknowledged
-            case "resolved": return "bg-success"; // Green for resolved
-            default: return "bg-default-300"; // Default gray
+            case 'new': return 'bg-destructive'; // Red for new incidents
+            case 'acknowledged': return 'bg-yellow-500'; // Yellow for acknowledged
+            case 'resolved': return 'bg-success'; // Green for resolved
+            default: return 'bg-default-300'; // Default gray
         }
     };
 
@@ -81,7 +81,7 @@ export function IncidentListItem({ incident, onSelect, isSelected, onAcknowledge
                 <p className="truncate text-sm text-default-600">
                     <span className={cn({ "font-bold": !mailLikeData.read })}>
                         {mailLikeData.subject}:
-                    </span>{' '}
+                    </span>{''}
                     {mailLikeData.text}
                 </p>
             </div>

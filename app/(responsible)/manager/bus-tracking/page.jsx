@@ -47,7 +47,9 @@ const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ss
 import 'leaflet/dist/leaflet.css';
 
 
-export const BusTrackingPage = ({ managerEstablishmentId = 1 }) => {
+ const BusTrackingPage = () => {
+
+    const managerEstablishmentId = 1;
     const [currentDemoData, setCurrentDemoData] = useState(demoData);
     const [dailyTripsForTracking, setDailyTripsForTracking] = useState([]);
     const [selectedDailyTripId, setSelectedDailyTripId] = useState('none');
@@ -155,7 +157,7 @@ export const BusTrackingPage = ({ managerEstablishmentId = 1 }) => {
     if (!managerEstablishmentId) {
         return (
             <div className="flex justify-center items-center h-screen text-xl text-default-600">
-                Chargement de l'établissement...
+                Chargement de l&apos;établissement...
             </div>
         );
     }
@@ -254,11 +256,11 @@ export const BusTrackingPage = ({ managerEstablishmentId = 1 }) => {
                 </Card>
             ) : selectedTripDetails && selectedTripDetails.status !== 'ONGOING' && selectedTripDetails.trip?.route?.id && polylinePositions.length > 0 ? (
                 // Message for PLANNED trips or other statuses with a route
-                <p className="text-sm text-muted-foreground text-center py-4">Le trajet n'est pas en cours. La position en temps réel n'est pas disponible.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Le trajet n&apos;est pas en cours. La position en temps réel n&apos;est pas disponible.</p>
             ) : selectedTripDetails && selectedTripDetails.trip?.route?.id && polylinePositions.length < 2 ? (
-                 <p className="text-sm text-muted-foreground text-center py-4">Pas assez d'arrêts pour afficher la route sur la carte.</p>
+                 <p className="text-sm text-muted-foreground text-center py-4">Pas assez d&apos;arrêts pour afficher la route sur la carte.</p>
             ) : selectedTripDetails ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Ce trajet n'a pas de route définie.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">Ce trajet n&apos;a pas de route définie.</p>
             ) : null}
         </div>
     );

@@ -51,8 +51,8 @@ import { ModalIncidentDetails } from './ModalIncidentDetails'; // Vérifiez le c
 
 const ITEMS_PER_PAGE_INCIDENTS = 10;
 
-export const IncidentsNotificationsPage = ({ managerEstablishmentId }) => {
-  const effectiveManagerEstablishmentId = managerEstablishmentId || 1;
+const IncidentsNotificationsPage = () => {
+
 
   // États
   const [incidents, setIncidents] = useState([]);
@@ -211,7 +211,7 @@ export const IncidentsNotificationsPage = ({ managerEstablishmentId }) => {
         <TabsContent value="incidents" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Incidents de l'Établissement</CardTitle>
+              <CardTitle>Incidents de l&rsquo;Établissement</CardTitle>
               <CardDescription>{filteredIncidents.length} résultats trouvés</CardDescription>
             </CardHeader>
             <CardContent>

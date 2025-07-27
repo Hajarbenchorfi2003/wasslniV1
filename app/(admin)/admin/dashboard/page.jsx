@@ -23,7 +23,7 @@ import { useThemeStore } from "@/store";
 import { useTheme } from "next-themes";
 import { themes } from "@/config/thems"; // Ensure this import is correct
 
-const DashboardPageView = ({ trans }) => {
+const DashboardPageView = () => {
   // Example school ID (replace with dynamic retrieval based on logged-in admin)
   const currentSchoolId = 1;
 
@@ -157,7 +157,7 @@ const DashboardPageView = ({ trans }) => {
           <Card>
             <CardHeader className="border-none p-6 pt-5 mb-0">
               <CardTitle className="text-lg font-semibold text-default-900 p-0">
-                Statistiques Clés de l'École
+                Statistiques Clés de l&apos;École
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -309,9 +309,9 @@ const DashboardPageView = ({ trans }) => {
               </Link>
               <Link href={`/admin/incidents?schoolId=${currentSchoolId}`} className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                 <Icon icon="heroicons:exclamation-triangle" className="h-5 w-5 text-destructive" />
-                <span className="font-medium text-default-700">Rapports d'Incidents</span>
+                <span className="font-medium text-default-700">Rapports d&apos;Incidents</span>
               </Link>
-              {/* Links to manage users specific to this admin's school, now including Drivers and Parents */}
+              {/* Links to manage users specific to this admin&apos;s school, now including Drivers and Parents */}
               <Link href={`/admin/users?role=RESPONSIBLE&schoolId=${currentSchoolId}`} className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
                 <Icon icon="heroicons:user" className="h-5 w-5 text-teal-500" />
                 <span className="font-medium text-default-700">Gérer les Responsables</span>

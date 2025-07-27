@@ -58,9 +58,9 @@ const LogInForm = () => {
   startTransition(async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/login`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(data),
       });
@@ -68,19 +68,19 @@ const LogInForm = () => {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success("Login successful");
+        toast.success('Login successful');
 
-        // Enregistre l'utilisateur dans le localStorage ou un autre endroit
+        // Enregistre l&apos;utilisateur dans le localStorage ou un autre endroit
         saveUser(result.user);
 
         // Redirection selon le rôle
-        window.location.assign("/role-redirect");
+        window.location.assign('/role-redirect');
       } else {
-        toast.error(result.message || "Login failed");
+        toast.error(result.message || 'Login failed');
       }
     } catch (error) {
-      toast.error("Something went wrong");
-      console.error("Login error:", error);
+      toast.error('Something went wrong');
+      console.error('Login error:', error);
     }
   });
 };
@@ -98,7 +98,7 @@ const LogInForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 2xl:mt-7">
         <div>
           <Label htmlFor="email" className="mb-2 font-medium text-default-600">
-            Email{" "}
+            Email{' '}
           </Label>
           <Input
             disabled={isPending}
@@ -120,8 +120,8 @@ const LogInForm = () => {
             htmlFor="password"
             className="mb-2 font-medium text-default-600"
           >
-            {" "}
-            Password{" "}
+            {' '}
+            Password{' '}
           </Label>
           <div className="relative">
             <Input
@@ -138,7 +138,7 @@ const LogInForm = () => {
               className="absolute top-1/2 -translate-y-1/2 ltr:right-4 rtl:left-4 cursor-pointer"
               onClick={togglePasswordType}
             >
-              {passwordType === "password" ? (
+              {passwordType === 'password' ? (
                 <Icon
                   icon="heroicons:eye"
                   className="w-5 h-5 text-default-400"
@@ -159,7 +159,7 @@ const LogInForm = () => {
         )}
 
         <div className="mt-5  mb-8 flex flex-wrap gap-2">
-          <div className="flex-1 flex  items-center gap-1.5 ">
+          {/* <div className="flex-1 flex  items-center gap-1.5 ">
             <Checkbox
               size="sm"
               className="border-default-300 mt-[1px]"
@@ -171,7 +171,7 @@ const LogInForm = () => {
             >
               Remember me
             </Label>
-          </div>
+          </div> */}
           <Link href="/auth/forgot2" className="flex-none text-sm text-primary">
             Forget Password?
           </Link>
@@ -182,7 +182,7 @@ const LogInForm = () => {
           size={!isDesktop2xl ? "lg" : "md"}
         >
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "Loading..." : "Sign In"}
+          {isPending ? 'Loading...' : 'Sign In'}
         </Button>
       </form>
       <div className="mt-5 2xl:mt-8 flex flex-wrap justify-center gap-4">
@@ -233,10 +233,10 @@ const LogInForm = () => {
         </Button>
       </div>
       <div className="mt-5 2xl:mt-8 text-center text-base text-default-600">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{' '}
         <Link href="/auth/register2" className="text-primary">
-          {" "}
-          Sign Up{" "}
+          {' '}
+          Sign Up{' '}
         </Link>
       </div>
     </div>

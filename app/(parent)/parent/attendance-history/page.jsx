@@ -102,7 +102,7 @@ const ParentAttendanceHistoryPage = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-default-900">Historique de Présence</h1>
-      <p className="text-default-600">Consultez et filtrez l'historique de présence de vos enfants.</p>
+      <p className="text-default-600">Consultez et filtrez l&apos;historique de présence de vos enfants.</p>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
@@ -136,7 +136,7 @@ const ParentAttendanceHistoryPage = () => {
               <Icon icon="heroicons:list-bullet" className="h-6 w-6 text-indigo-500" />
               Toutes les entrées de présence
             </CardTitle>
-            <CardDescription>Nombre total d'entrées : {filteredAttendance.length}</CardDescription>
+            <CardDescription>Nombre total d&apos;entrées : {filteredAttendance.length}</CardDescription>
           </CardHeader>
 
           <CardContent className="p-0">

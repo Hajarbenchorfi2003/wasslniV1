@@ -63,7 +63,7 @@ export default function BusModal({ isOpen, onClose, bus, onSave }) {
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
                   <label htmlFor="plateNumber" className="block text-sm font-medium text-gray-700">
-                    Numéro d'immatriculation
+                    Numéro d&apos;immatriculation
                   </label>
                   <input
                     type="text"

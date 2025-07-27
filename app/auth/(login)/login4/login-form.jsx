@@ -56,14 +56,14 @@ const LogInForm = () => {
 
   const onSubmit = (data) => {
     startTransition(async () => {
-      let response = await signIn("credentials", {
+      let response = await signIn('credentials', {
         email: data.email,
         password: data.password,
         redirect: false,
       });
       if (response?.ok) {
-        toast.success("Login Successful");
-        window.location.assign("/dashboard");
+        toast.success('Login Successful');
+        window.location.assign('/dashboard');
         reset();
       } else if (response?.error) {
         toast.error(response?.error);
@@ -135,7 +135,7 @@ const LogInForm = () => {
             className="absolute top-1/2 -translate-y-1/2 ltr:right-4 rtl:left-4 cursor-pointer"
             onClick={togglePasswordType}
           >
-            {passwordType === "password" ? (
+            {passwordType === 'password' ? (
               <Icon icon="heroicons:eye" className="w-4 h-4 text-default-400" />
             ) : (
               <Icon
@@ -176,7 +176,7 @@ const LogInForm = () => {
           size={!isDesktop2xl ? "lg" : "md"}
         >
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "Loading..." : "Sign In"}
+          {isPending ? 'Loading...' : 'Sign In'}
         </Button>
       </form>
       <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -227,10 +227,10 @@ const LogInForm = () => {
         </Button>
       </div>
       <div className="mt-6 text-center text-base text-default-600">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{' '}
         <Link href="/auth/register4" className="text-primary">
-          {" "}
-          Sign Up{" "}
+          {' '}
+          Sign Up{' '}
         </Link>
       </div>
     </div>

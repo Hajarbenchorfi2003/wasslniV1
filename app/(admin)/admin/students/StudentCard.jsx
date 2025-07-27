@@ -50,7 +50,7 @@ const StudentCard = ({ student, onEditStudent, onDeleteStudent }) => {
                     {getInitials(student.fullname)}
                   </AvatarFallback>
                 </Avatar>
-                {/* Students are "active" if not deleted */}
+                {/* Students are &quot;active&quot; if not deleted */}
                 <Badge color={!student.deletedAt ? 'success' : 'destructive'} className="h-2 w-2 p-0 items-center justify-center absolute left-[calc(100%-8px)] bottom-[calc(100%-8px)]">
                 </Badge>
               </div>
@@ -90,7 +90,7 @@ const StudentCard = ({ student, onEditStudent, onDeleteStudent }) => {
           </p>
           <p className="flex items-center gap-2">
             <Icon icon={student.gender === 'MALE' ? 'heroicons:user' : 'heroicons:user-group'} className="w-4 h-4 opacity-70" />
-            Genre: {student.gender === 'MALE' ? 'Masculin' : 'Féminin'}
+            Genre: {student.gender ==='MALE' ? 'Masculin' : 'Féminin'}
           </p>
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:map-pin" className="w-4 h-4 opacity-70" />
@@ -100,7 +100,7 @@ const StudentCard = ({ student, onEditStudent, onDeleteStudent }) => {
   <p className="flex items-center gap-2">
     <Icon icon="heroicons:users" className="w-4 h-4 opacity-70" />
     Parents :{' '}
-    {student.parentLinks.map((link) => link.parent.fullname).join(', ')}
+    {student.parentLinks.map((link) => link.parent.fullname).join(',')}
   </p>
 ) : (
   <p className="flex items-center gap-2 text-gray-500">

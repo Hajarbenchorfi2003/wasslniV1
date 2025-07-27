@@ -30,7 +30,7 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
   const isEditing = !!editingDailyTrip;
   useEffect(() => {
     if (editingDailyTrip) {
-      const tripDate = editingDailyTrip.date ? new Date(editingDailyTrip.date).toISOString().split('T')[0] : '';
+      const tripDate = editingDailyTrip.date ? new Date(editingDailyTrip.date).toISOString().slice(0, 16): '';
       setFormData({
         tripId: editingDailyTrip.tripId || null,
         date: tripDate,
@@ -95,7 +95,7 @@ export const ModalDailyTrip = ({ isOpen, onClose, editingDailyTrip, onSave, trip
 
           <div>
             <Label htmlFor="date" className="text-right">Date du Trajet</Label>
-            <Input id="date" name="date" type="date" value={formData.date} onChange={handleChange} className="col-span-3" disabled={isEditing} required />
+            <Input id="date" name="date" type="datetime-local" value={formData.date} onChange={handleChange} className="col-span-3" disabled={isEditing} required />
           </div>
 
           {/* Status Selection */}

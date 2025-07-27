@@ -81,7 +81,7 @@ const EstablishmentDetailsPage = () => {
   }, [establishmentId]);
 
     
-   console.log("details",details)
+   console.log('details',details)
    if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -93,7 +93,7 @@ const EstablishmentDetailsPage = () => {
   if (error || !details) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center text-muted-foreground">
-        <p>{error || "Aucune donnée disponible"}</p>
+        <p>{error || 'Aucune donnée disponible'}</p>
         <Button onClick={() => router.back()} className="mt-4">Retour</Button>
       </div>
     );
@@ -197,7 +197,7 @@ const EstablishmentDetailsPage = () => {
             xaxis: {
                 categories: buses.map(bus => bus.plateNumber),
                 labels: getXAxisConfig(
-                    `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                    `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
                 ),
             },
             padding: {
@@ -224,7 +224,7 @@ const EstablishmentDetailsPage = () => {
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
-                                Vue d'ensemble
+                                Vue d&apos;ensemble
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -320,7 +320,7 @@ const EstablishmentDetailsPage = () => {
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
-                                Informations de l'École
+                                Informations de l&apos;École
                             </CardTitle>
                         </CardHeader>
                         <CardContent>

@@ -46,9 +46,9 @@ const CreatePasswordForm = () => {
   const onSubmit = (data) => {
     console.log("Form Data:", data);
     startTransition(async () => {
-      toast.success("reset successful");
+      toast.success('reset successful');
       reset();
-      router.push("/dashboard");
+      router.push('/dashboard');
     });
   };
   return (
@@ -89,7 +89,7 @@ const CreatePasswordForm = () => {
             className="absolute top-1/2 -translate-y-1/2 ltr:right-4 rtl:left-4 cursor-pointer"
             onClick={() => setNewPasswordType(!newPasswordType)}
           >
-            {newPasswordType === "password" ? (
+            {newPasswordType === 'password' ? (
               <Icon icon="heroicons:eye" className="w-5 h-5 text-default-400" />
             ) : (
               <Icon
@@ -161,14 +161,14 @@ const CreatePasswordForm = () => {
 
         <Button className="w-full mt-8" size={!isDesktop2xl ? "lg" : "md"}>
           {isPending && <Loader2 className="ltr:mr-2 rtl:ml-2 h-4 w-4 animate-spin" />}
-          {isPending ? "Resetting..." : "Reset Password"}
+          {isPending ? 'Resetting...' : 'Reset Password'}
         </Button>
       </form>
       <div className="mt-6 text-center text-base text-default-600">
-        Not now? Return{" "}
+        Not now? Return{' '}
         <Link href="/auth/login3" className="text-primary">
-          {" "}
-          Sign In{" "}
+          {' '}
+          Sign In{' '}
         </Link>
       </div>
     </div>

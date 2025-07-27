@@ -72,7 +72,7 @@ export const StopCard = ({ stop, onEditStop, onDeleteStop }) => {
           {/* Stop Details */}
           <p className="flex items-center gap-2 text-default-700">
             <Icon icon="heroicons:globe-alt" className="w-4 h-4 text-default-500" />
-            Latitude: {stop.lat || 'N/A'}
+            Latitude: {stop.lat ||'N/A'}
           </p>
           <p className="flex items-center gap-2 text-default-700">
             <Icon icon="heroicons:globe-alt" className="w-4 h-4 text-default-500" />

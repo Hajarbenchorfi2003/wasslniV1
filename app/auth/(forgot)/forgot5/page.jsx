@@ -121,12 +121,12 @@ const LoginPage = () => {
                           <div className="text-lg lg:text-xl  font-semibold text-default-900 pr-10 ">
                             Prantik Chakraborty <br />
                             <span className="text-base font-medium text-default-700">
-                              {" "}
+                              {""}
                               UI/UX Designer at Codeshaper
                             </span>
                           </div>
                           <div className="text-lg  text-default-800 mt-4">
-                            The key metric of whether you've succeeded is what
+                            The key metric of whether you&apos;ve succeeded is what
                             fraction of your employees use that dashboard
                             everyday.
                           </div>
@@ -137,12 +137,12 @@ const LoginPage = () => {
                           <div className="text-lg lg:text-xl  font-semibold text-default-900 pr-10 ">
                             Prantik Chakraborty <br />
                             <span className="text-base font-medium text-default-700">
-                              {" "}
+                              {""}
                               UI/UX Designer at Codeshaper
                             </span>
                           </div>
                           <div className="text-lg  text-default-800 mt-4">
-                            The key metric of whether you've succeeded is what
+                            The key metric of whether you&apos;ve succeeded is what
                             fraction of your employees use that dashboard
                             everyday.
                           </div>
@@ -153,12 +153,12 @@ const LoginPage = () => {
                           <div className="text-lg lg:text-xl  font-semibold text-default-900 pr-10 ">
                             Prantik Chakraborty <br />
                             <span className="text-base font-medium text-default-700">
-                              {" "}
+                              {""}
                               UI/UX Designer at Codeshaper
                             </span>
                           </div>
                           <div className="text-lg  text-default-800 mt-4">
-                            The key metric of whether you've succeeded is what
+                            The key metric of whether you&apos;ve succeeded is what
                             fraction of your employees use that dashboard
                             everyday.
                           </div>
@@ -301,12 +301,12 @@ export default LoginPage;
 //                           <div className="text-lg lg:text-xl  font-semibold text-default-900 pr-10 ">
 //                             Prantik Chakraborty <br />
 //                             <span className="text-base font-medium text-default-700">
-//                               {" "}
+//                               {' '}
 //                               UI/UX Designer at Codeshaper
 //                             </span>
 //                           </div>
 //                           <div className="text-lg  text-default-800 mt-4">
-//                             The key metric of whether you've succeeded is what
+//                             The key metric of whether you&apos;ve succeeded is what
 //                             fraction of your employees use that dashboard
 //                             everyday.
 //                           </div>
@@ -317,12 +317,12 @@ export default LoginPage;
 //                           <div className="text-lg lg:text-xl  font-semibold text-default-900 pr-10 ">
 //                             Prantik Chakraborty <br />
 //                             <span className="text-base font-medium text-default-700">
-//                               {" "}
+//                               {' '}
 //                               UI/UX Designer at Codeshaper
 //                             </span>
 //                           </div>
 //                           <div className="text-lg  text-default-800 mt-4">
-//                             The key metric of whether you've succeeded is what
+//                             The key metric of whether you&apos;ve succeeded is what
 //                             fraction of your employees use that dashboard
 //                             everyday.
 //                           </div>
@@ -333,12 +333,12 @@ export default LoginPage;
 //                           <div className="text-lg lg:text-xl  font-semibold text-default-900 pr-10 ">
 //                             Prantik Chakraborty <br />
 //                             <span className="text-base font-medium text-default-700">
-//                               {" "}
+//                               {' '}
 //                               UI/UX Designer at Codeshaper
 //                             </span>
 //                           </div>
 //                           <div className="text-lg  text-default-800 mt-4">
-//                             The key metric of whether you've succeeded is what
+//                             The key metric of whether you&apos;ve succeeded is what
 //                             fraction of your employees use that dashboard
 //                             everyday.
 //                           </div>

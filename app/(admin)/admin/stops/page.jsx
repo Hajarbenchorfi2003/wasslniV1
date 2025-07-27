@@ -17,7 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 
 const ITEMS_PER_PAGE = 6;
 
-export const StopsPage = () => {
+ const StopsPage = () => {
   const [stops, setStops] = useState([]);
   const [filteredStops, setFilteredStops] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -190,7 +190,7 @@ export const StopsPage = () => {
             Liste des Arrêts
           </CardTitle>
           <CardDescription>
-            {isLoading ? 'Chargement...' : `Nombre total d'arrêts: ${filteredStops.length}`}
+            {isLoading ? 'Chargement...' : `Nombre total d&apos;arrêts: ${filteredStops.length}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
@@ -219,7 +219,7 @@ export const StopsPage = () => {
             </div>
           ) : (
             <p className="col-span-full text-center text-gray-500 py-10">
-              {searchTerm ? 'Aucun résultat trouvé' : 'Aucun arrêt disponible'}
+              {searchTerm ?'Aucun résultat trouvé' : 'Aucun arrêt disponible'}
             </p>
           )}
         </CardContent>

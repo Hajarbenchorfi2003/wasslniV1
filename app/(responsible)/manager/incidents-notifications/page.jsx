@@ -52,8 +52,7 @@ import { ModalIncidentDetails } from './ModalIncidentDetails'; // Vérifiez le c
 
 const ITEMS_PER_PAGE_INCIDENTS = 10;
 
-export const IncidentsNotificationsPage = ({ managerEstablishmentId }) => {
-  const effectiveManagerEstablishmentId = managerEstablishmentId || 1;
+const IncidentsNotificationsPage = () => {
 
   // États
   const [incidents, setIncidents] = useState([]);
@@ -97,13 +96,7 @@ export const IncidentsNotificationsPage = ({ managerEstablishmentId }) => {
   useEffect(() => {
     let tempFilteredIncidents = [...incidents];
   
-    // Filtrer par établissement
-    if (effectiveManagerEstablishmentId) {
-      tempFilteredIncidents = tempFilteredIncidents.filter(
-        inc =>
-          inc.dailyTrip?.trip?.establishment?.id === effectiveManagerEstablishmentId
-      );
-    }
+    
   
     // Filtrer par statut (ex: NEW, ACKNOWLEDGED)
     if (incidentStatusFilter !== 'all') {
@@ -148,7 +141,6 @@ export const IncidentsNotificationsPage = ({ managerEstablishmentId }) => {
     incidentDateRange,
     incidentStatusFilter,
     incidentCurrentPage,
-    effectiveManagerEstablishmentId
   ]);
 
   const paginatedIncidents = filteredIncidents.slice(
@@ -212,7 +204,7 @@ export const IncidentsNotificationsPage = ({ managerEstablishmentId }) => {
         <TabsContent value="incidents" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Incidents de l'Établissement</CardTitle>
+              <CardTitle>Incidents de l&apos;Établissement</CardTitle>
               <CardDescription>{filteredIncidents.length} résultats trouvés</CardDescription>
             </CardHeader>
             <CardContent>

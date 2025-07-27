@@ -1,5 +1,5 @@
 'use client';
-
+import { io } from 'socket.io-client';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { Card, CardContent } from '@/components/ui/card';
 import parentService from '@/services/parentService';
+import { getToken } from '@/utils/auth';
 
 // Import dynamique du composant Map
 const BusTrackingMap = dynamic(
@@ -41,6 +42,7 @@ const BusTrackingPage = () => {
           setError("Enfant non trouvé avec l'ID fourni.");
         } else {
           setChild(found);
+          console.log('child',child)
         }
       } catch (err) {
         console.error(err);
@@ -52,7 +54,6 @@ const BusTrackingPage = () => {
 
     fetchChildInfo();
   }, [childId]);
-
   const handleGoBackToOverview = () => {
     router.push('/parent/children-overview');
   };
@@ -79,7 +80,7 @@ const BusTrackingPage = () => {
           <CardContent className="p-6 text-center text-red-700">
             <Icon icon="heroicons:exclamation-triangle" className="h-10 w-10 mx-auto mb-4 text-red-500" />
             <p className="text-lg font-medium">{error}</p>
-            <p className="text-sm mt-2">Veuillez retourner à la vue d'ensemble des enfants et sélectionner un enfant valide pour le suivi.</p>
+            <p className="text-sm mt-2">Veuillez retourner à la vue d&rsquo;ensemble des enfants et sélectionner un enfant valide pour le suivi.</p>
           </CardContent>
         </Card>
       </div>
@@ -93,7 +94,7 @@ const BusTrackingPage = () => {
           Suivi du Bus pour {child?.fullname || 'Enfant Inconnu'}
         </h1>
         <Button onClick={handleGoBackToOverview} variant="outline">
-          <Icon icon="heroicons:arrow-left" className="h-4 w-4 mr-2" /> Retour à la vue d'ensemble
+          <Icon icon="heroicons:arrow-left" className="h-4 w-4 mr-2" /> Retour à la vue d&rsquo;ensemble
         </Button>
       </div>
 

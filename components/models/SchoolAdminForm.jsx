@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 // import { demoData } from '@/data/data'; // Remove direct import and manipulation
 // import toast from 'react-hot-toast'; // Remove direct toast calls here
-
+import { ScrollArea } from "@/components/ui/scroll-area";
 // Schéma pour l'école
 const schoolSchema = z.object({
   name: z.string().min(2, "Nom de l'école requis"),
@@ -128,7 +128,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Section École */}
         <div className="space-y-4 p-4 border rounded-lg">
-          <h3 className="text-lg font-medium">Informations de l'école</h3>
+          <h3 className="text-lg font-medium">Informations de l&apos;école</h3>
           <div className="sm:grid sm:grid-cols-2 sm:gap-5 space-y-4 sm:space-y-0">
             {schoolFields.map(({ name, label, placeholder, type = 'text' }) => (
               <FormField
@@ -164,7 +164,7 @@ export default function SchoolAdminForm({ onSubmit, defaultValues, existingAdmin
 
         {/* Section Admin */}
         <div className="space-y-4 p-4 border rounded-lg">
-          <h3 className="text-lg font-medium">Administrateur de l'école</h3>
+          <h3 className="text-lg font-medium">Administrateur de l&apos;école</h3>
 
           <div className="flex items-center space-x-2">
             <Switch

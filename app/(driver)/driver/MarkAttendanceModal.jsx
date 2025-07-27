@@ -43,12 +43,12 @@ export const MarkAttendanceModal = ({
 
   const handleSaveAttendance = async () => {
     if (!status) {
-      toast.error("Veuillez sélectionner un statut de présence.");
+      toast.error('Veuillez sélectionner un statut de présence.');
       return;
     }
   
     if (!dailyTripId || !studentId) {
-      toast.error("Données manquantes pour enregistrer la présence.");
+      toast.error('Données manquantes pour enregistrer la présence.');
       return;
     }
   
@@ -70,10 +70,10 @@ export const MarkAttendanceModal = ({
   
       setIsOpen(false);
     } catch (error) {
-      console.error("Erreur API:", error.response?.data);
+      console.error('Erreur API:', error.response?.data);
      
       if (error.response?.status === 403) {
-        toast.error("Impossible de marquer la présence : le trajet  est pas en cours");
+        toast.error('Impossible de marquer la présence : le trajet  est pas en cours');
       }  else if(error.response?.data?.error) {
         toast.error(error.response.data.error);
       }else if (typeof error.response?.data === 'string') {

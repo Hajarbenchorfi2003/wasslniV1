@@ -24,7 +24,7 @@ const StudentCard = ({ student, onEditStudent, onDeleteStudent }) => {
 
   const handleDelete = () => {
     if (!student?.id) {
-      console.error("Impossible de supprimer : ID de l'étudiant manquant");
+      console.error('Impossible de supprimer : ID de l&apos;étudiant manquant');
       return;
     }
     onDeleteStudent(student.id);

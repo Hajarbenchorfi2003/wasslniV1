@@ -133,11 +133,11 @@ const SuperAdminDashboardPage = () => {
             },
             labels: roleLabels,
             colors: [
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].primary})`, // SUPER_ADMIN
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].info})`,    // ADMIN
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].secondary})`, // RESPONSIBLE
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].destructive})`, // DRIVER
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].success})` // PARENT
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].primary})`, // SUPER_ADMIN
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].info})`,    // ADMIN
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].secondary})`, // RESPONSIBLE
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].destructive})`, // DRIVER
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].success})` // PARENT
             ],
             responsive: [{
                 breakpoint: 480,
@@ -156,16 +156,16 @@ const SuperAdminDashboardPage = () => {
                     return opts.w.config.series[opts.seriesIndex];
                 },
                 style: {
-                    colors: [`hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`]
+                    colors: [`hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`]
                 }
             },
             legend: {
                 labels: {
-                    colors: `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                    colors: `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
                 }
             },
             tooltip: {
-                theme: mode === "dark" ? "dark" : "light",
+                theme: mode === 'dark' ? 'dark' : 'light',
             },
         },
     };
@@ -187,21 +187,21 @@ const SuperAdminDashboardPage = () => {
                 curve: 'smooth',
                 width: 3,
             },
-            colors: [`hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].info})`],
+            colors: [`hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].info})`],
             tooltip: {
-                theme: mode === "dark" ? "dark" : "light",
+                theme: mode === 'dark' ? 'dark' : 'light',
             },
             grid: getGridConfig(
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartGird})`
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartGird})`
             ),
             xaxis: {
                 categories: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
                 labels: getXAxisConfig(
-                    `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                    `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
                 ),
             },
             yaxis: getYAxisConfig(
-                `hsl(${theme?.cssVars[mode === "dark" ? "dark" : "light"].chartLabel})`
+                `hsl(${theme?.cssVars[mode === 'dark' ? 'dark' : 'light'].chartLabel})`
             ),
         }
     };

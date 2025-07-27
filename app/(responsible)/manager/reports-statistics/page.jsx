@@ -28,7 +28,7 @@ import {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#a4de6c', '#d0ed57', '#83a6ed'];
 
-export const ReportsStatisticsPage = ({ managerEstablishmentId = 1 }) => {
+const ReportsStatisticsPage = () => {
   const defaultFromDate = new Date();
   defaultFromDate.setDate(defaultFromDate.getDate() - 30);
 
@@ -176,7 +176,7 @@ export const ReportsStatisticsPage = ({ managerEstablishmentId = 1 }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalStudentsCount}</div>
-            <p className="text-xs text-muted-foreground">inscrits dans l'établissement</p>
+            <p className="text-xs text-muted-foreground">inscrits dans l&apos;établissement</p>
           </CardContent>
         </Card>
         
@@ -285,7 +285,7 @@ export const ReportsStatisticsPage = ({ managerEstablishmentId = 1 }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-red-500" />
-            Types d'Incidents
+            Types d&apos;Incidents
           </CardTitle>
           <CardDescription>Répartition des incidents par type.</CardDescription>
         </CardHeader>

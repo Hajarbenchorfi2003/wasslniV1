@@ -88,13 +88,13 @@ export const ParentIncidentList = ({ incidents, onMarkAsRead }) => {
                         {getIncidentTypeText(incident.type)}
                       </Badge>
                       <p className="text-xs text-gray-500">
-                        Signalé par: {incident.reportedBy?.fullname || 'Inconnu'}
+                        Signalé par: {incident.reportedBy?.fullname ||'Inconnu'}
                       </p>
                     </div>
                     
                     <div className="mb-2">
                       <h4 className="font-semibold text-default-700 text-sm">
-                        {incident.dailyTrip?.trip?.name || 'Trajet inconnu'}
+                        {incident.dailyTrip?.trip?.name ||'Trajet inconnu'}
                       </h4>
                       <p className="text-sm text-muted-foreground mt-1">
                         {incident.description}
@@ -104,11 +104,11 @@ export const ParentIncidentList = ({ incidents, onMarkAsRead }) => {
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-gray-500">
                         {new Date(incident.timestamp).toLocaleString('fr-FR', {
-                          year: 'numeric', 
-                          month: 'short', 
-                          day: 'numeric', 
-                          hour: '2-digit', 
-                          minute: '2-digit'
+                          year:'numeric', 
+                          month:'short', 
+                          day:'numeric', 
+                          hour:'2-digit', 
+                          minute:'2-digit'
                         })}
                       </p>
                     </div>
@@ -121,7 +121,7 @@ export const ParentIncidentList = ({ incidents, onMarkAsRead }) => {
               <Icon icon="heroicons:check-circle" className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucun incident</h3>
               <p className="text-muted-foreground text-sm">
-                Aucun incident n'a été signalé pour votre enfant.
+                Aucun incident n&apos;a été signalé pour votre enfant.
               </p>
             </div>
           )}

@@ -25,18 +25,6 @@ import toast from 'react-hot-toast';
 import { Input } from '@/components/ui/input'; // Import the Input component
 
 export default function SchoolDetailsPage({ params }) {
-  const { id } = params;
-  const schoolId = parseInt(id);
-  const router = useRouter();
-  const pathname = usePathname();
-  const paramsr = useParams(); // Using useParams for 'lang'
-  const locale = paramsr.lang;
-
-  // Find the school directly from demoData.schools
-  const school = demoData.schools.find((s) => s.id === schoolId);
-
-  if (!school) return notFound();
-
   const ITEMS_PER_PAGE = 5;
   const [currentPage, setCurrentPage] = useState(1);
   const [establishments, setEstablishments] = useState([]);
@@ -45,11 +33,23 @@ export default function SchoolDetailsPage({ params }) {
   const [currentEstablishmentDataForModal, setCurrentEstablishmentDataForModal] = useState(null);
   const [establishmentToDelete, setEstablishmentToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); // New state for search query
+  const [searchQuery, setSearchQuery] = useState('');
+  const { id } = params;
+  const schoolId = parseInt(id);
+  const router = useRouter();
+  const pathname = usePathname();
+  const paramsr = useParams(); // Using useParams for 'lang'
+  const locale = paramsr.lang;
 
-  // Use useEffect to keep establishments state in sync with demoData and apply filter
+  // Find the school directly from demoData.schools
+  //const school = demoData.schools.find((s) => s.id === schoolId);
+
+  const school = useMemo(() => {
+    return demoData.schools.find((s) => s.id === schoolId);
+  }, [schoolId]);
+  
   useEffect(() => {
-    // Get all establishments for this school
+    if (!school) return;
     const allSchoolEstablishments = getSchoolEstablishments(schoolId);
 
     // Apply search filter
@@ -81,7 +81,7 @@ export default function SchoolDetailsPage({ params }) {
       setCurrentPage(1);
     }
     setCollapsedRows([]); // Collapse all rows on data refresh/filter change
-  }, [schoolId, demoData.establishments, demoData.users, searchQuery, currentPage]); // Added demoData.users and searchQuery to dependencies
+  }, [schoolId, searchQuery, currentPage]); // Added demoData.users and searchQuery to dependencies
 
   const totalPages = Math.ceil(establishments.length / ITEMS_PER_PAGE);
   const paginatedEstablishments = establishments.slice(
@@ -331,12 +331,12 @@ export default function SchoolDetailsPage({ params }) {
                             <p className="flex items-center gap-2">
                               <Icon icon="heroicons:at-symbol" className="w-4 h-4 opacity-50" />
                               <span>
-                                Email Directeur : {directeur?.email || "Non renseigné"}
+                                Email Directeur : {directeur?.email || 'Non renseigné'}
                               </span>
                             </p>
                             <p className="flex items-center gap-2">
                               <Icon icon="heroicons:phone" className="w-4 h-4 opacity-50" />
-                              <span>Téléphone Directeur : {directeur?.phone || "Non renseigné"}</span>
+                              <span>Téléphone Directeur : {directeur?.phone || 'Non renseigné'}</span>
                             </p>
                             <p className="flex items-center gap-2">
                               {/* You'll need to calculate number of buses per establishment */}

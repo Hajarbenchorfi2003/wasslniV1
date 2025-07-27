@@ -62,13 +62,13 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
             <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {fullname?.charAt(0) || "?"}
+                  {fullname?.charAt(0) || '?'}
                 </AvatarFallback>
               </Avatar>
-              {fullname || "Nom inconnu"}
+              {fullname || 'Nom inconnu'}
             </CardTitle>
             <CardDescription className="text-sm text-default-600 mt-1">
-              <span className="font-medium">Classe:</span> {studentClass || "N/A"} &bull; <span className="font-medium">Quartier:</span> {quartie || "N/A"}
+              <span className="font-medium">Classe:</span> {studentClass || 'N/A'} &bull; <span className="font-medium">Quartier:</span> {quartie || 'N/A'}
             </CardDescription>
           </div>
           <Badge variant="soft" color={childStatus.color} className="capitalize">
@@ -187,7 +187,7 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
                 </div>
                 <div className="text-center p-3 bg-default-50 rounded-lg">
                   <Icon icon="heroicons:clock" className="h-6 w-6 mx-auto text-orange-500 mb-2" />
-                  <p className="font-semibold text-gray-900">Heure d'arrivée</p>
+                  <p className="font-semibold text-gray-900">Heure d&apos;arrivée</p>
                   <p className="text-sm text-gray-600">
                     {status === 'ONGOING' ? 'En cours' : status === 'COMPLETED' ? 'Arrivé' : 'À déterminer'}
                   </p>
@@ -226,8 +226,8 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
           <div className="py-8 text-center text-default-500">
             <Icon icon="heroicons:information-circle" className="h-12 w-12 mx-auto mb-4 text-gray-400" />
             <h3 className="text-lg font-semibold mb-2">Aucun trajet assigné</h3>
-            <p className="text-sm">Aucun trajet n'est actuellement assigné à cet enfant.</p>
-            <p className="text-xs mt-1">Veuillez contacter l'administration pour plus d'informations.</p>
+            <p className="text-sm">Aucun trajet n&apos;est actuellement assigné à cet enfant.</p>
+            <p className="text-xs mt-1">Veuillez contacter l&apos;administration pour plus d&apos;informations.</p>
           </div>
         )}
       </CardContent>

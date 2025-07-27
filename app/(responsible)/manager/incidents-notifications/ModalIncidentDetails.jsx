@@ -58,10 +58,10 @@ export const ModalIncidentDetails = ({ isOpen, setIsOpen, incidentDetails }) => 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6 text-red-500" />
-            Détails de l'Incident #{incidentDetails.id}
+            Détails de l&apos;Incident #{incidentDetails.id}
           </DialogTitle>
           <DialogDescription>
-            Informations détaillées concernant l'incident signalé.
+            Informations détaillées concernant l&apos;incident signalé.
           </DialogDescription>
         </DialogHeader>
 

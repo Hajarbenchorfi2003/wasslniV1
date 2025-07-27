@@ -43,13 +43,13 @@ export const ModalIncidentDetails = ({ isOpen, setIsOpen, incidentDetails }) => 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return isNaN(date.getTime()) ? 'Date invalide' : date.toLocaleString();
+    return isNaN(date.getTime()) ? 'Date invalide': date.toLocaleString();
   };
 
   // Extraction des données avec sécurité
-  const tripName = incidentDetails.dailyTrip?.trip?.name || 'N/A';
+  const tripName = incidentDetails.dailyTrip?.trip?.name ||'N/A';
   const establishmentName = incidentDetails.dailyTrip?.trip?.establishment?.name || 'N/A';
-  const reportedByName = incidentDetails.reportedBy?.fullname || 'Inconnu';
+  const reportedByName = incidentDetails.reportedBy?.fullname ||'Inconnu';
   const incidentDate = incidentDetails.dailyTrip?.date ? new Date(incidentDetails.dailyTrip.date).toLocaleDateString() : 'N/A';
 
   return (
@@ -58,10 +58,10 @@ export const ModalIncidentDetails = ({ isOpen, setIsOpen, incidentDetails }) => 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6 text-red-500" />
-            Détails de l'Incident #{incidentDetails.id}
+            Détails de l&rsquo;Incident #{incidentDetails.id}
           </DialogTitle>
           <DialogDescription>
-            Informations détaillées concernant l'incident signalé.
+            Informations détaillées concernant l&rsquo;incident signalé.
           </DialogDescription>
         </DialogHeader>
 

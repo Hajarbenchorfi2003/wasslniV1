@@ -32,7 +32,7 @@ const VerfiyForm = () => {
     inputRefs.current[0].focus();
   };
 
-  const isOtpComplete = otp.every((digit) => digit !== "");
+  const isOtpComplete = otp.every((digit) => digit !== '');
 
   return (
     <div className="w-full md:w-[480px]">

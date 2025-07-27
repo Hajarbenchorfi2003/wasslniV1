@@ -15,7 +15,7 @@ import { fetchDrivers } from '@/services/user';
 import { fetchAlltrip } from '@/services/trips';
 import { getAllIncidents, getNotfication, markNotificationAsRead } from '@/services/notficationicidient';
 
-export const ManagerDashboardPage = () => {
+const ManagerDashboardPage = () => {
     const [stats, setStats] = useState({
         totalStudents: 0,
         totalDrivers: 0,
@@ -160,13 +160,13 @@ export const ManagerDashboardPage = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-default-900">Tableau de Bord de l'Établissement</h1>
-            <p className="text-default-600">Vue d'ensemble pour <strong>{stats.establishmentName}</strong>.</p>
+            <h1 className="text-3xl font-bold text-default-900">Tableau de Bord de l&apos;Établissement</h1>
+            <p className="text-default-600">Vue d&apos;ensemble pour <strong>{stats.establishmentName}</strong>.</p>
 
             <Card className="col-span-12 lg:col-span-8">
                 <CardHeader className="border-none p-6 pt-5 mb-0">
                     <CardTitle className="text-lg font-semibold text-default-900 p-0">
-                        Vue d'ensemble
+                        Vue d&apos;ensemble
                     </CardTitle>
                 </CardHeader>
                 <CardContent>

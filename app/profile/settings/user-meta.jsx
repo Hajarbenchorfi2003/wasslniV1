@@ -1,4 +1,4 @@
-// components/user-profile/UserMeta.jsx
+/* // components/user-profile/UserMeta.jsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -27,7 +27,7 @@ const UserMeta = ({ userId }) => {
   // Function to get initials from fullname
   const getInitials = (fullname) => {
     if (!fullname) return 'N/A';
-    const parts = fullname.split(' ');
+    const parts = fullname.split('');
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   };
@@ -67,13 +67,12 @@ const UserMeta = ({ userId }) => {
             <span>{user.phone || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-default-600">
-            <Icon icon="heroicons:identification" className="w-5 h-5" /> {/* Icon for CIN */}
-            <span>{user.cin || 'N/A'}</span>
+            <Icon icon="heroicons:identification" className="w-5 h-5" />
+            <span>{user.cin || '/A'}</span>
           </div>
-          {/* You might also want to display isActive status */}
           <div className="flex items-center gap-2 text-sm text-default-600">
             <Icon icon={user.isActive ? "heroicons:check-circle" : "heroicons:x-circle"} className={`w-5 h-5 ${user.isActive ? 'text-green-500' : 'text-red-500'}`} />
-            <span>{user.isActive ? 'Active' : 'Inactive'}</span>
+            <span>{user.isActive ?'Active' : 'Inactive'}</span>
           </div>
         </div>
 
@@ -83,3 +82,4 @@ const UserMeta = ({ userId }) => {
 };
 
 export default UserMeta;
+ */

@@ -34,12 +34,12 @@ export function NotificationListItem({ notification, onMarkAsRead, onDismiss, on
 
     const getLabelColor = (label) => {
         switch (label) {
-            case "incident-report": return "bg-destructive"; // Red for incidents
-            case "daily-trip-assignment": return "bg-primary"; // Primary for presence/assignment
-            case "system-alert": return "bg-yellow-500"; // Yellow for system alerts
-            case "incident-update": return "bg-orange-500"; // Orange for updates
-            case "incident-resolution": return "bg-success"; // Green for resolution
-            default: return "bg-default-300"; // Default gray
+            case 'incident-report': return 'bg-destructive'; // Red for incidents
+            case 'daily-trip-assignment': return 'bg-primary'; // Primary for presence/assignment
+            case 'system-alert': return 'bg-yellow-500'; // Yellow for system alerts
+            case 'incident-update': return 'bg-orange-500'; // Orange for updates
+            case 'incident-resolution': return 'bg-success'; // Green for resolution
+            default: return 'bg-default-300'; // Default gray
         }
     };
 
@@ -88,7 +88,7 @@ export function NotificationListItem({ notification, onMarkAsRead, onDismiss, on
                 <p className="truncate text-sm text-default-600">
                     <span className={cn({ "font-bold": !mailLikeData.read })}>
                         {mailLikeData.subject}:
-                    </span>{' '}
+                    </span>{''}
                     {mailLikeData.text}
                 </p>
             </div>

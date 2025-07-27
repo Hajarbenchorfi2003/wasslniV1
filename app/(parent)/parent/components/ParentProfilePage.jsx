@@ -49,10 +49,10 @@ export const ParentProfilePage = () => {
     if (userIndex !== -1) {
       demoData.users[userIndex] = updatedData;
       setParentData(updatedData);
-      toast.success("Profil mis à jour avec succès !");
-      console.log("Updated Parent Data:", updatedData);
+      toast.success('Profil mis à jour avec succès !');
+      console.log('Updated Parent Data:', updatedData);
     } else {
-      toast.error("Erreur lors de la mise à jour du profil.");
+      toast.error('Erreur lors de la mise à jour du profil.');
     }
   };
 

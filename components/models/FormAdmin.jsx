@@ -50,7 +50,7 @@ const FormAdmin = ({ onSubmit, editingSchool, schools }) => {
       <input type="hidden" name="adminMode" value={adminMode} />
       <div className="space-y-4">
         <div>
-          <Label htmlFor="name">Nom de l'école</Label>
+          <Label htmlFor="name">Nom de l&apos;école</Label>
           <Input id="name" name="name" defaultValue={editingSchool?.name} required />
         </div>
         <div>
@@ -95,7 +95,7 @@ const FormAdmin = ({ onSubmit, editingSchool, schools }) => {
         {adminMode === "new" && (
           <>
             <div>
-              <Label htmlFor="adminName">Nom complet de l'admin</Label>
+              <Label htmlFor="adminName">Nom complet de l&apos;admin</Label>
               <Input
                 name="adminName"
                 id="adminName"
@@ -109,7 +109,7 @@ const FormAdmin = ({ onSubmit, editingSchool, schools }) => {
               />
             </div>
             <div>
-              <Label htmlFor="adminEmail">Email de l'admin</Label>
+              <Label htmlFor="adminEmail">Email de l&apos;admin</Label>
               <Input
                 type="email"
                 name="adminEmail"
@@ -120,7 +120,7 @@ const FormAdmin = ({ onSubmit, editingSchool, schools }) => {
               />
             </div>
             <div>
-              <Label htmlFor="adminPhone">Téléphone de l'admin</Label>
+              <Label htmlFor="adminPhone">Téléphone de l&apos;admin</Label>
               <Input
                 name="adminPhone"
                 id="adminPhone"

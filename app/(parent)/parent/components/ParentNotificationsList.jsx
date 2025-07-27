@@ -178,7 +178,7 @@ export const ParentNotificationsList = ({ notifications, onMarkAsRead }) => {
               <Icon icon="heroicons:bell-slash" className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucune notification</h3>
               <p className="text-muted-foreground text-sm">
-                Vous n'avez aucune notification pour le moment.
+                Vous n&apos;avez aucune notification pour le moment.
               </p>
             </div>
           )}

@@ -34,37 +34,38 @@ const DriversPage = () => {
     const [loading, setLoading] = useState(false);
     const [establishmentsLoading, setEstablishmentsLoading] = useState(false); 
   
- useEffect(() => {
-  let isMounted = true;
-
-  async function loadEstablishments() {
-    setEstablishmentsLoading(true);
-    try {
-      const data = await fetchUserEstablishments();
-      console.log("Établissements reçus :", data);
-
-      if (isMounted && data && Array.isArray(data)) {
-        setEstablishments(data);
+    useEffect(() => {
+      let isMounted = true;
+    
+      async function loadEstablishments() {
+        setEstablishmentsLoading(true);
+        try {
+          const data = await fetchUserEstablishments();
+          console.log("Établissements reçus :", data);
+    
+          if (isMounted && data && Array.isArray(data)) {
+            setEstablishments(data);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des établissements', error);
+          toast.error("Impossible de charger les établissements");
+        } finally {
+          if (isMounted) {
+            setEstablishmentsLoading(false);
+          }
+        }
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement des établissements', error);
-      toast.error("Impossible de charger les établissements");
-    } finally {
-      if (isMounted) {
-        setEstablishmentsLoading(false);
+    
+      // Charger seulement si non encore chargés
+      if (establishments.length === 0) {
+        loadEstablishments();
       }
-    }
-  }
-
-  // Charger seulement si non encore chargés
-  if (establishments.length === 0) {
-    loadEstablishments();
-  }
-
-  return () => {
-    isMounted = false;
-  };
-}, []); // ✅ seulement au montage du composant
+    
+      return () => {
+        isMounted = false;
+      };
+    }, []); // ✅ ne s'exécute qu'une seule fois au montage
+    // ✅ seulement au montage du composant
 // 👈 pas `loading` global ici
 console.log("etablisment",establishments)
  const loadDriver = async () => {
@@ -112,7 +113,7 @@ console.log("drivers",drivers)
   } else if (filteredDrivers.length === 0 && currentPage !== 1) {
     setCurrentPage(1);
   }
-}, [currentDemoData, filterEstablishmentId]);
+}, [currentDemoData, filterEstablishmentId, currentPage]);
  // Add filterEstablishmentId to dependency array
 
   const totalPages = Math.ceil(drivers.length / ITEMS_PER_PAGE);

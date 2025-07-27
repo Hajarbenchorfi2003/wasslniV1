@@ -128,7 +128,7 @@ export const TripDetailsCard = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom de l'élève</TableHead>
+                  <TableHead>Nom de l&apos;élève</TableHead>
                   <TableHead>Classe</TableHead>
                   <TableHead>Quartier</TableHead>
                   <TableHead>Statut Présence</TableHead>

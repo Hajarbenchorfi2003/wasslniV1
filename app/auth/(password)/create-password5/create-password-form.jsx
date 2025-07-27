@@ -47,9 +47,9 @@ const CreatePasswordForm = () => {
   const onSubmit = (data) => {
     console.log("Form Data:", data);
     startTransition(async () => {
-      toast.success("reset successful");
+      toast.success('reset successful');
       reset();
-      router.push("/dashboard");
+      router.push('/dashboard');
     });
   };
   return (
@@ -165,14 +165,14 @@ const CreatePasswordForm = () => {
         </div>
         <Button className="w-full mt-8" size="lg">
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "Resetting..." : "Reset Password"}
+          {isPending ? 'Resetting...' : 'Reset Password'}
         </Button>
       </form>
       <div className="mt-5 2xl:mt-8 text-center text-base text-default-600">
-        Not now? Return{" "}
+        Not now? Return{' '}
         <Link href="/auth/register5" className="text-primary">
-          {" "}
-          Sign In{" "}
+          {' '}
+          Sign In{' '}
         </Link>
       </div>
     </div>

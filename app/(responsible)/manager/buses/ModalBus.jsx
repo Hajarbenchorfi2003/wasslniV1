@@ -103,7 +103,7 @@ export const ModalBus = ({
     e.preventDefault();
     
     if (!formData.establishmentId) {
-      toast.error("Veuillez sélectionner un établissement");
+      toast.error('Veuillez sélectionner un établissement');
       return;
     }
 

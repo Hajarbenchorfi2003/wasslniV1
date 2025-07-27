@@ -19,7 +19,7 @@ export default function NotificationsPage({ params }) {
     if (!managerId) {
         return (
             <div className="flex justify-center items-center h-screen text-xl text-default-600">
-                Chargement de l'utilisateur...
+                Chargement de l&apos;utilisateur...
             </div>
         );
     }

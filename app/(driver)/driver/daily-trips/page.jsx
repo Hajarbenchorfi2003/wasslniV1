@@ -1,4 +1,3 @@
-
 // pages/driver/DailyTripDetailsPage.jsx
 'use client';
 import { io } from 'socket.io-client';
@@ -7,9 +6,7 @@ import driverService from '@/services/driverService';
 import { MarkAttendanceModal } from '../MarkAttendanceModal';
 import { ReportIncidentModal } from '../ReportIncidentModal';
 
-import {
-  Card, CardContent, CardHeader, CardTitle, CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
@@ -19,18 +16,24 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
-// Leaflet
+// Import Leaflet components for the embedded map
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+
+// Fix for default Leaflet marker icons
 import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import {getToken, isAuthenticated } from '@/utils/auth';
-
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -39,14 +42,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow.src,
 });
 
-
-export const DailyTripDetailsPage = ({ dailyTripId, onGoBackToDashboard }) => {
-    console.log("🧪 Component mounted");
-
-export const DailyTripDetailsPage = () => {
+const DailyTripDetailsPage = () => {
   const [dailyTrips, setDailyTrips] = useState([]);
-  const [selectedTripId, setSelectedTripId] = useState(null);
-
+  const [selectedTrip, setSelectedTrip] = useState(null);
   const [dailyTrip, setDailyTrip] = useState(null);
   const [students, setStudents] = useState([]);
   const [stops, setStops] = useState([]);
@@ -54,154 +52,151 @@ export const DailyTripDetailsPage = () => {
   const [isTrackingActive, setIsTrackingActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [dailyTrips, setDailyTrips] = useState([]);
   const [socket, setSocket] = useState(null);
-const [isConnected, setIsConnected] = useState(false);
-const [positionInterval, setPositionInterval] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [positionInterval, setPositionInterval] = useState(null);
 
-
+  // Modal states
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [attendanceModalStudentId, setAttendanceModalStudentId] = useState(null);
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] = useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
-console.log("Token JWT:", getToken());
-// Vérifiez que le token est valide et non expiré
-useEffect(() => {
-  console.log("je suis dans connect server");
-  const newSocket = io('https://wasslni-backend.onrender.com/', {
-    auth: {
-      token: getToken()
-    }
-  });
 
-  setSocket(newSocket);
+  // Connect to socket server
+  useEffect(() => {
+    const newSocket = io('https://wasslni-backend.onrender.com/', {
+      auth: {
+        token: getToken()
+      }
+    });
 
-  newSocket.on('connect', () => {
-    setIsConnected(true);
-    toast.success('Connecté au serveur de suivi');
-  });
+    setSocket(newSocket);
 
-  newSocket.on('connect_error', (err) => {
-    toast.error(`Erreur de connexion: ${err.message}`);
-  });
+    newSocket.on('connect', () => {
+      setIsConnected(true);
+      toast.success('Connecté au serveur de suivi');
+    });
 
-  newSocket.on('disconnect', () => {
-    setIsConnected(false);
-    toast.error('Déconnecté du serveur de suivi');
-  });
+    newSocket.on('connect_error', (err) => {
+      toast.error(`Erreur de connexion: ${err.message}`);
+    });
 
-  return () => {
-    newSocket.disconnect();
-    if (positionInterval) clearInterval(positionInterval);
-  };
-}, []);
+    newSocket.on('disconnect', () => {
+      setIsConnected(false);
+      toast.error('Déconnecté du serveur de suivi');
+    });
 
+    return () => {
+      newSocket.disconnect();
+      if (positionInterval) clearInterval(positionInterval);
+    };
+  }, []);
 
+  // Fetch all daily trips on component mount
+  useEffect(() => {
+    const fetchDailyTrips = async () => {
+      try {
+        setLoading(true);
+        const tripsResponse = await driverService.getDailyTrips();
+        setDailyTrips(tripsResponse);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
 
-  const fetchDailyTripData = useCallback(async () => {
+    fetchDailyTrips();
+  }, []);
+
+  // Fetch details when a trip is selected
+  const fetchTripDetails = useCallback(async (tripId) => {
     try {
       setLoading(true);
-
+      const tripDetails = await driverService.getTripDetails(tripId);
+      setDailyTrip(tripDetails);
       
-      // Fetch all daily trips first
-      const tripsResponse = await driverService.getDailyTrips();
-      setDailyTrips(tripsResponse);
+      // Extract students from tripDetails
+      const tripStudents = tripDetails.trip?.tripStudents?.map(ts => ts.student) || [];
+      setStudents(tripStudents);
       
+      // Extract stops from tripDetails
+      const routeStops = tripDetails.trip?.route?.stops || [];
+      setStops(routeStops);
       
-      // If no specific trip ID is provided, use the first one
-      const tripIdToFetch = dailyTripId || (tripsResponse.length > 0 ? tripsResponse[0].id : null);
-      
-      if (tripIdToFetch) {
-        const tripDetails = await driverService.getTripDetails(tripIdToFetch);=======
-      const trips = await driverService.getDailyTrips();
-      setDailyTrips(trips);
-      console.log("Current dailyTrips:", trips);
-      if (selectedTripId) {
-        const tripDetails = await driverService.getTripDetails(selectedTripId);
-
-        setDailyTrip(tripDetails);
-        setStudents(tripDetails.trip?.tripStudents?.map(ts => ts.student) || []);
-        setStops(tripDetails.trip?.route?.stops || []);
-       
-      } else {
-        setDailyTrip(null);
-        setStudents([]);
-        setStops([]);
-      }
-
       setLoading(false);
     } catch (err) {
       setError(err.message);
       setLoading(false);
     }
-  }, [dailyTripId]);
-  
-console.log("all dailytrip",dailyTrips);
+  }, []);
 
-  }, [selectedTripId]);
+  // Handle trip selection
+  const handleSelectTrip = (trip) => {
+    setSelectedTrip(trip);
+    fetchTripDetails(trip.id);
+  };
 
+  // Return to trip list
+  const handleReturnToList = () => {
+    setSelectedTrip(null);
+    setDailyTrip(null);
+  };
 
-  useEffect(() => {
-    fetchDailyTripData();
-  }, [fetchDailyTripData]);
+  // Helper Functions
   const getAttendanceStatusForStudent = useCallback((studentId) => {
-    if (!dailyTrip?.attendances) return 'NON_MARQUE'; // Return a specific value for "Non marqué"
-    const a = dailyTrip.attendances.find(att => att.studentId === studentId && att.type === 'DEPART');
-    return a?.status || 'NON_MARQUE'; // Use 'NON_MARQUE' if status is not found
-}, [dailyTrip]);
- 
-const getAttendanceText = (status) => ({
-    PRESENT: 'Présent',
-    ABSENT: 'Absent',
-    LATE: 'En Retard',
-    NON_MARQUE: 'Non marqué', // Add the text for 'NON_MARQUE'
-}[status] || 'Non marqué'); // Fallback in case of unexpected status
+    if (!dailyTrip || !dailyTrip.attendances) return null;
+    const attendance = dailyTrip.attendances.find(a => a.studentId === studentId && a.type === 'DEPART');
+    return attendance?.status || 'ABSENT';
+  }, [dailyTrip]);
 
-const getAttendanceColor = (status) => ({
-    PRESENT: 'green',
-    ABSENT: 'red',
-    LATE: 'yellow',
-    NON_MARQUE: 'gray', // Add the color for 'NON_MARQUE'
-}[status] || 'gray');
-
-  const getTripStatusText = (s) => ({
-    PENDING: 'En attente',
-    ONGOING: 'En cours',
-    COMPLETED: 'Terminé',
-    CANCELED: 'Annulé',
-  }[s] || 'Inconnu');
-
-  const getTripStatusColor = (s) => ({
-    PENDING: 'blue',
-    ONGOING: 'yellow',
-    COMPLETED: 'green',
-    CANCELED: 'red',
-  }[s] || 'gray');
-  const mapStatusColorToTailwind = (statusColor) => {
-    switch (statusColor) {
-      case 'blue':
-        return 'text-blue-600 border-blue-600';
-      case 'yellow':
-        return 'text-yellow-600 border-yellow-600';
-      case 'green':
-        return 'text-green-600 border-green-600';
-      case 'red':
-        return 'text-red-600 border-red-600';
-      case 'gray':
-        return 'text-gray-600 border-gray-600';
-      default:
-        return 'text-gray-600 border-gray-600'; // Default for unknown colors
+  const getAttendanceText = (status) => {
+    switch (status) {
+      case 'PRESENT': return 'Présent';
+      case 'ABSENT': return 'Absent';
+      case 'LATE': return 'En Retard';
+      default: return 'Non marqué';
     }
   };
 
+  const getAttendanceColor = (status) => {
+    switch (status) {
+      case 'PRESENT': return 'green';
+      case 'ABSENT': return 'red';
+      case 'LATE': return 'yellow';
+      default: return 'gray';
+    }
+  };
+
+  const getTripStatusColor = (s) => {
+    switch (s) {
+      case 'PENDING': return 'blue';
+      case 'ONGOING': return 'yellow';
+      case 'COMPLETED': return 'green';
+      case 'CANCELED': return 'red';
+      default: return 'gray';
+    }
+  };
+
+  const getTripStatusText = (s) => {
+    switch (s) {
+      case 'PENDING': return 'En attente';
+      case 'ONGOING': return 'En cours';
+      case 'COMPLETED': return 'Terminé';
+      case 'CANCELED': return 'Annulé';
+      default: return 'Inconnu';
+    }
+  };
+
+  // Handlers
   const handleUpdateTripStatus = async (newStatus) => {
     try {
       await driverService.updateTripStatus(dailyTrip.id, newStatus);
-      const updated = await driverService.getTripDetails(dailyTrip.id);
-      setDailyTrip(updated);
-      toast.success(`Statut mis à jour à "${getTripStatusText(newStatus)}"`);
-    } catch {
-      toast.error("Erreur lors de la mise à jour.");
+      const updatedTrip = await driverService.getTripDetails(dailyTrip.id);
+      setDailyTrip(updatedTrip);
+      toast.success(`Statut du trajet mis à jour à "${getTripStatusText(newStatus)}"`);
+    } catch (err) {
+      toast.error("Échec de la mise à jour du statut du trajet.");
     }
   };
 
@@ -212,256 +207,170 @@ const getAttendanceColor = (status) => ({
   };
 
   const handleAttendanceMarked = async () => {
-    await fetchDailyTripData();
-    toast.success("Présence mise à jour !");
+    await fetchTripDetails(dailyTrip.id);
+    toast.success('Présence mise à jour!');
   };
 
-  const handleIncidentReported = async () => {
-    await fetchDailyTripData();
-    toast.success("Incident signalé !");
-  };
- 
-
-  // Define handleOpenIncidentModal
   const handleOpenIncidentModal = () => {
     setIsIncidentModalOpen(true);
   };
 
-// Ajoutez ce useEffect pour écouter les mises à jour de position
-useEffect(() => {
-  if (!socket) return;
+  const handleIncidentReported = async () => {
+    await fetchTripDetails(dailyTrip.id);
+    toast.success('Incident signalé avec succès !');
+  };
 
-  const handlePositionUpdate = (data) => {
-    console.log('📡 Reçu position-update:', data);
-    if (data.position) {
-      setBusPosition({
-        lat: data.position.lat,
-        lng: data.position.lng
-      });
+  // GPS Tracking
+  const handleToggleTracking = () => {
+    if (!isTrackingActive) {
+      if (!navigator.geolocation) {
+        toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
+        return;
+      }
+
+      if (!socket || !dailyTrip?.id) {
+        toast.error('Connexion au serveur non établie ou trajet non sélectionné');
+        return;
+      }
+
+      const interval = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude: lat, longitude: lng } = position.coords;
+            socket.emit('bus-position', {
+              dailyTripId: dailyTrip.id,
+              lat,
+              lng,
+              timestamp: new Date().toISOString()
+            });
+            setBusPosition({ lat, lng });
+          },
+          (err) => {
+            console.error('Erreur GPS:', err);
+            toast.error(`Erreur GPS: ${err.message}`);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      }, 3000);
+
+      setPositionInterval(interval);
+      setIsTrackingActive(true);
+      toast.success('Suivi GPS activé');
+    } else {
+      if (positionInterval) clearInterval(positionInterval);
+      setIsTrackingActive(false);
+      toast.success('Suivi GPS désactivé');
     }
   };
 
-  socket.on('position-update', handlePositionUpdate);
+  // Listen for position updates
+  useEffect(() => {
+    if (!socket) return;
 
-  return () => {
-    socket.off('position-update', handlePositionUpdate);
-  };
-}, [socket, dailyTrip?.id]);
+    const handlePositionUpdate = (data) => {
+      if (data.position) {
+        setBusPosition({
+          lat: data.position.lat,
+          lng: data.position.lng
+        });
+      }
+    };
 
-// Modifiez la fonction handleToggleTracking comme ceci :
-const handleToggleTracking = () => {
-  if (!isTrackingActive) {
-    if (!navigator.geolocation) {
-      toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
-      return;
-    }
-
-    // Vérifiez que le socket et le trip sont bien disponibles
-    if (!socket || !dailyTrip?.id) {
-      toast.error('Connexion au serveur non établie ou trajet non sélectionné');
-      return;
-    }
-
-    const interval = setInterval(() => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude: lat, longitude: lng } = position.coords;
-          console.log("Envoi position pour le trajet:", dailyTrip.id);
-          
-          socket.emit('bus-position', {
-            dailyTripId: dailyTrip.id,
-            lat,
-            lng,
-            timestamp: new Date().toISOString()
-          }, (ack) => {
-            console.log('Accusé de réception du serveur:', ack);
-          });
-          
-          setBusPosition({ lat, lng });
-        },
-        (err) => {
-          console.error('Erreur GPS:', err);
-          toast.error(`Erreur GPS: ${err.message}`);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
-    }, 3000);
-
-    setPositionInterval(interval);
-    setIsTrackingActive(true);
-    toast.success('Suivi GPS activé');
-  } else {
-    if (positionInterval) clearInterval(positionInterval);
-    setIsTrackingActive(false);
-    toast.success('Suivi GPS désactivé');
-  }
-};
-console.log(dailyTrip)
+    socket.on('position-update', handlePositionUpdate);
+    return () => socket.off('position-update', handlePositionUpdate);
+  }, [socket, dailyTrip?.id]);
 
   if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Icon icon="heroicons:arrow-path" className="h-8 w-8 mx-auto animate-spin" />
+          <p className="mt-2">Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleToggleTracking = () => {
-    setIsTrackingActive(prev => !prev);
-    toast(isTrackingActive ? "Suivi désactivé" : "Suivi activé");
-  };
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center text-red-500">
+          <Icon icon="heroicons:exclamation-triangle" className="h-8 w-8 mx-auto" />
+          <p className="mt-2">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  // ----------- AFFICHAGE DE LA LISTE DES TRAJETS -----------
-  if (!selectedTripId) {
+  // Show trip list if no trip is selected
+  if (!selectedTrip) {
     return (
       <div className="space-y-6 p-6">
-        <h1 className="text-2xl font-bold">Liste des Trajets du Jour</h1>
-        {loading ? (
-          <div className="text-center py-8">
-            <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin mx-auto" />
-            <p>Chargement...</p>
-          </div>
-        ) : dailyTrips.length === 0 ? (
-          <p>Aucun trajet disponible.</p>
-        ) : (
+        <div className="flex items-center gap-4">
           <div>
-          
-
-            {/* Table for assigned trips */}
-            <Card className="shadow-sm">
-  <CardContent className="p-0">
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="min-w-[180px]">Trajet Principal</TableHead>
-            <TableHead className="min-w-[150px]">Bus</TableHead>
-            {/* Changed "Chauffeur" to "Période" */}
-            <TableHead className="min-w-[150px]">Période</TableHead>
-            <TableHead className="min-w-[120px]">Statut</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {dailyTrips.map((dTrip) => (
-            <TableRow
-              key={dTrip.id}
-              className={cn(
-                selectedTripId === dTrip.id ? "bg-muted" : "hover:bg-default-50",
-                "cursor-pointer"
-              )}
-              onClick={() => setSelectedTripId(dTrip.id)}
-            >
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="font-medium text-default-800">{dTrip.trip?.name || 'N/A'}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {dTrip.trip?.route?.name || 'N/A'}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="font-medium text-default-800">{dTrip.trip?.bus?.plateNumber || 'N/A'}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {dTrip.trip?.bus?.marque || 'N/A'}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {/* Displaying "Matin" or "Soir" based on dTrip.timeSlot */}
-                  <div className="font-medium text-default-800">
-                    {dTrip.timeSlot ? (dTrip.timeSlot.toLowerCase() === 'morning' ? 'Matin' : 'Soir') : 'N/A'}
-                  </div>
-                  {/* If you had a different piece of data to display here for "Période" secondary info, you'd put it here */}
-                  <div className="text-sm text-muted-foreground">
-                    {/* You could add more detail here, e.g., actual time, if available */}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-sm font-medium",
-                    mapStatusColorToTailwind(getTripStatusColor(dTrip.status))
-                  )}
-                >
-                  <Icon icon="heroicons:signal" className="h-3 w-3 mr-1" />
-                  {getTripStatusText(dTrip.status)}
-                </Badge>
-              </TableCell>
-            </TableRow>
-          ))}
-          {dailyTrips.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                Aucun trajet assigné pour le moment.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
-  </CardContent>
-</Card>
+            <h1 className="text-3xl font-bold text-default-900">Mes Trajets du Jour</h1>
+            <p className="text-default-600">Sélectionnez un trajet pour voir les détails</p>
           </div>
+        </div>
+
+        {dailyTrips.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {dailyTrips.map((trip) => (
+              <Card 
+                key={trip.id} 
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => handleSelectTrip(trip)}
+              >
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center">
+                    <div className="flex items-center gap-2" >
+                      <Icon icon="heroicons:truck" className="h-5 w-5 text-blue-500" />
+                       {trip.trip.name}
+                    </div>
+                     <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "text-sm font-medium",
+                        trip.status === 'ONGOING' ? 'text-green-600 border-green-600' : 
+                        trip.status === 'COMPLETED' ? 'text-blue-600 border-blue-600' :
+                        trip.status === 'CANCELED' ? 'text-red-600 border-red-600' :
+                        'text-yellow-600 border-yellow-600'
+                      )}
+                    >
+                      {getTripStatusText(trip.status)}
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    {new Date(trip.date).toLocaleDateString()} | Bus: {trip.trip.bus.plateNumber}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-end items-center">
+                    <Button size="sm" variant="outline">
+                      Voir détails
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="shadow-sm">
+            <CardContent className="flex flex-col items-center justify-center h-[400px] text-center">
+              <Icon icon="heroicons:information-circle" className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">Aucun trajet trouvé</h3>
+              <p className="text-gray-500">Aucun trajet disponible pour aujourd&apos;hui.</p>
+            </CardContent>
+          </Card>
         )}
       </div>
     );
   }
 
-  // Affichage erreur
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen text-center">
-        <div>
-          <Icon icon="heroicons:exclamation-triangle" className="h-8 w-8 text-red-500 mx-auto" />
-          <p className="mt-2 text-red-600">{error}</p>
-          <Button className="mt-4" onClick={() => window.location.reload()}>Recharger</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Affichage si loading
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-center">
-        <div>
-        <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin mx-auto" />
-        <p className="mt-2">Chargement du trajet...</p>
-        </div>
-      </div>
-    );
-  }
-
- 
-
-  if (!dailyTrip) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center gap-4">
-       
-           <Button onClick={() => setSelectedTripId(null)} variant="ghost" size="icon">
-              <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
-            </Button>
-       
-          <div>
-            <h1 className="text-3xl font-bold text-default-900">Mon Trajet du Jour</h1>
-            <p className="text-default-600">Détails du trajet actuel et actions.</p>
-          </div>
-        </div>
-        
-        <Card className="shadow-sm">
-          <CardContent className="flex flex-col items-center justify-center h-[400px] text-center">
-            <Icon icon="heroicons:information-circle" className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Aucun trajet trouvé</h3>
-            <p className="text-gray-500">Le trajet demandé n'existe pas ou n'est pas disponible.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  // Show trip details when a trip is selected
   const { trip, date, status } = dailyTrip;
   const { name: tripName, bus, route, driver, establishment } = trip || {};
 
@@ -478,15 +387,15 @@ console.log(dailyTrip)
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
+      {/* Header with back button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-        <Button onClick={() => setSelectedTripId(null)} variant="ghost" size="icon">
-              <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
-            </Button>
+          <Button onClick={handleReturnToList} variant="ghost" size="icon">
+            <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
+          </Button>
           <div>
-            <h1 className="text-3xl font-bold text-default-900">Mon Trajet du Jour</h1>
-            <p className="text-default-600">Gestion complète du trajet et des élèves</p>
+            <h1 className="text-3xl font-bold text-default-900">Détails du Trajet</h1>
+            <p className="text-default-600">{tripName} - {new Date(date).toLocaleDateString()}</p>
           </div>
         </div>
         
@@ -586,7 +495,7 @@ console.log(dailyTrip)
         <CardContent className="p-0">
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+              <TabsTrigger value="overview">Vue d&rsquo;ensemble</TabsTrigger>
               <TabsTrigger value="students">Élèves</TabsTrigger>
               <TabsTrigger value="route">Itinéraire</TabsTrigger>
               <TabsTrigger value="tracking">Suivi GPS</TabsTrigger>
@@ -599,7 +508,7 @@ console.log(dailyTrip)
                   <h3 className="font-semibold text-lg text-default-700">Informations Bus</h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
-                      <span className="text-sm font-medium">Plaque d'immatriculation</span>
+                      <span className="text-sm font-medium">Plaque &rsquo;immatriculation</span>
                       <span className="font-mono text-sm">{bus?.plateNumber || 'N/A'}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
@@ -621,7 +530,7 @@ console.log(dailyTrip)
                       <span className="text-sm">{route?.name || 'N/A'}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
-                      <span className="text-sm font-medium">Nombre d'arrêts</span>
+                      <span className="text-sm font-medium">Nombre d&rsquo;arrêts</span>
                       <span className="text-sm">{stops.length}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
@@ -638,7 +547,7 @@ console.log(dailyTrip)
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg text-default-700">Actions rapides</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Dans la section "Suivi GPS en Temps Réel" */}
+                  {/* Dans la section &quot;Suivi GPS en Temps Réel&quot; */}
 <div className="p-4 bg-blue-50 rounded-lg">
   <div className="flex items-center gap-2 mb-2">
     <Icon icon="heroicons:information-circle" className="h-5 w-5 text-blue-600" />
@@ -646,8 +555,8 @@ console.log(dailyTrip)
   </div>
   <p className="text-sm text-blue-700">
     {isTrackingActive 
-      ? "Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel."
-      : "Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus."
+      ? 'Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel.'
+      : 'Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus.'
     }
   </p>
   <p className="text-sm mt-2">
@@ -741,7 +650,7 @@ console.log(dailyTrip)
 
             <TabsContent value="route" className="p-6">
               <div className="space-y-6">
-                <h3 className="font-semibold text-lg text-default-700">Carte de l'Itinéraire</h3>
+                <h3 className="font-semibold text-lg text-default-700">Carte de l&apos;Itinéraire</h3>
                 
                 {stops.length > 0 ? (
                   <div className="w-full h-[400px] rounded-md overflow-hidden border">
@@ -786,7 +695,7 @@ console.log(dailyTrip)
                 ) : (
                   <div className="text-center py-8">
                     <Icon icon="heroicons:map" className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                    <p className="text-gray-500">Aucun arrêt pour afficher l'itinéraire.</p>
+                    <p className="text-gray-500">Aucun arrêt pour afficher l&apos;itinéraire.</p>
                   </div>
                 )}
 
@@ -842,8 +751,8 @@ console.log(dailyTrip)
                   </div>
                   <p className="text-sm text-blue-700">
                     {isTrackingActive 
-                      ? "Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel."
-                      : "Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus."
+                      ? 'Le suivi GPS est actif. Les parents peuvent voir votre position en temps réel.'
+                      : 'Le suivi GPS est inactif. Activez-le pour permettre aux parents de suivre le bus.'
                     }
                   </p>
                 </div>
@@ -874,10 +783,12 @@ console.log(dailyTrip)
       </Card>
 
       {/* Modals */}
-      <MarkAttendanceModal
+    
+ 
+     <MarkAttendanceModal
         isOpen={isAttendanceModalOpen}
         setIsOpen={setIsAttendanceModalOpen}
-        dailyTripId={selectedTripId}
+        dailyTripId={dailyTrip.id}
         studentId={attendanceModalStudentId}
         currentStatus={attendanceModalCurrentStatus}
         onAttendanceMarked={handleAttendanceMarked}
@@ -887,11 +798,12 @@ console.log(dailyTrip)
       <ReportIncidentModal
         isOpen={isIncidentModalOpen}
         setIsOpen={setIsIncidentModalOpen}
-        dailyTripId={selectedTripId}
+        dailyTripId={dailyTrip.id}
         driverId={dailyTrip.driverId}
         onIncidentReported={handleIncidentReported}
       />
     </div>
+
   );
 };
 

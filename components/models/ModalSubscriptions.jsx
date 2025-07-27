@@ -137,7 +137,7 @@ export const ModalSubscriptions = ({ isOpen, onClose, editingSubscription, onSav
               name="establishmentCount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nombre d'établissements</FormLabel>
+                  <FormLabel>Nombre d&apos;établissements</FormLabel>
                   <FormControl>
                     <Input type="number" {...field} />
                   </FormControl>

@@ -17,7 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 
 const ITEMS_PER_PAGE = 6;
 
-export const StopsPage = () => {
+ const StopsPage = () => {
   const [stops, setStops] = useState([]);
   const [filteredStops, setFilteredStops] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -98,7 +98,7 @@ export const StopsPage = () => {
     } else if (tempFilteredStops.length === 0) {
       setCurrentPage(1);
     }
-  }, [stops, searchTerm]);
+  }, [stops, searchTerm , currentPage]);
 
   const totalPages = Math.ceil(filteredStops.length / ITEMS_PER_PAGE);
   const paginatedStops = filteredStops.slice(

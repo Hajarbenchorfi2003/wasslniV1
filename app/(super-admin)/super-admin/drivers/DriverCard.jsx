@@ -51,7 +51,7 @@ const DriverCard = ({ driver, onEditDriver, onDeleteDriver }) => {
               </div>
             </div>
             <div>
-              {/* Main title for the card, using the driver's full name */}
+              {/* Main title for the card, using the driver';s full name */}
               <CardTitle className="text-base font-semibold text-default-900 leading-tight">
                 {driver.fullname}
               </CardTitle>

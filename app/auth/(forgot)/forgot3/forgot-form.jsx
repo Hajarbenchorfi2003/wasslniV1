@@ -35,9 +35,9 @@ const ForgotForm = () => {
 
   const onSubmit = (data) => {
     startTransition(async () => {
-      toast.success("Password Reset code has been sent to your email");
+      toast.success('Password Reset code has been sent to your email');
       reset();
-      router.push("/auth/create-password3");
+      router.push('/auth/create-password3');
     });
   };
   return (
@@ -80,14 +80,14 @@ const ForgotForm = () => {
 
         <Button className="w-full mt-6" size={!isDesktop2xl ? "lg" : "md"}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "sending..." : "Send Recovery Email"}
+          {isPending ? 'sending...' : 'Send Recovery Email'}
         </Button>
       </form>
       <div className="mt-5 2xl:mt-8 text-center text-base text-default-600">
-        Forget it. Send me back to{" "}
+        Forget it. Send me back to{' '}
         <Link href="/auth/login3" className="text-primary">
-          {" "}
-          Sign In{" "}
+          {' '}
+          Sign In{' '}
         </Link>
       </div>
     </div>

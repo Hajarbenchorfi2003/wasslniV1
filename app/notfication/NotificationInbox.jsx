@@ -6,7 +6,7 @@ import {
     markNotificationAsRead,
     getNotfication,
   getAllIncidents,
-} from '@/services/incidentsNotifications';
+} from '@/services/notficationicidient';
 import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from '@iconify/react';
 import { Input } from '@/components/ui/input';

@@ -14,37 +14,37 @@ const ErrorPage = () => {
 
   useEffect(() => {
     try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr || userStr === "undefined" || userStr === "null") return;
+      const userStr = localStorage.getItem('user');
+      if (!userStr || userStr === 'undefined' || userStr === 'null') return;
 
       const parsedUser = JSON.parse(userStr);
       setUser(parsedUser);
 
       const role = parsedUser?.role?.toLowerCase();
-      let redirectHref = "/";
+      let redirectHref = '/';
       switch (role) {
-        case "admin":
-          redirectHref = "/admin";
+        case 'admin':
+          redirectHref = '/admin';
           break;
-        case "super_admin":
-          redirectHref = "/super-admin";
+        case 'super_admin':
+          redirectHref = '/super-admin';
           break;
-        case "parent":
-          redirectHref = "/parent";
+        case 'parent':
+          redirectHref = '/parent';
           break;
-        case "responsible":
-          redirectHref = "/manager";
+        case 'responsible':
+          redirectHref = '/manager';
           break;
-        case "driver":
-          redirectHref = "/driver";
+        case 'driver':
+          redirectHref = '/driver';
           break;
         default:
-          redirectHref = "/";
+          redirectHref = '/';
       }
 
       setHref(redirectHref);
     } catch (err) {
-      console.error("Failed to parse user from localStorage", err);
+      console.error('Failed to parse user from localStorage', err);
     }
   }, []);
 
@@ -66,7 +66,7 @@ const ErrorPage = () => {
           La page que vous recherchez a peut-être été supprimée<br /> son nom a changé ou elle est temporairement indisponible.
           </div>
           <Button asChild className="mt-9 md:min-w-[300px]" size="lg">
-            <Link href={href}>Aller à la page d'accueil</Link>
+            <Link href={href}>Aller à la page d&apos;accueil</Link>
           </Button>
         </div>
       </div>

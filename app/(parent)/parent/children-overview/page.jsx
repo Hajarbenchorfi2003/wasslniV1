@@ -11,7 +11,7 @@ import parentService from '@/services/parentService';
 
 const ITEMS_PER_PAGE = 3;
 
-export const ChildrenOverviewPage = () => {
+ const ChildrenOverviewPage = () => {
   const router = useRouter();
   const [childrenInfo, setChildrenInfo] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ export const ChildrenOverviewPage = () => {
     } else if (totalPages === 0 && currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [childrenInfo, totalPages]);
+  }, [childrenInfo, totalPages , currentPage]);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -103,7 +103,7 @@ export const ChildrenOverviewPage = () => {
 
   return (
     <div className="space-y-6">
-       <h1 className="text-3xl font-bold text-default-900">Vue d'ensemble de mes Enfants</h1>
+       <h1 className="text-3xl font-bold text-default-900">Vue d&apos;ensemble de mes Enfants</h1>
        <p className="text-default-600">Retrouvez les informations clés de vos enfants et de leurs trajets.</p>
 
       {childrenInfo.length === 0 ? (

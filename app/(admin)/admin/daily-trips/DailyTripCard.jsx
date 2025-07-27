@@ -31,7 +31,7 @@ const DailyTripCard = ({ dailyTrip, onEditDailyTrip, onDeleteDailyTrip }) => {
   // Helper to get badge color based on status
   const getStatusColor = (status) => {
     switch (status) {
-      case 'PLANNED': return 'default';
+      case 'PLANNED': return'default';
       case 'ONGOING': return 'info';
       case 'COMPLETED': return 'success';
       default: return 'secondary';
@@ -48,8 +48,8 @@ const DailyTripCard = ({ dailyTrip, onEditDailyTrip, onDeleteDailyTrip }) => {
               {dailyTrip.trip?.name ? dailyTrip.trip.name : 'Trajet inconnu'}
             </div>
             <span className="text-sm text-gray-500 font-normal">
-              {new Date(dailyTrip.date).toLocaleDateString('fr-FR', {
-                year: 'numeric', month: 'long', day: 'numeric'
+              {new Date(dailyTrip.date).toLocaleDateString("fr-FR", {
+                year: 'numeric', month: 'long', day:'numeric'
               })}
             </span>
           </CardTitle>
@@ -87,7 +87,7 @@ const DailyTripCard = ({ dailyTrip, onEditDailyTrip, onDeleteDailyTrip }) => {
           </p>
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:user" className="w-4 h-4 opacity-70" />
-            Chauffeur:   {dailyTrip.trip?.driver?.fullname || 'Aucun chauffeur'}
+            Chauffeur:   {dailyTrip.trip?.driver?.fullname ||'Aucun chauffeur'}
           </p>
         </CardContent>
       </Card>

@@ -40,7 +40,7 @@ const VerifyPage = () => {
                   <span className="text-slate-700">
                     Unlock <br />
                     Your Project
-                  </span>{" "}
+                  </span>{' '}
                   <br />
                   <span className="text-slate-700">Performance</span>
                 </div>

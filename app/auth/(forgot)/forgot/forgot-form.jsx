@@ -38,21 +38,21 @@ const ForgotForm = () => {
     startTransition(async () => {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/user/forgot-password`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({ email: data.email }),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Something went wrong");
+          throw new Error(errorData.message || 'Something went wrong');
         }
 
-        toast.success("Password Reset code has been sent to your email");
+        toast.success('Password Reset code has been sent to your email');
         reset();
-        router.push("/");
+        router.push('/');
       } catch (error) {
         toast.error(error.message);
       }
@@ -72,7 +72,7 @@ const ForgotForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 xl:mt-7">
         <div>
           <Label htmlFor="email" className="mb-2 font-medium text-default-600">
-            Email{" "}
+            Email{' '}
           </Label>
           <Input
             disabled={isPending}
@@ -91,11 +91,11 @@ const ForgotForm = () => {
 
         <Button className="w-full mt-6" size={!isDesktop2xl ? "lg" : "md"}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "sending..." : "Send Recovery Email"}
+          {isPending ? 'sending...' : 'Send Recovery Email'}
         </Button>
       </form>
       <div className="mt-5 2xl:mt-8 text-center text-base text-default-600">
-        Forget it. Send me back to{" "}
+        Forget it. Send me back to{' '}
         <Link href="/auth/login" className="text-primary">
           Sign In
         </Link>

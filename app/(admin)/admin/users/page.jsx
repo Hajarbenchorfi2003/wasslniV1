@@ -314,7 +314,7 @@ export default function UsersManagementPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="RESPONSIBLE">Responsable d'Établissement</SelectItem>
+                          <SelectItem value="RESPONSIBLE">Responsable d&apos;Établissement</SelectItem>
                           <SelectItem value="DRIVER">Chauffeur</SelectItem>
                           <SelectItem value="PARENT">Parent</SelectItem>
                         </SelectContent>
@@ -459,7 +459,7 @@ export default function UsersManagementPage() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Modifier l'Utilisateur</DialogTitle>
+            <DialogTitle>Modifier l&apos;Utilisateur</DialogTitle>
           </DialogHeader>
           <Form {...userForm}>
             <form onSubmit={userForm.handleSubmit(handleEditUser)} className="space-y-4">
@@ -528,7 +528,7 @@ export default function UsersManagementPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="RESPONSIBLE">Responsable d'Établissement</SelectItem>
+                        <SelectItem value="RESPONSIBLE">Responsable d&apos;Établissement</SelectItem>
                         <SelectItem value="DRIVER">Chauffeur</SelectItem>
                         <SelectItem value="PARENT">Parent</SelectItem>
                       </SelectContent>

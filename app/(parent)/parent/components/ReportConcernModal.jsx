@@ -42,12 +42,12 @@ export const ReportConcernModal = ({ isOpen, setIsOpen, parentId, onConcernRepor
   const handleSendConcern = async () => {
     // Validation des champs
     if (!subject.trim()) {
-      toast.error("Veuillez saisir un objet pour votre préoccupation.");
+      toast.error('Veuillez saisir un objet pour votre préoccupation.');
       return;
     }
 
     if (!message.trim()) {
-      toast.error("Veuillez saisir un message pour votre préoccupation.");
+      toast.error('Veuillez saisir un message pour votre préoccupation.');
       return;
     }
 
@@ -105,7 +105,7 @@ export const ReportConcernModal = ({ isOpen, setIsOpen, parentId, onConcernRepor
             Signaler une Préoccupation
           </DialogTitle>
           <DialogDescription>
-            Votre avis est important. Envoyez un message à l'administration de l'école.
+            Votre avis est important. Envoyez un message à l&apos;administration de l&apos;école.
           </DialogDescription>
         </DialogHeader>
         

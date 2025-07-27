@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import toast from 'react-hot-toast';
 
-export const DriverHelpPage = () => {
+ const DriverHelpPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactForm, setContactForm] = useState({
@@ -26,7 +26,7 @@ export const DriverHelpPage = () => {
 
   const handleContactSubmit = async () => {
     if (!contactForm.subject.trim() || !contactForm.message.trim()) {
-      toast.error("Veuillez remplir tous les champs obligatoires.");
+      toast.error('Veuillez remplir tous les champs obligatoires.');
       return;
     }
 
@@ -119,11 +119,11 @@ export const DriverHelpPage = () => {
       ]
     },
     {
-      title: 'En cas d\'incident',
+      title: 'En cas d&apos;incident',
       items: [
         'Sécuriser immédiatement les élèves',
         'Contacter les secours si nécessaire',
-        'Signaler l\'incident via l\'application',
+        'Signaler l&apos;incident via l&apos;application',
         'Attendre les instructions du responsable'
       ]
     }
@@ -133,8 +133,8 @@ export const DriverHelpPage = () => {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-default-900">Centre d'Aide Conducteur</h1>
-        <p className="text-lg text-default-600">Guide complet pour utiliser l'application de transport scolaire</p>
+        <h1 className="text-4xl font-bold text-default-900">Centre d&apos;Aide Conducteur</h1>
+        <p className="text-lg text-default-600">Guide complet pour utiliser l&apos;application de transport scolaire</p>
       </div>
  
       {/* Main Content */}
@@ -211,7 +211,7 @@ export const DriverHelpPage = () => {
                 Tutoriels Vidéo
               </CardTitle>
               <CardDescription>
-                Apprenez à utiliser toutes les fonctionnalités de l'application
+                Apprenez à utiliser toutes les fonctionnalités de l&apos;application
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -256,7 +256,7 @@ export const DriverHelpPage = () => {
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
                       <Icon icon="heroicons:play" className="h-5 w-5 text-green-500" />
                       <div>
-                        <p className="font-medium">Consulter l'itinéraire</p>
+                        <p className="font-medium">Consulter l&apos;itinéraire</p>
                         <p className="text-sm text-muted-foreground">2 min</p>
                       </div>
                     </div>
@@ -305,12 +305,12 @@ export const DriverHelpPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Icon icon="heroicons:exclamation-circle" className="h-6 w-6 text-red-500" />
-                Procédure d'urgence
+                Procédure d&apos;urgence
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h4 className="font-semibold text-red-800 mb-3">En cas d'urgence :</h4>
+                <h4 className="font-semibold text-red-800 mb-3">En cas d&apos;urgence :</h4>
                 <div className="space-y-2 text-sm text-red-700">
                   <div className="flex items-center gap-2">
                     <Icon icon="heroicons:phone" className="h-4 w-4" />
@@ -318,7 +318,7 @@ export const DriverHelpPage = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Icon icon="heroicons:exclamation" className="h-4 w-4" />
-                    <span>2. Utilisez le bouton "URGENCE" dans l'application</span>
+                    <span>2. Utilisez le bouton &quot;URGENCE&quot; dans l&apos;application</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Icon icon="heroicons:user-group" className="h-4 w-4" />
@@ -360,7 +360,7 @@ export const DriverHelpPage = () => {
                 <Separator />
                 
                 <div className="space-y-3">
-                  <h4 className="font-semibold">Contacts d'urgence</h4>
+                  <h4 className="font-semibold">Contacts d&apos;urgence</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Icon icon="heroicons:phone" className="h-4 w-4 text-red-500" />
@@ -411,7 +411,7 @@ export const DriverHelpPage = () => {
                       <span className="text-sm text-muted-foreground">Bus-001</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Trajets aujourd'hui</span>
+                      <span className="text-sm font-medium">Trajets aujourd&apos;hui</span>
                       <span className="text-sm text-muted-foreground">4 trajets</span>
                     </div>
                     <div className="flex justify-between items-center">

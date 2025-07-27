@@ -138,7 +138,7 @@ const TableSchool = ({ schools, onEditSchool, onDeleteSchool }) => {
                           "bg-red-100 text-red-800": !item.isActive,
                         })}
                       >
-                        {item.isActive ? "Active" : "Inactive"}
+                        {item.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right flex gap-2 justify-start">
@@ -175,7 +175,7 @@ const TableSchool = ({ schools, onEditSchool, onDeleteSchool }) => {
                         <div className="ltr:pl-12 rtl:pr-12 flex flex-col items-start gap-4">
                           <div className="grid grid-cols-2 gap-4 w-full">
                             <div>
-                              <h4 className="font-medium mb-2">Détails de l'école</h4>
+                              <h4 className="font-medium mb-2">Détails de l&apos;école</h4>
                               <div className="space-y-2 text-sm">
                                 <p className="flex items-center gap-2">
                                   <Icon icon="heroicons:calendar" className="w-4 h-4 opacity-50" />

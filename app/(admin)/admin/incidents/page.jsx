@@ -119,7 +119,7 @@ const IncidentsPage = () => {
         </h2>
       </div>
 
-      <div className="flex items-center justify-start flex-wrap gap-4"> {/* Changed to justify-start as there's no "Add" button */}
+      <div className="flex items-center justify-start flex-wrap gap-4"> {/* Changed to justify-start as there's no 'Add' button */}
         {/* Search Input */}
         <Input
           type="text"

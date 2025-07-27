@@ -1,7 +1,7 @@
 // components/ParentsPage.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useRef} from 'react';
 import { demoData as initialDemoData } from '@/data/data';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
@@ -24,39 +24,31 @@ const ParentsPage = () => {
     const [loading, setLoading] = useState(false);
     
   
- useEffect(() => {
-  let isMounted = true;
+    const hasFetchedEstablishments = useRef(false);
 
-  async function loadEstablishments() {
-    setEstablishmentsLoading(true);
-    try {
-      const data = await fetchAllEstablishments();
-      console.log("Établissements reçus :", data);
-
-      if (isMounted && data && Array.isArray(data)) {
-        setEstablishments(data);
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des établissements', error);
-      toast.error("Impossible de charger les établissements");
-    } finally {
-      if (isMounted) {
-        setEstablishmentsLoading(false);
-      }
-    }
-  }
-
-  // Charger seulement si non encore chargés
-  if (establishments.length === 0) {
-    loadEstablishments();
-  }
-
-  return () => {
-    isMounted = false;
-  };
-}, []); // ✅ seulement au montage du composant
-// 👈 pas `loading` global ici
-console.log("etablisment",establishments)
+    useEffect(() => {
+      if (hasFetchedEstablishments.current) return;
+    
+      const loadEstablishments = async () => {
+        setEstablishmentsLoading(true);
+        try {
+          const data = await fetchAllEstablishments();
+          console.log("Établissements reçus :", data);
+          if (Array.isArray(data)) {
+            setEstablishments(data);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des établissements', error);
+          toast.error("Impossible de charger les établissements");
+        } finally {
+          setEstablishmentsLoading(false);
+        }
+      };
+    
+      hasFetchedEstablishments.current = true;
+      loadEstablishments();
+    }, []);
+    
  const loadParents = async () => {
     setLoading(true);
     try {

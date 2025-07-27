@@ -50,7 +50,7 @@ const StudentCard = ({ student, onEditStudent, onDeleteStudent }) => {
                     {getInitials(student.fullname)}
                   </AvatarFallback>
                 </Avatar>
-                {/* Students are "active" if not deleted */}
+                {/* Students are &quot;active&quot; if not deleted */}
                 <Badge color={!student.deletedAt ? 'success' : 'destructive'} className="h-2 w-2 p-0 items-center justify-center absolute left-[calc(100%-8px)] bottom-[calc(100%-8px)]">
                 </Badge>
               </div>

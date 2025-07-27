@@ -38,9 +38,9 @@ const ForgotForm = () => {
 
   const onSubmit = (data) => {
     startTransition(async () => {
-      toast.success("Password Reset code has been sent to your email");
+      toast.success('Password Reset code has been sent to your email');
       reset();
-      router.push("/auth/create-password2");
+      router.push('/auth/create-password2');
     });
   };
   return (
@@ -58,7 +58,7 @@ const ForgotForm = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 xl:mt-7">
         <div>
           <Label htmlFor="email" className="mb-2 font-medium text-default-600">
-            Email{" "}
+            Email{' '}
           </Label>
           <Input
             disabled={isPending}
@@ -77,11 +77,11 @@ const ForgotForm = () => {
 
         <Button className="w-full mt-6" size={!isDesktop2xl ? "xl" : "lg"}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "sending..." : "Send Recovery Email"}
+          {isPending ? 'sending...' : 'Send Recovery Email'}
         </Button>
       </form>
       <div className="mt-8 text-center text-base text-default-600">
-        Forget it. Send me back to{" "}
+        Forget it. Send me back to{' '}
         <Link href="/auth/login2" className="text-primary">
           Sign In
         </Link>

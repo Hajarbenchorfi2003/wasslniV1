@@ -63,7 +63,7 @@ const RouteCard = ({ route, onEditRoute, onDeleteRoute }) => {
           )}
           <p className="flex items-center gap-2">
             <Icon icon="heroicons:map-pin" className="w-4 h-4 opacity-70" />
-            Nombre d'arrêts: {route.stops ? route.stops.length : 0}
+            Nombre d&apos;arrêts: {route.stops ? route.stops.length : 0}
           </p>
         </CardContent>
       </Card>

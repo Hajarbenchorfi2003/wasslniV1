@@ -60,7 +60,7 @@ const PersonalDetails = ({ user, onUpdate }) => {
       setIsEditing(false);
       toast.success('Informations mises à jour avec succès!');
     } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
+      console.error('Erreur lors de la mise à jour:', error);
       toast.error(error.message || 'Erreur lors de la mise à jour');
     } finally {
       setLoading(false);

@@ -24,37 +24,33 @@ const ParentsPage = () => {
     const [loading, setLoading] = useState(false);
     
   
- useEffect(() => {
-  let isMounted = true;
-
-  async function loadEstablishments() {
-    setEstablishmentsLoading(true);
-    try {
-      const data = await fetchUserEstablishments();
-      console.log("Établissements reçus :", data);
-
-      if (isMounted && data && Array.isArray(data)) {
-        setEstablishments(data);
+    useEffect(() => {
+      let isMounted = true;
+    
+      async function loadEstablishments() {
+        setEstablishmentsLoading(true);
+        try {
+          const data = await fetchUserEstablishments();
+          if (isMounted && data && Array.isArray(data)) {
+            setEstablishments(data);
+          }
+        } catch (error) {
+          toast.error("Impossible de charger les établissements");
+        } finally {
+          if (isMounted) setEstablishmentsLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement des établissements', error);
-      toast.error("Impossible de charger les établissements");
-    } finally {
-      if (isMounted) {
-        setEstablishmentsLoading(false);
+    
+      // Charger seulement si non encore chargés
+      if (establishments.length === 0) {
+        loadEstablishments();
       }
-    }
-  }
-
-  // Charger seulement si non encore chargés
-  if (establishments.length === 0) {
-    loadEstablishments();
-  }
-
-  return () => {
-    isMounted = false;
-  };
-}, []); // ✅ seulement au montage du composant
+    
+      return () => {
+        isMounted = false;
+      };
+    }, []); // ← tableau vide ici
+     // ✅ seulement au montage du composant
 // 👈 pas `loading` global ici
 console.log("etablisment",establishments)
  const loadParents = async () => {

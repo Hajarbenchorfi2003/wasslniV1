@@ -68,8 +68,8 @@ const IncidentsSuperAdminPage = () => {
                     <td className="border px-4 py-2">{incident.description || '-'}</td>
                     <td className="border px-4 py-2">
                       {incident.date
-                        ? format(new Date(incident.date), "dd MMMM yyyy - HH:mm", { locale: fr })
-                        : "-"}
+                        ? format(new Date(incident.date), 'dd MMMM yyyy - HH:mm', { locale: fr })
+                        : '-'}
                     </td>
                   </tr>
                 ))}

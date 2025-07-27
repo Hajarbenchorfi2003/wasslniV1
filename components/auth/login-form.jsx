@@ -132,7 +132,7 @@ const LogInForm = () => {
         Salut 👋
       </div>
       <div className="2xl:text-lg text-base text-default-600 2xl:mt-2 leading-6">
-        Entrez les informations utilisées lors de l'inscription.
+        Entrez les informations utilisées lors de l&apos;inscription.
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 2xl:mt-7">
         <div>

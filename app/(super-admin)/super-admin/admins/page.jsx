@@ -325,7 +325,7 @@ useEffect(() => {
           ))
         ) : (
           <p className="col-span-full text-center text-gray-500">
-            {searchQuery ? `Aucun Admin trouvé pour "${searchQuery}".` : 'Aucun Admin trouvé.'}
+            {searchQuery ? `Aucun Admin trouvé pour &quot;${searchQuery}&quot;.` : 'Aucun Admin trouvé.'}
           </p>
         )}
       </div>

@@ -56,29 +56,29 @@ const CreatePasswordForm = ({ token }) => {
 
   const onSubmit = async (data) => {
     if (!token) {
-      toast.error("Token manquant");
+      toast.error('Token manquant');
       return;
     }
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/user/reset-password/${token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword: data.password }),
       });
 
       const result = await res.json();
 
       if (!res.ok) {
-        toast.error(result.message || "Erreur de réinitialisation");
+        toast.error(result.message || 'Erreur de réinitialisation');
         return;
       }
 
-      toast.success(result.message || "Mot de passe réinitialisé !");
+      toast.success(result.message || 'Mot de passe réinitialisé !');
       reset();
-      router.push("/");
+      router.push('/');
     } catch (error) {
-      toast.error("Erreur serveur, réessayez plus tard");
+      toast.error('Erreur serveur, réessayez plus tard');
     }
   };
 
@@ -195,14 +195,14 @@ const CreatePasswordForm = ({ token }) => {
         </div>
         <Button className="w-full mt-8" size="lg">
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "Resetting..." : "Reset Password"}
+          {isPending ? 'Resetting...' : 'Reset Password'}
         </Button>
       </form>
       <div className="mt-5 2xl:mt-8 text-center text-base text-default-600">
-        Not now? Return{" "}
+        Not now? Return{' '}
         <Link href="/auth/register" className="text-primary">
-          {" "}
-          Sign In{" "}
+          {' '}
+          Sign In{' '}
         </Link>
       </div>
     </div>

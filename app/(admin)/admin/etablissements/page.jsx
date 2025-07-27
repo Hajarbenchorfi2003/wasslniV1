@@ -257,7 +257,7 @@ console.log(editingEtablissement)
       />
 
       {/* Pagination Controls */}
-      {totalPages > 1 && ( // Only show pagination if there's more than one page
+      {totalPages > 1 && ( // Only show pagination if there&apos;s more than one page
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
             variant="outline"

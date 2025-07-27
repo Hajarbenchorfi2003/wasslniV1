@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "check": "next lint && tsc --noEmit" 
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^40.1.0",

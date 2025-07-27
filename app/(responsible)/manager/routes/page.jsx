@@ -14,7 +14,7 @@ import {fetchUserEstablishments} from '@/services/etablissements';
 
 const ITEMS_PER_PAGE = 6;
 
-export const RoutesPage = () => {
+const RoutesPage = () => {
   const [routes, setRoutes] = useState([]);
   const [filteredRoutes, setFilteredRoutes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);

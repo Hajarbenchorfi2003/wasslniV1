@@ -13,36 +13,36 @@ const ErrorPage = () => {
 
   useEffect(() => {
     try {
-      const userStr = localStorage.getItem("user");
-      if (!userStr || userStr === "undefined" || userStr === "null") return;
+      const userStr = localStorage.getItem('user');
+      if (!userStr || userStr === 'undefined' || userStr === 'null') return;
 
       const parsedUser = JSON.parse(userStr);
       const role = parsedUser?.role?.toLowerCase();
 
-      let redirectHref = "/";
+      let redirectHref = '/';
       switch (role) {
-        case "admin":
-          redirectHref = "/admin";
+        case 'admin':
+          redirectHref = '/admin';
           break;
-        case "super_admin":
-          redirectHref = "/super-admin";
+        case 'super_admin':
+          redirectHref = '/super-admin';
           break;
-        case "parent":
-          redirectHref = "/parent";
+        case 'parent':
+          redirectHref = '/parent';
           break;
-        case "responsible":
-          redirectHref = "/manager";
+        case 'responsible':
+          redirectHref = '/manager';
           break;
-        case "driver":
-          redirectHref = "/driver";
+        case 'driver':
+          redirectHref = '/driver';
           break;
         default:
-          redirectHref = "/";
+          redirectHref = '/';
       }
 
       setHref(redirectHref);
     } catch (err) {
-      console.error("Erreur lors de la récupération de l'utilisateur :", err);
+      console.error('Erreur lors de la récupération de l&apos;utilisateur :', err);
     }
   }, []);
 
@@ -58,13 +58,13 @@ const ErrorPage = () => {
         </div>
         <div className="mt-16 text-center">
           <div className="text-xl md:text-4xl lg:text-5xl font-semibold text-default-900">
-            Oups ! Vous n'avez pas l'autorisation .
+            Oups ! Vous n&apos;avez pas l&apos;autorisation .
           </div>
           <div className="mt-3 text-default-600 text-sm md:text-base">
-            Il est possible que cette page ait été supprimée, renommée ou qu'elle soit temporairement indisponible.
+            Il est possible que cette page ait été supprimée, renommée ou qu&apos;elle soit temporairement indisponible.
           </div>
           <Button asChild className="mt-9 md:min-w-[300px]" size="lg">
-            <Link href={href}>Aller à la page d'accueil</Link>
+            <Link href={href}>Aller à la page d&apos;accueil</Link>
           </Button>
         </div>
       </div>

@@ -32,7 +32,7 @@ import { useThemeStore } from "@/store";
 import { useTheme } from "next-themes";
 import { themes } from "@/config/thems";
 
-const AdminDashboardPage = ({ trans }) => {
+const AdminDashboardPage = () => {
   // Example school ID (replace with dynamic retrieval based on logged-in admin)
   const currentSchoolId = 1;
 
@@ -173,7 +173,7 @@ const AdminDashboardPage = ({ trans }) => {
             Tableau de Bord - Administration Scolaire
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Gestion de l'école et de ses établissements
+            Gestion de l&apos;école et de ses établissements
           </p>
         </div>
         <DatePickerWithRange />
@@ -229,12 +229,12 @@ const AdminDashboardPage = ({ trans }) => {
           </CardContent>
         </Card>
 
-        {/* Today's Attendance */}
+        {/* Today&apos;s Attendance */}
         <Card className="border-l-4 border-l-orange-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Présence Aujourd'hui</p>
+                <p className="text-sm font-medium text-muted-foreground">Présence Aujourd&apos;hui</p>
                 <p className="text-3xl font-bold text-default-900">95%</p>
                 <p className="text-xs text-green-600 mt-1">+2% vs hier</p>
               </div>

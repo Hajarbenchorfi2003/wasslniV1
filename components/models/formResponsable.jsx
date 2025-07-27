@@ -199,7 +199,7 @@ export function FormUserRes({ initialData, onSubmit, onCancel, role,schools }) {
               <div className="space-y-0.5">
                 <FormLabel>Actif</FormLabel>
                 <div className="text-sm text-muted-foreground">
-                  Indique si l'utilisateur est actif dans le système.
+                  Indique si l&apos;utilisateur est actif dans le système.
                 </div>
               </div>
               <FormControl>

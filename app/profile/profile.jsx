@@ -31,7 +31,7 @@ const PageProfilUtilisateur = () => {
       setLoading(true);
       try {
         const userData = await userAPI.getProfile();
-        console.log("Données utilisateur reçues:", userData); // <-- Ajoutez cette ligne
+        console.log('Données utilisateur reçues:', userData); // <-- Ajoutez cette ligne
         setUser(userData);
       } catch (error) {
         toast.error(error.message || 'Erreur lors du chargement des données');
@@ -42,13 +42,13 @@ const PageProfilUtilisateur = () => {
     chargerDonneesUtilisateur();
   }, []);
   const supprimerCompte = async () => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.")) {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.')) {
       try {
         // You would need to implement this endpoint in your API
         // await userAPI.deleteAccount();
         toast.success('Compte supprimé avec succès !');
         // Redirect after deletion
-        // router.push('/logout');
+        // router.push(&apos;/logout&apos;);
       } catch (error) {
         toast.error(error.message || 'Erreur lors de la suppression du compte');
       }

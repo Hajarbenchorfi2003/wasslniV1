@@ -13,7 +13,7 @@ import {fetchMyBuses} from '@/services/bus.jsx';
 import {fetchroute}  from '@/services/route';
 import {fetchDrivers} from '@/services/user';
 import {fetchAlltrip,createtrip,createtripStudents,updatetrip,removeStudentFromTrip,deleteTrip} from '@/services/trips';
-
+import { useCallback } from "react";
 // Import shadcn/ui Select components
 import {
   Select,
@@ -44,20 +44,17 @@ const TripsPage = () => {
   const [loadingdriver, setLoadindriver] = useState(false);
  
     
-   useEffect(() => {
+  useEffect(() => {
     let isMounted = true;
   
     async function loadEstablishments() {
       setEstablishmentsLoading(true);
       try {
         const data = await fetchUserEstablishments();
-        console.log("Établissements reçus :", data);
-  
-        if (isMounted && data && Array.isArray(data)) {
+        if (isMounted && Array.isArray(data)) {
           setEstablishments(data);
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des établissements', error);
         toast.error("Impossible de charger les établissements");
       } finally {
         if (isMounted) {
@@ -66,7 +63,6 @@ const TripsPage = () => {
       }
     }
   
-    // Charger seulement si non encore chargés
     if (establishments.length === 0) {
       loadEstablishments();
     }
@@ -74,7 +70,8 @@ const TripsPage = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [establishments.length]); // ✅ ajoute cette dépendance
+  
   const loadBuses = async () => {
     try {
       setLoadingbus(true);
@@ -144,39 +141,34 @@ const [filterEstablishmentId, setFilterEstablishmentId] = useState('all');
 
 
 
- const fetchTripsWithFilters = async () => {
-    setLoading(true);
-    setError(null);
 
-    try {
-      const filters = {};
 
-      if (filterRouteId !== 'all') filters.routeId = parseInt(filterRouteId);
-      if (filterBusId !== 'all') filters.busId = parseInt(filterBusId);
-      if (filterDriverId !== 'all') filters.driverId = parseInt(filterDriverId);
-      if (filterEstablishmentId !== 'all') filters.establishmentId = parseInt(filterEstablishmentId);
+const fetchTripsWithFilters = useCallback(async () => {
+  setLoading(true);
+  setError(null);
 
-      // Appel vers le backend
-      const data = await fetchAlltrip(filters);
-      console.log("data api",data)
-      
-      setTrips(data.data); // On stocke les trajets reçus du backend
-     
-      setCurrentPage(1); // Réinitialise à la première page après filtrage
-    } catch (err) {
-      setError(err.message);
-      toast.error(`Erreur : ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-useEffect(() => {  fetchTripsWithFilters();
-}, [
-  filterRouteId,
-  filterBusId,
-  filterDriverId,
-  filterEstablishmentId,
-]);
+  try {
+    const filters = {};
+    if (filterRouteId !== 'all') filters.routeId = parseInt(filterRouteId);
+    if (filterBusId !== 'all') filters.busId = parseInt(filterBusId);
+    if (filterDriverId !== 'all') filters.driverId = parseInt(filterDriverId);
+    if (filterEstablishmentId !== 'all') filters.establishmentId = parseInt(filterEstablishmentId);
+
+    const data = await fetchAlltrip(filters);
+    setTrips(data.data);
+    setCurrentPage(1);
+  } catch (err) {
+    setError(err.message);
+    toast.error(`Erreur : ${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+}, [filterRouteId, filterBusId, filterDriverId, filterEstablishmentId]);
+
+useEffect(() => {
+  fetchTripsWithFilters();
+}, [fetchTripsWithFilters]); // ✅ maintenant ça passe ESLint
+
 console.log("trips",trips)
 
 const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE);

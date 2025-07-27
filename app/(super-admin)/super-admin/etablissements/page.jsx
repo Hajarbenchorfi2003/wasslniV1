@@ -15,7 +15,6 @@ import{fetchSchools}from '@/services/school';
 const ITEMS_PER_PAGE = 5;
 
 const EtablissementsPage = () => {
-  const [etablissements, setEtablissements] = useState(demoData.establishments);
   const[establishments,setEstablishments]= useState([]);
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
   const [editingEtablissement, setEditingEtablissement] = useState(null); // Holds data for editing
@@ -257,7 +256,7 @@ console.log(editingEtablissement)
       />
 
       {/* Pagination Controls */}
-      {totalPages > 1 && ( // Only show pagination if there's more than one page
+      {totalPages > 1 && ( // Only show pagination if there&apos;s more than one page
         <div className="flex gap-2 items-center mt-4 justify-center">
           <Button
             variant="outline"

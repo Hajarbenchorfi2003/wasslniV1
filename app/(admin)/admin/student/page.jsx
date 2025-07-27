@@ -48,7 +48,7 @@ const StudentsPage = () => {
       return {
         ...student,
         establishmentName: establishment ? establishment.name : 'Non attribué',
-        parentNames: parentNames.length > 0 ? parentNames.join(', ') : 'Aucun parent associé',
+        parentNames: parentNames.length > 0 ? parentNames.join(',') : 'Aucun parent associé',
         status: student.deletedAt ? 'INACTIVE' : 'ACTIVE'
       };
     });
@@ -296,11 +296,11 @@ const StudentsPage = () => {
             <Icon icon="heroicons:user-group" className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Aucun élève trouvé</h3>
             <p className="text-muted-foreground">
-              {searchTerm || statusFilter !== 'ALL' || establishmentFilter !== 'ALL' || gradeFilter !== 'ALL'
-                ? 'Aucun élève ne correspond à vos critères de recherche.'
+              {searchTerm || statusFilter !== 'ALL' || establishmentFilter !== 'ALL'|| gradeFilter !== 'ALL'
+                ? 'Aucun élève ne correspond à vos critères de recherche'
                 : 'Commencez par ajouter votre premier élève.'}
             </p>
-            {!searchTerm && statusFilter === 'ALL' && establishmentFilter === 'ALL' && gradeFilter === 'ALL' && (
+            {!searchTerm && statusFilter === 'ALL' && establishmentFilter === 'ALL' && gradeFilter ==='ALL' && (
               <Button 
                 onClick={() => setIsModalOpen(true)}
                 className="mt-4"

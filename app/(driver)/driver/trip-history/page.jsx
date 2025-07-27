@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator";
 
 const ITEMS_PER_PAGE = 10;
 
-export const TripHistoryPage = ({ onGoBack }) => {
+ const TripHistoryPage = () => {
   const [allDriverTrips, setAllDriverTrips] = useState([]);
   const [filteredTrips, setFilteredTrips] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -158,6 +158,7 @@ export const TripHistoryPage = ({ onGoBack }) => {
       </Badge>
     );
   };
+
 
   if (loading) {
     return (
@@ -334,11 +335,6 @@ export const TripHistoryPage = ({ onGoBack }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-3xl font-bold text-default-900">Historique des Trajets</h1>
-        {onGoBack && (
-          <Button onClick={onGoBack} variant="outline">
-            <Icon icon="heroicons:arrow-left" className="h-4 w-4 mr-2" /> Retour
-          </Button>
-        )}
       </div>
       <p className="text-default-600">Consultez et recherchez vos trajets passés.</p>
 
@@ -434,8 +430,8 @@ export const TripHistoryPage = ({ onGoBack }) => {
           ) : (
             <div className="p-6 text-center text-gray-500">
               {allDriverTrips.length === 0 
-                ? "Aucun trajet trouvé"
-                : "Aucun trajet ne correspond à vos critères"}
+                ? 'Aucun trajet trouvé'
+                : 'Aucun trajet ne correspond à vos critères'}
             </div>
           )}
         </CardContent>

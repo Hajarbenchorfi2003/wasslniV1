@@ -66,7 +66,7 @@ export default function EditSchoolForm({ defaultValues, onSubmit }) {
       >
         {/* Section École */}
         <div className="space-y-4 p-4 border rounded-lg">
-          <h3 className="text-lg font-medium">Informations de l'école</h3>
+          <h3 className="text-lg font-medium">Informations de l&apos;école</h3>
 
           {/* Afficher toutes les erreurs */}
           {Object.keys(errors).map((key) => (

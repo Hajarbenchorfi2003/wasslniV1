@@ -33,8 +33,8 @@ const Layout = ({ children }) => {
         setIsAuth(true);
       })
       .catch((err) => {
-        console.error("Erreur lors du chargement des traductions :", err);
-        router.push("/auth/login");
+        console.error('Erreur lors du chargement des traductions :', err);
+        router.push('/auth/login');
       });
   }, [router]);
 

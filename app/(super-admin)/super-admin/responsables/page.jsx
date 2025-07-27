@@ -27,47 +27,36 @@ const [loading, setLoading] = useState(false);
 
 
 
-useEffect(() => {
-  let isMounted = true; // 🔥 Pour éviter les fuites de mémoire si le composant se démonte
-
-  async function loadResponsibles() {
-    if (loading || responsables.length > 0) {
-      // 🚫 Évite de recharger si déjà en cours ou déjà chargé
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const data = await fetchResponsibles(); // Assurez-vous que cette fonction renvoie bien un tableau
-      console.log("Données reçues depuis l'API:", data);
-
-     
-        // Met à jour la liste des responsables
+  useEffect(() => {
+    let isMounted = true;
+  
+    async function loadResponsibles() {
+      if (loading || responsables.length > 0) {
+        return;
+      }
+  
+      setLoading(true);
+      try {
+        const data = await fetchResponsibles();
         setResponsables(data);
-
-        // Met à jour currentDemoData.users
         setCurrentDemoData((prev) => ({ ...prev, users: data }));
-
-        console.log("Données mises à jour dans currentDemoData:", currentDemoData);
-      
-    } catch (error) {
-      console.error('Erreur lors du chargement des responsables', error);
-      toast.error("Impossible de charger les responsables");
-    } finally {
-      if (isMounted) {
-        setLoading(false); // 🔄 Fin du chargement
+      } catch (error) {
+        console.error('Erreur lors du chargement des responsables', error);
+        toast.error("Impossible de charger les responsables");
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
-  }
-
-  loadResponsibles();
-
-  // Nettoyage pour éviter les mises à jour sur un composant non monté
-  return () => {
-    isMounted = false;
-  };
-}, [loading]); // ⚠️ Tu peux retirer `responsables` si tu veux forcer le rechargement manuellement
-
+  
+    loadResponsibles();
+  
+    return () => {
+      isMounted = false;
+    };
+  }, [loading, responsables.length, currentDemoData]);
+  
   // Effect to filter and set responsables whenever currentDemoData or searchQuery changes
   useEffect(() => {
     

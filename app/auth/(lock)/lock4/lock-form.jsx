@@ -13,10 +13,10 @@ const LockForm = () => {
   const [passwordType, setPasswordType] = useState("password");
   const isDesktop2xl = useMediaQuery("(max-width: 1530px)");
   const togglePasswordType = () => {
-    if (passwordType === "text") {
-      setPasswordType("password");
-    } else if (passwordType === "password") {
-      setPasswordType("text");
+    if (passwordType === 'text') {
+      setPasswordType('password');
+    } else if (passwordType === 'password') {
+      setPasswordType('text');
     }
   };
   return (
@@ -65,7 +65,7 @@ const LockForm = () => {
             className="absolute top-1/2 -translate-y-1/2 ltr:right-4 rtl:left-4 cursor-pointer"
             onClick={togglePasswordType}
           >
-            {passwordType === "password" ? (
+            {passwordType === 'password' ? (
               <Icon icon="heroicons:eye" className="w-5 h-5 text-default-400" />
             ) : (
               <Icon
@@ -77,13 +77,13 @@ const LockForm = () => {
         </div>
         <div className="mt-6">
           <Button className="w-full" size={!isDesktop2xl ? "lg" : "md"}>
-            {" "}
-            Sign In{" "}
+            {' '}
+            Sign In{' '}
           </Button>
         </div>
       </form>
       <div className="mt-8 text-center text-base font-medium text-default-600">
-        Not you? Return{" "}
+        Not you? Return{' '}
         <Link href="/auth/login4" className="text-primary">
           Sign In
         </Link>

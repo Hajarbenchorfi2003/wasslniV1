@@ -190,7 +190,7 @@ const handleSubmit = (data) => {
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Section Établissement */}
         <div className="space-y-4 p-4 border rounded-lg">
-          <h3 className="text-lg font-medium">Informations de l'établissement</h3>
+          <h3 className="text-lg font-medium">Informations de l&apos;établissement</h3>
           <div className="sm:grid sm:grid-cols-2 sm:gap-5 space-y-4 sm:space-y-0">
             {etablissementFields.map(({ name, label, placeholder, type = 'text' }) => (
               <FormField
@@ -241,7 +241,7 @@ const handleSubmit = (data) => {
 
         {/* Section Responsable (remains the same) */}
         <div className="space-y-4 p-4 border rounded-lg">
-          <h3 className="text-lg font-medium">Responsable de l'établissement</h3>
+          <h3 className="text-lg font-medium">Responsable de l&apos;établissement</h3>
           <div className="flex items-center space-x-2">
             <Switch
               id="add-new-responsable"

@@ -26,37 +26,42 @@ const RoutesPage = () => {
    const [establishments, setEstablishments] = useState([]);
       const [establishmentsLoading, setEstablishmentsLoading] = useState(false);
 
- useEffect(() => {
-  let isMounted = true;
+      const [hasFetchedEstablishments, setHasFetchedEstablishments] = useState(false);
 
-  async function loadEstablishments() {
-    setEstablishmentsLoading(true);
-    try {
-      const data = await fetchUserEstablishments();
-      console.log("Établissements reçus :", data);
-
-      if (isMounted && data && Array.isArray(data)) {
-        setEstablishments(data);
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des établissements', error);
-      toast.error("Impossible de charger les établissements");
-    } finally {
-      if (isMounted) {
-        setEstablishmentsLoading(false);
-      }
-    }
-  }
-
-  // Charger seulement si non encore chargés
-  if (establishments.length === 0) {
-    loadEstablishments();
-  }
-
-  return () => {
-    isMounted = false;
-  };
-}, []);
+      useEffect(() => {
+        let isMounted = true;
+      
+        async function loadEstablishments() {
+          setEstablishmentsLoading(true);
+          try {
+            const data = await fetchUserEstablishments();
+            console.log("Établissements reçus :", data);
+      
+            if (isMounted && data && Array.isArray(data)) {
+              setEstablishments(data);
+            }
+          } catch (error) {
+            console.error('Erreur lors du chargement des établissements', error);
+            toast.error("Impossible de charger les établissements");
+          } finally {
+            if (isMounted) {
+              setEstablishmentsLoading(false);
+              setHasFetchedEstablishments(true);
+            }
+          }
+        }
+      
+        if (!hasFetchedEstablishments) {
+          loadEstablishments();
+        }
+      
+        return () => {
+          isMounted = false;
+        };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [hasFetchedEstablishments]);
+      
+      
  const loadRoute = async () => {
     setLoading(true);
     try {

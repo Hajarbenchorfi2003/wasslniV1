@@ -50,7 +50,7 @@ export const ModalRoute = ({
     setIsSubmitting(true);
 
     if (!name || !establishmentId) {
-      toast.error("Veuillez remplir tous les champs obligatoires.");
+      toast.error('Veuillez remplir tous les champs obligatoires.');
       setIsSubmitting(false);
       return;
     }
@@ -66,7 +66,7 @@ export const ModalRoute = ({
       await onSave(routeData);
     } catch (error) {
       console.error('Error in form submission:', error);
-      toast.error("Une erreur est survenue lors de la sauvegarde");
+      toast.error('Une erreur est survenue lors de la sauvegarde');
     } finally {
       setIsSubmitting(false);
     }

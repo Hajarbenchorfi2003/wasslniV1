@@ -12,34 +12,34 @@ const CommingSoonPage = () => {
   const { theme } = useTheme();
   const socials = [
     {
-      link: "/",
+      link: '/',
       icon: <Twitter />,
     },
     {
-      link: "/",
+      link: '/',
       icon: <Facebook />,
     },
     {
-      link: "/",
+      link: '/',
       icon: <Linkedin />,
     },
     {
-      link: "/",
+      link: '/',
       icon: <Instagram />,
     },
   ];
   const menu = [
     {
-      label: "Privacy Policy",
-      link: "/",
+      label: 'Privacy Policy',
+      link: '/',
     },
     {
-      label: "FAQ",
-      link: "/",
+      label: 'FAQ',
+      link: '/',
     },
     {
-      label: "Email Us",
-      link: "/",
+      label: 'Email Us',
+      link: '/',
     },
   ];
   return (

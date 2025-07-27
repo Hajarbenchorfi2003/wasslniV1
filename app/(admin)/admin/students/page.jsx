@@ -61,7 +61,7 @@ const StudentsPage = () => {
   return () => {
     isMounted = false;
   };
-}, [loading]); 
+}, [loading, establishments.length]); 
 
 
  const loadStudents = async () => {

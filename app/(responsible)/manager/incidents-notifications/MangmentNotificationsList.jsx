@@ -36,7 +36,7 @@ export const MangmentNotificationsList = ({ notifications, onMarkAsRead }) => {
     <Card className="shadow-sm h-full flex flex-col">
       <CardHeader className="pb-3">
         {/* Titre et description adaptés pour le gestionnaire */}
-        <CardTitle className="text-xl font-medium text-default-800">Notifications de l'Établissement</CardTitle>
+        <CardTitle className="text-xl font-medium text-default-800">Notifications de l&apos;Établissement</CardTitle>
         <CardDescription>Restez informé des événements importants concernant votre établissement.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow p-0">

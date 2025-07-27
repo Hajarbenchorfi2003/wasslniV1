@@ -55,10 +55,10 @@ const RegForm = () => {
   const onSubmit = (data) => {
     startTransition(async () => {
       let response = await addUser(data);
-      if (response?.status === "success") {
+      if (response?.status === 'success') {
         toast.success(response?.message);
         reset();
-        router.push("/");
+        router.push('/');
       } else {
         toast.error(response?.message);
       }
@@ -79,7 +79,7 @@ const RegForm = () => {
         <div className="space-y-4">
           <div>
             <Label htmlFor="name" className="mb-2 font-medium text-default-600">
-              Full Name{" "}
+              Full Name{' '}
             </Label>
             <Input
               disabled={isPending}
@@ -102,7 +102,7 @@ const RegForm = () => {
               htmlFor="email"
               className="mb-2 font-medium text-default-600"
             >
-              Email{" "}
+              Email{' '}
             </Label>
             <Input
               disabled={isPending}
@@ -125,7 +125,7 @@ const RegForm = () => {
               htmlFor="password"
               className="mb-2 font-medium text-default-600"
             >
-              Password{" "}
+              Password{' '}
             </Label>
             <div className="relative">
               <Input
@@ -142,7 +142,7 @@ const RegForm = () => {
                 className="absolute top-1/2 -translate-y-1/2 ltr:right-4 rtl:left-4 cursor-pointer"
                 onClick={togglePasswordType}
               >
-                {passwordType === "password" ? (
+                {passwordType === 'password' ? (
                   <Icon
                     icon="heroicons:eye"
                     className="w-5 h-5 text-default-400"
@@ -181,7 +181,7 @@ const RegForm = () => {
           size={!isDesktop2xl ? "lg" : "md"}
         >
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "Registering..." : "Create an Account"}
+          {isPending ? 'Registering...' : 'Create an Account'}
         </Button>
       </form>
       <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -219,7 +219,7 @@ const RegForm = () => {
         </Button>
       </div>
       <div className="mt-5 2xl:mt-8 text-center text-base text-default-600">
-        Already Registered?{" "}
+        Already Registered?{' '}
         <Link href="/auth/login" className="text-primary">
           Sign In
         </Link>

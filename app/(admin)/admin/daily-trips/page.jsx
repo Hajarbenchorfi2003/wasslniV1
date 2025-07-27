@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCallback } from 'react';
 import { demoData as initialDemoData } from '@/data/data';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
@@ -127,10 +128,10 @@ const ITEMS_PER_PAGE = 10;
       return () => {
         isMounted = false;
       };
-    }, []);
+    }, [establishments.length]);
 
 
-const fetchDailyTripsWithFilters = async () => {
+const fetchDailyTripsWithFilters = useCallback(async () => {
         setLoading(true);
        setError(null);
 
@@ -179,17 +180,18 @@ const fetchDailyTripsWithFilters = async () => {
   } finally {
     setLoading(false);
   }
-  };
-    useEffect(() => {
-     fetchDailyTripsWithFilters();
-    }, [
-      filterTripId,
-      filterEstablishmentsId,
-      filterDriverId,
-      filterStatus,
-      searchDate,
-      currentPage,
-    ]);
+},[
+  filterTripId,
+  filterEstablishmentsId,
+  filterDriverId,
+  filterStatus,
+  searchDate,
+  currentPage,
+]);
+
+useEffect(() => {
+  fetchDailyTripsWithFilters();
+}, [fetchDailyTripsWithFilters]);
 
  
  

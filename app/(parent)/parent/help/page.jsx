@@ -18,7 +18,7 @@ import toast from 'react-hot-toast';
 
 import { getUser } from '@/utils/auth'; // Assuming auth.js is the correct path for getUser
 
-export const ParentHelpPage = () => {
+const ParentHelpPage = () => {
   // Existing states
   const [childrenStudents, setChildrenStudents] = useState([]);
   const [associatedSchools, setAssociatedSchools] = useState([]);
@@ -104,7 +104,7 @@ export const ParentHelpPage = () => {
 
   const handleContactSubmit = async () => {
     if (!contactForm.subject.trim() || !contactForm.message.trim()) {
-      return toast.error("Veuillez remplir tous les champs obligatoires.");
+      return toast.error('Veuillez remplir tous les champs obligatoires.');
     }
 
     if (contactForm.message.trim().length < 10) {
@@ -232,8 +232,8 @@ export const ParentHelpPage = () => {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-default-900">Centre d'Aide & Support</h1>
-        <p className="text-lg text-default-600">Trouvez des réponses à vos questions et obtenez l'aide dont vous avez besoin</p>
+        <h1 className="text-4xl font-bold text-default-900">Centre d&apos;Aide & Support</h1>
+        <p className="text-lg text-default-600">Trouvez des réponses à vos questions et obtenez l&apos;aide dont vous avez besoin</p>
       </div>
 
       {/* Quick Actions */}
@@ -342,7 +342,7 @@ export const ParentHelpPage = () => {
                 <Separator />
 
                 <div className="space-y-3">
-                  <h4 className="font-semibold">Contacts d'urgence</h4>
+                  <h4 className="font-semibold">Contacts d&apos;urgence</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Icon icon="heroicons:phone" className="h-4 w-4 text-red-500" />

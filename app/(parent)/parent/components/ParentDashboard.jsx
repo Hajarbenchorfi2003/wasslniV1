@@ -181,10 +181,10 @@ const refreshParentData = useCallback(async () => {
       default: return 'Inconnu';
     }
   };
- console.log("trackingChildId",trackingChildId)
- console.log("tripDetailsMap",childDailyTripDetails)
- console.log("trip id",childDailyTripDetails.id)
-console.log("trip id", childDailyTripDetails[trackingChildId]?.id);
+ console.log('trackingChildId',trackingChildId)
+ console.log('tripDetailsMap',childDailyTripDetails)
+ console.log('trip id',childDailyTripDetails.id)
+console.log('trip id', childDailyTripDetails[trackingChildId]?.id);
   if (!children) return <div>Chargement...</div>;
 
   const selectedChild = children.find(c => c.student.id === selectedChildId)?.student;
@@ -239,7 +239,7 @@ console.log("trip id", childDailyTripDetails[trackingChildId]?.id);
         <Card><CardContent className="p-8 text-center">
           <Icon icon="heroicons:information-circle" className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Aucun enfant associé</h3>
-          <p className="text-muted-foreground">Aucun enfant n'est actuellement associé à votre compte.</p>
+          <p className="text-muted-foreground">Aucun enfant n&apos;est actuellement associé à votre compte.</p>
         </CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -247,7 +247,7 @@ console.log("trip id", childDailyTripDetails[trackingChildId]?.id);
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Icon icon="heroicons:users" className="h-5 w-5" /> Vue d'ensemble des enfants
+                  <Icon icon="heroicons:users" className="h-5 w-5" /> Vue d&apos;ensemble des enfants
                 </CardTitle>
               </CardHeader>
               <CardContent>

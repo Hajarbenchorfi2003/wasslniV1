@@ -72,7 +72,7 @@ export const RouteCard = ({ route, onEditRoute, onDeleteRoute }) => {
           {/* Route Details */}
           <p className="flex items-center gap-2 text-default-700">
             <Icon icon="heroicons:map-pin" className="w-4 h-4 text-default-500" />
-            Nombre d'arrêts: {route.stopCount || '0'} {/* Will be enriched */}
+            Nombre d&apos;arrêts: {route.stopCount || '0'} {/* Will be enriched */}
           </p>
           <p className="flex items-center gap-2 text-default-700">
             <Icon icon="heroicons:arrows-right-left" className="w-4 h-4 text-default-500" />

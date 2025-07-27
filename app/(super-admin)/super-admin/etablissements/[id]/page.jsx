@@ -72,7 +72,7 @@ const EstablishmentDetailsPage = () => {
         setDetails(data);
         setLoading(false);
       } else {
-        setError('Impossible de charger les détails de l’établissement.');
+        setError('Impossible de charger les détails de l&apos;établissement.');
         setLoading(false);
       }
     };
@@ -81,7 +81,7 @@ const EstablishmentDetailsPage = () => {
   }, [establishmentId]);
 
     
-   console.log("details",details)
+
    if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -224,7 +224,7 @@ const EstablishmentDetailsPage = () => {
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
-                                Vue d'ensemble
+                                Vue d&rsquo;ensemble
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -320,7 +320,7 @@ const EstablishmentDetailsPage = () => {
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
-                                Informations de l'École
+                                Informations de l&rsquo;École
                             </CardTitle>
                         </CardHeader>
                         <CardContent>

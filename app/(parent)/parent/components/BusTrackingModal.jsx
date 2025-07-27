@@ -135,8 +135,8 @@ export const BusTrackingModal = ({ isOpen, setIsOpen, childId }) => {
       refreshChildData();
     }
   }, [isOpen, refreshChildData]);
- console.log("data socket",busPosition,"path",path);
- console.log("postionenvoyer",busPosition,"dailytriddata",dailyTripDetails)
+ console.log('data socket',busPosition,'path',path);
+ console.log('postionenvoyer',busPosition,'dailytriddata',dailyTripDetails)
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -178,7 +178,7 @@ export const BusTrackingModal = ({ isOpen, setIsOpen, childId }) => {
         ) : (
           <div className="p-6 text-center">
             <Icon icon="heroicons:information-circle" className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <p>Aucun trajet actif aujourd'hui</p>
+            <p>Aucun trajet actif aujourd&apos;hui</p>
           </div>
         )}
       </DialogContent>

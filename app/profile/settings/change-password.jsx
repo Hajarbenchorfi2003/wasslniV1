@@ -34,7 +34,7 @@ const ChangePassword = () => {
     setLoading(true);
     
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
+      toast.error(' mots de passe ne correspondent pas');
       setLoading(false);
       return;
     }
@@ -49,7 +49,7 @@ const ChangePassword = () => {
       setFormData({
         currentPassword: '',
         newPassword: '',
-        confirmPassword: ''
+        confirmPassword:''
       });
     } catch (error) {
       toast.error(error.message || 'Erreur lors du changement de mot de passe');
@@ -159,7 +159,7 @@ const ChangePassword = () => {
             </Button>
             <Button type="submit" disabled={loading}>
               <Icon icon="heroicons:lock-closed" className="w-5 h-5 text-primary-foreground me-1" />
-              {loading ? 'Changement en cours...' : 'Changer le mot de passe'}
+              {loading ?'Changement en cours...' : 'Changer le mot de passe'}
             </Button>
           </div>
         </form>

@@ -48,7 +48,7 @@ export const AttendanceHistoryTable = ({ student, attendanceHistory = [] }) => {
     <Card className="shadow-sm h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl font-medium text-default-800">
-          Historique de Présence {student?.fullname && student.fullname !== "Tous les enfants" ? `de ${student.fullname}` : "des Enfants"}
+          Historique de Présence {student?.fullname && student.fullname !== 'Tous les enfants' ? `de ${student.fullname}` : 'des Enfants'}
         </CardTitle>
         <CardDescription>Consultez les enregistrements de présence passés.</CardDescription>
       </CardHeader>

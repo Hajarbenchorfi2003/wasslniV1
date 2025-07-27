@@ -144,7 +144,7 @@ export default function ModalEtablissement({
             <form onSubmit={form.handleSubmit(onSubmit)} className="sm:grid sm:grid-cols-2 sm:gap-5 space-y-4 sm:space-y-0">
               {/* Section Établissement */}
               <div className="col-span-2">
-                <h3 className="text-sm font-medium mb-3">Informations de l'établissement</h3>
+                <h3 className="text-sm font-medium mb-3">Informations de l&apos;établissement</h3>
                 <div className="sm:grid  sm:grid-cols-2 sm:gap-5 space-y-4 sm:space-y-0">
                   {[
                     { name: "name", label: "Nom", placeholder: "Entrez le nom" },

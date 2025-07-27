@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ParentIncidentList } from '../components/ParentIncidentList';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const ParentNotificationsPage = () => {
+const ParentNotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState({

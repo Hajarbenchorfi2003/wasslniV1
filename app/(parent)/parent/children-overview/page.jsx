@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Icon } from "@iconify/react";
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
-import parentService from '@/services/parentService';
+import parentService from '@/services/parentservice';
 
 const ITEMS_PER_PAGE = 3;
 

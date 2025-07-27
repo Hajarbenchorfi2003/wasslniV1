@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import attendanceService from '@/services/attendanceService';
+import attendanceService from '@/services/attendanceservice';
 import {
     Card, CardContent, CardHeader, CardTitle, CardDescription
 } from "@/components/ui/card";

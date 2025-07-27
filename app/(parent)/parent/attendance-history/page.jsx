@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import DatePickerWithRange from '@/components/date-picker-with-range';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import parentService from '@/services/parentService';
+import parentService from '@/services/parentservice';
 import toast from 'react-hot-toast';
 
 const ITEMS_PER_PAGE = 10;

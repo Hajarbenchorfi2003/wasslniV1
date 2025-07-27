@@ -21,7 +21,7 @@ import { fetchAllStudents } from '@/services/students';
 import { fetchAllBuses } from '@/services/bus';
 import { fetchroute } from '@/services/route';
 import { fetchAdmins, fetchDrivers, fetchParents, fetchResponsibles } from '@/services/user';
-import attendanceService from '@/services/attendanceService';
+import attendanceService from '@/services/attendanceservice';
 import { useEffect, useState } from 'react';
 
 const SuperAdminDashboardPage = () => {

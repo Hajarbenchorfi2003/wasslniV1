@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { ModalRoute } from './ModalRoute';
 import { RouteCard } from './RouteCard';
-import routeService from '@/services/routeService';
+import routeService from '@/services/routeservice';
 import {fetchUserEstablishments} from '@/services/etablissements';
 
 const ITEMS_PER_PAGE = 6;

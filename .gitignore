@@ -35,3 +35,4 @@ yarn-error.log*
 .contentlayer
 tsconfig.tsbuildinfo
 /.contentlayer/
+package-lock.json

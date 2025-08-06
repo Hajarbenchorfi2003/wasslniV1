@@ -24,23 +24,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Import Leaflet components for the embedded map
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default Leaflet marker icons
-import L from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import {getToken, isAuthenticated } from '@/utils/auth';
+import dynamic from 'next/dynamic';
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x.src,
-  iconUrl: markerIcon.src,
-  shadowUrl: markerShadow.src,
-});
+// Import Leaflet components dynamically to avoid SSR issues
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 
 const DailyTripDetailsPage = () => {
   const [dailyTrips, setDailyTrips] = useState([]);
@@ -297,7 +289,7 @@ const DailyTripDetailsPage = () => {
         <div className="text-center text-red-500">
           <Icon icon="heroicons:exclamation-triangle" className="h-8 w-8 mx-auto" />
           <p className="mt-2">{error}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
+          <Button onClick={() => typeof window !== 'undefined' && window.location.reload()} className="mt-4">
             Réessayer
           </Button>
         </div>
@@ -654,43 +646,48 @@ const DailyTripDetailsPage = () => {
                 
                 {stops.length > 0 ? (
                   <div className="w-full h-[400px] rounded-md overflow-hidden border">
-                    <MapContainer
-                      center={mapInitialCenter}
-                      zoom={13}
-                      scrollWheelZoom={false}
-                      className="h-full w-full"
-                    >
-                      <TileLayer
-                        attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      {stops.map((stop, index) => (
-                        <Marker key={stop.id} position={[parseFloat(stop.lat), parseFloat(stop.lng)]}>
-                          <Popup>
-                            <div>
-                              <strong>Arrêt {index + 1}: {stop.name}</strong>
-                              <br />
-                              {stop.address}
-                            </div>
-                          </Popup>
-                        </Marker>
-                      ))}
-                      {polylinePositions.length > 1 && (
-                        <Polyline positions={polylinePositions} color="blue" weight={5} opacity={0.7} />
-                      )}
-                      {busPosition && (
-                        <Marker position={[busPosition.lat, busPosition.lng]} icon={new L.Icon({
-                          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                          iconSize: [25, 41],
-                          iconAnchor: [12, 41],
-                          popupAnchor: [1, -34],
-                          shadowSize: [41, 41]
-                        })}>
-                          <Popup>Position actuelle du bus</Popup>
-                        </Marker>
-                      )}
-                    </MapContainer>
+                    {typeof window !== 'undefined' && (
+                      <MapContainer
+                        center={mapInitialCenter}
+                        zoom={13}
+                        scrollWheelZoom={false}
+                        className="h-full w-full"
+                      >
+                        <TileLayer
+                          attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        {stops.map((stop, index) => (
+                          <Marker key={stop.id} position={[parseFloat(stop.lat), parseFloat(stop.lng)]}>
+                            <Popup>
+                              <div>
+                                <strong>Arrêt {index + 1}: {stop.name}</strong>
+                                <br />
+                                {stop.address}
+                              </div>
+                            </Popup>
+                          </Marker>
+                        ))}
+                        {polylinePositions.length > 1 && (
+                          <Polyline positions={polylinePositions} color="blue" weight={5} opacity={0.7} />
+                        )}
+                        {busPosition && (
+                          <Marker 
+                            position={[busPosition.lat, busPosition.lng]} 
+                            icon={typeof window !== 'undefined' && window.L ? new window.L.Icon({
+                              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                              iconSize: [25, 41],
+                              iconAnchor: [12, 41],
+                              popupAnchor: [1, -34],
+                              shadowSize: [41, 41]
+                            }) : undefined}
+                          >
+                            <Popup>Position actuelle du bus</Popup>
+                          </Marker>
+                        )}
+                      </MapContainer>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8">

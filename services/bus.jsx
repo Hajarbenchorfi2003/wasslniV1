@@ -17,7 +17,6 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getToken();
-    console.log("Token envoyé dans la requête :", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -25,17 +24,15 @@ axiosInstance.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-console.log("i am in buses")
+// Bus service configured
 // Récupérer tous les bus (avec permission view:Allbus)
 export async function fetchAllBuses(filters = {}) {
   if (!isAuthenticated()) throw new Error('Non authentifié');
 
   try {
     const response = await axiosInstance.get('/buses', { params: filters });
-    console.log('Données des bus reçues:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Erreur lors de la récupération des bus:', error);
     throw error;
   }
 };

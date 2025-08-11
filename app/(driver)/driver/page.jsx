@@ -33,21 +33,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-// Leaflet + Map
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
-
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x.src,
-  iconUrl: markerIcon.src,
-  shadowUrl: markerShadow.src,
-});
+// Import Leaflet components dynamically to avoid SSR issues
+import dynamic from 'next/dynamic';
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 
 const ITEMS_PER_PAGE = 5;
 
@@ -510,43 +502,48 @@ const DriverDashboardPage =() =>{
                     <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l&apos;Itinéraire</h3>
                     {stopsInSelectedRoute.length > 0 ? (
                       <div className="w-full h-[400px] rounded-md overflow-hidden border">
-                        <MapContainer
-                          center={[stopsInSelectedRoute[0].lat, stopsInSelectedRoute[0].lng]}
-                          zoom={13}
-                          scrollWheelZoom={false}
-                          className="h-full w-full"
-                        >
-                          <TileLayer
-                            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          />
-                          {stopsInSelectedRoute.map((stop, index) => (
-                            <Marker key={stop.id} position={[stop.lat, stop.lng]}>
-                              <Popup>
-                                <div>
-                                  <strong>Arrêt {index + 1}: {stop.name}</strong>
-                                  <br />
-                                  {stop.address}
-                                </div>
-                              </Popup>
-                            </Marker>
-                          ))}
-                          {stopsInSelectedRoute.length > 1 && (
-                            <Polyline positions={stopsInSelectedRoute.map(stop => [stop.lat, stop.lng])} color="blue" />
-                          )}
-                          {busPosition && (
-                            <Marker position={[busPosition.lat, busPosition.lng]} icon={new L.Icon({
-                              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                              iconSize: [25, 41],
-                              iconAnchor: [12, 41],
-                              popupAnchor: [1, -34],
-                              shadowSize: [41, 41]
-                            })}>
-                              <Popup>Position actuelle du bus</Popup>
-                            </Marker>
-                          )}
-                        </MapContainer>
+                        {typeof window !== 'undefined' && (
+                          <MapContainer
+                            center={[stopsInSelectedRoute[0].lat, stopsInSelectedRoute[0].lng]}
+                            zoom={13}
+                            scrollWheelZoom={false}
+                            className="h-full w-full"
+                          >
+                            <TileLayer
+                              attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            {stopsInSelectedRoute.map((stop, index) => (
+                              <Marker key={stop.id} position={[stop.lat, stop.lng]}>
+                                <Popup>
+                                  <div>
+                                    <strong>Arrêt {index + 1}: {stop.name}</strong>
+                                    <br />
+                                    {stop.address}
+                                  </div>
+                                </Popup>
+                              </Marker>
+                            ))}
+                            {stopsInSelectedRoute.length > 1 && (
+                              <Polyline positions={stopsInSelectedRoute.map(stop => [stop.lat, stop.lng])} color="blue" />
+                            )}
+                            {busPosition && (
+                              <Marker 
+                                position={[busPosition.lat, busPosition.lng]} 
+                                icon={typeof window !== 'undefined' && window.L ? new window.L.Icon({
+                                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                                  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                                  iconSize: [25, 41],
+                                  iconAnchor: [12, 41],
+                                  popupAnchor: [1, -34],
+                                  shadowSize: [41, 41]
+                                }) : undefined}
+                              >
+                                <Popup>Position actuelle du bus</Popup>
+                              </Marker>
+                            )}
+                          </MapContainer>
+                        )}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">Aucun arrêt pour afficher l&apos;itinéraire.</p>

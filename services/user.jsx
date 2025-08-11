@@ -17,16 +17,14 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getToken();
-     console.log("Token envoyé dans la requête :", token);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
-console.log(axiosInstance)
+// Axios instance configured
 export async function fetchAdmins() {
   const response = await axiosInstance.get('/users/admins');
   return response.data;

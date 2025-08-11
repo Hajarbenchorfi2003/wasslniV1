@@ -30,14 +30,13 @@ const handleApiError = (error) => {
 
   if (error.response) {
     // Erreur côté serveur
-    console.error('Erreur API:', error.response.data);
     errorMessage = error.response.data.message || 'Erreur serveur';
   } else if (error.request) {
     // Aucune réponse reçue
-    console.error('Aucune réponse du serveur');
+    errorMessage = 'Aucune réponse du serveur';
   } else {
     // Erreur avant l'envoi
-    console.error('Erreur lors de la requête:', error.message);
+    errorMessage = error.message;
   }
 
   return new Error(errorMessage);
@@ -48,7 +47,6 @@ const driverService = {
           const response = await axiosInstance.get('/dailyTrip/today');
           return response.data.data;  
         } catch (error) {
-          console.error('Error fetching daily trips:', error);
           throw error;
         }
       },
@@ -57,8 +55,7 @@ const driverService = {
         try {
           const response = await axiosInstance.get(`/dailyTrip/${tripId}`);
           return response.data;  
-        } catch (error) {
-            console.error('Error fetching daily trips:', error);
+          } catch (error) {
             throw error;
           }
       },
@@ -157,7 +154,6 @@ const driverService = {
       const response = await axiosInstance.post('/attendances', data);
       return response.data;
     } catch (error) {
-      console.error("Erreur API:", error.response?.data);
       throw error;
     }
   },

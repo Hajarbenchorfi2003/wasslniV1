@@ -44,39 +44,85 @@ const handleApiError = (error) => {
 };
 
 export async function getNotfication() {
-    try {
-      const response = await axiosInstance.get('/notifications');
-      return response.data;
-    } catch (error) {
-      handleApiError(error);
-    }
-  };
-  export async function markNotificationAsRead(notificationId) {
-    try {
-      const response = await axiosInstance.patch(`/notifications/${notificationId}/read`);
-      return response.data;
-    } catch (error) {
-      handleApiError(error);
-    }
-  };
-  // --- Incidents ---
+  try {
+    const response = await axiosInstance.get('/notifications');
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
 
-  export async function reportIncident(dailyTripId, description) {
-    try {
-       const response = await axiosInstance.post('/incidents', {
-       dailyTripId,
-       description,
-      });
-      return response.data;
-    } catch (error) {
-      handleApiError(error);
-    }
-  };
-  export async function getAllIncidents() {
-try {
-  const response = await axiosInstance.get('/incidents');
-  return response.data;
-} catch (error) {
-  handleApiError(error);
-}
+export async function markNotificationAsRead(notificationId) {
+  try {
+    const response = await axiosInstance.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+// --- Incidents ---
+export async function reportIncident(dailyTripId, description) {
+  try {
+    const response = await axiosInstance.post('/incidents', {
+      dailyTripId,
+      description,
+    });
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+export async function getAllIncidents() {
+  try {
+    const response = await axiosInstance.get('/incidents');
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+export async function getIncidentsByEstablishment(establishmentId) {
+  try {
+    const response = await axiosInstance.get(`/incidents/establishment/${establishmentId}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+export async function getNotificationsForUser(userId) {
+  try {
+    const response = await axiosInstance.get(`/notifications/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+export async function updateIncidentStatus({ id, status }) {
+  try {
+    const response = await axiosInstance.patch(`/incidents/${id}/status`, { status });
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+export async function deleteIncident(id) {
+  try {
+    const response = await axiosInstance.delete(`/incidents/${id}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+export async function deleteNotification(id) {
+  try {
+    const response = await axiosInstance.delete(`/notifications/${id}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
 };

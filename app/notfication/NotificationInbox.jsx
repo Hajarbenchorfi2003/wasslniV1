@@ -5,7 +5,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     markNotificationAsRead,
     getNotfication,
-  getAllIncidents,
+    getAllIncidents,
+    getIncidentsByEstablishment,
+    getNotificationsForUser,
+    updateIncidentStatus,
+    deleteIncident,
+    deleteNotification,
 } from '@/services/notficationicidient';
 import { Card, CardContent } from "@/components/ui/card";
 import { Icon } from '@iconify/react';

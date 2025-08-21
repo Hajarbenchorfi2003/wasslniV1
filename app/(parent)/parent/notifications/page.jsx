@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import parentService from '@/services/parentService';
+import parentService from '@/services/parentservice';
 import { ParentNotificationsList } from '../components/ParentNotificationsList';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';

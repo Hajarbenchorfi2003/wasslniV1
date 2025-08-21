@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { Card, CardContent } from '@/components/ui/card';
-import parentService from '@/services/parentService';
+import parentService from '@/services/parentservice';
 import { getToken } from '@/utils/auth';
 
 // Import dynamique du composant Map

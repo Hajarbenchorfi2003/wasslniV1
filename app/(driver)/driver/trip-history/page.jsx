@@ -39,7 +39,7 @@ const ITEMS_PER_PAGE = 10;
   const fetchDriverTrips = useCallback(async () => {
     try {
       setLoading(true);
-      const trips = await driverService.getDailyTrips();
+      const trips = await driverService.getallDailyTrips();
       setAllDriverTrips(trips);
       setFilteredTrips(trips);
     } catch (error) {

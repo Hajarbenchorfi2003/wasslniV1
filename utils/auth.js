@@ -122,10 +122,10 @@ export const userAPI = {
     }
   },
 
-  async updateProfile(userData) {
+   async updateProfile(userData) {
     try {
       const token = getToken();
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/voirmonprofil`, userData, {
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/update-profile`, userData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;

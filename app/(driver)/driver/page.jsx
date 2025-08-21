@@ -1,7 +1,7 @@
 // pages/driver/DriverDashboardPage.jsx
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import driverService  from '@/services/driverService';
+import driverService  from '@/services/driverservice';
 
 import { AssignedTripsList } from './AssignedTripsList';
 import { MarkAttendanceModal } from './MarkAttendanceModal';

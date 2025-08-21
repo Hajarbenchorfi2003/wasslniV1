@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import driverService from '@/services/driverService';
+import driverService from '@/services/driverservice';
 import { NotificationsList } from '../NotificationsList';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';

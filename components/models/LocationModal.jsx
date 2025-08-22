@@ -42,7 +42,7 @@ export default function ParentLocationModal() {
       const { latitude, longitude } = pos.coords;
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/me/location`, {
-          method: "POST",
+         method: 'PUT', 
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

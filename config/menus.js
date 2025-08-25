@@ -883,11 +883,11 @@ export const menuSuperAdminConfig = {
           href: "/super-admin/routes",
           icon: "Map",
         },
-        {
+      /*   {
           title: "Arrêts",
           icon: "Flag",
           href: "/super-admin/stops",
-        },
+        }, */
         {
           title: "Trajets",
           href: "/super-admin/trips",
@@ -1011,11 +1011,11 @@ export const menuSuperAdminConfig = {
             href: "/super-admin/routes",
             icon: "Map",
           },
-          {
+         /*  {
             title: "Arrêts",
             icon: "Flag",
             href: "/super-admin/stops",
-          },
+          }, */
           {
             title: "Trajets",
             href: "/super-admin/trips",
@@ -1137,11 +1137,11 @@ export const menuSuperAdminConfig = {
         icon: "Map",
         href: "/super-admin/routes",
       },
-      {
+    /*   {
         title: "Arrêts",
         icon: "Flag",
         href: "/super-admin/stops",
-      },
+      }, */
       {
         title: "Trajets",
         icon: "Route",
@@ -1252,11 +1252,11 @@ export const menuAdminConfig = {
           href: "/admin/routes",
           icon: "Map",
         },
-        {
+     /*    {
           title: "Arrêts",
           icon: "Flag",
           href: "/admin/stops",
-        },
+        }, */
         {
           title: "Trajets",
           href: "/admin/trips",
@@ -1350,11 +1350,11 @@ export const menuAdminConfig = {
             href: "/admin/routes",
             icon: "Map",
           },
-          {
+        /*   {
             title: "Arrêts",
             icon: "Flag",
             href: "/admin/stops",
-          },
+          }, */
           {
             title: "Trajets",
             href: "/admin/trips",
@@ -1452,11 +1452,11 @@ export const menuAdminConfig = {
         icon: "Map",
         href: "/admin/routes",
       },
-      {
+     /*  {
         title: "Arrêts",
         icon: "Flag",
         href: "/admin/stops",
-      },
+      }, */
       {
         title: "Trajets",
         icon: "Route",
@@ -1838,11 +1838,11 @@ export const menuManagerConfig = {
           icon: "Map",
           href: "/manager/routes",
         },
-        {
+        /* {
           title: "Arrêts",
           href: "/manager/stops",
           icon: "Flag",
-        },
+        }, */
       ],
     },
     {
@@ -1930,11 +1930,11 @@ export const menuManagerConfig = {
             icon: "Map",
             href: "/manager/routes",
           },
-          {
+          /* {
             title: "Arrêts",
             href: "/manager/stops",
             icon: "Flag",
-          },
+          }, */
         ],
       },
       {
@@ -2033,11 +2033,11 @@ export const menuManagerConfig = {
         icon: "Map",
         href: "/manger/routes",
       },
-      {
+      /* {
         title: "Arrêts",
         icon: "Flag",
         href: "/manager/stops",
-      },
+      }, */
       {
         isHeader: true,
         title: "SUIVI & RAPPORTS",

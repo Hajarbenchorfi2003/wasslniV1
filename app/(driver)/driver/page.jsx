@@ -35,6 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {getToken, isAuthenticated } from '@/utils/auth';
+
 // Import Leaflet components dynamically to avoid SSR issues
 import dynamic from 'next/dynamic';
 const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
@@ -43,23 +44,37 @@ const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), 
 const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 
+// Import Leaflet and its CSS
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix for default markers in Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
 const ITEMS_PER_PAGE = 5;
 
 const DriverDashboardPage =() =>{
   const [driver, setDriver] = useState(null);
   const [dailyTrips, setDailyTrips] = useState([]);
+  const [dailyTrip, setDailyTrip] = useState(null);
   const [selectedDailyTrip, setSelectedDailyTrip] = useState(null);
   const [studentsInSelectedTrip, setStudentsInSelectedTrip] = useState([]);
   const [stopsInSelectedRoute, setStopsInSelectedRoute] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [busPosition, setBusPosition] = useState(null);
   const [isTrackingActive, setIsTrackingActive] = useState(false);
- const [parentsCoordinates, setParentsCoordinates] = useState([]);
+  const [parentsCoordinates, setParentsCoordinates] = useState([]);
   const [isLoadingParents, setIsLoadingParents] = useState(false);
- const [error, setError] = useState(null);
+  const [error, setError] = useState(null);
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [positionInterval, setPositionInterval] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -78,49 +93,52 @@ const DriverDashboardPage =() =>{
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] =
     useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+  
   useEffect(() => {
-     const newSocket = io('https://wasslni-backend.onrender.com/', {
-       auth: {
-         token: getToken()
-       }
-     });
- 
-     setSocket(newSocket);
- 
-     newSocket.on('connect', () => {
-       setIsConnected(true);
-       toast.success('Connecté au serveur de suivi');
-     });
- 
-     newSocket.on('connect_error', (err) => {
-       toast.error(`Erreur de connexion: ${err.message}`);
-     });
- 
-     newSocket.on('disconnect', () => {
-       setIsConnected(false);
-       toast.error('Déconnecté du serveur de suivi');
-     });
- 
-     return () => {
-       newSocket.disconnect();
-       if (positionInterval) clearInterval(positionInterval);
-     };
-   }, []);
+    const newSocket = io('https://wasslni-backend.onrender.com/', {
+      auth: {
+        token: getToken()
+      }
+    });
+
+    setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+      setIsConnected(true);
+      toast.success('Connecté au serveur de suivi');
+    });
+
+    newSocket.on('connect_error', (err) => {
+      toast.error(`Erreur de connexion: ${err.message}`);
+    });
+
+    newSocket.on('disconnect', () => {
+      setIsConnected(false);
+      toast.error('Déconnecté du serveur de suivi');
+    });
+
+    return () => {
+      newSocket.disconnect();
+      if (positionInterval) clearInterval(positionInterval);
+    };
+  }, []);
+
   // Load driver & trips on mount
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
+        setLoading(true);
         const trips = await driverService.getDailyTrips();
         setDailyTrips(trips);
-
         if (trips.length > 0 && trips[0].trip?.driver) {
           setDriver(trips[0].trip.driver);
-         }
-         const fetchedNotifications = await driverService.getNotfication();
-         setNotifications(fetchedNotifications);
+        }
+        const fetchedNotifications = await driverService.getNotfication();
+        setNotifications(fetchedNotifications);
       } catch (error) {
-      
         toast.error("Impossible de charger les données");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -150,7 +168,6 @@ const DriverDashboardPage =() =>{
         );
       });
     }
-   
 
     const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
     setTotalDailyTripPages(totalPages);
@@ -165,16 +182,16 @@ const DriverDashboardPage =() =>{
         setStudentsInSelectedTrip([]);
         setStopsInSelectedRoute([]);
         setBusPosition(null);
-         setParentsCoordinates([]);
+        setParentsCoordinates([]);
         return;
       }
 
       try {
-
         setIsLoadingParents(true);
 
         // Charger les détails du trajet
         const tripDetails = await driverService.getTripDetails(selectedDailyTrip.id);
+        setDailyTrip(tripDetails);
         
         // Charger les coordonnées des parents
         const tripId = tripDetails.trip?.id || selectedDailyTrip.tripId;
@@ -187,13 +204,14 @@ const DriverDashboardPage =() =>{
             setParentsCoordinates([]);
           }
         }
+        
         const students = tripDetails.trip?.tripStudents?.map(ts => ts.student) || [];
-         const attendance = tripDetails.attendances?.map(ts => ts.student) || [];
-    
-       
         setStudentsInSelectedTrip(students);
-       
-        setBusPosition(tripDetails.currentPosition || null);
+        
+        // Set initial bus position if available
+        if (tripDetails.currentPosition) {
+          setBusPosition(tripDetails.currentPosition);
+        }
       } catch (error) {
         console.error('Error loading trip details:', error);
         toast.error("Erreur lors du chargement des détails du trajet");
@@ -256,47 +274,46 @@ const DriverDashboardPage =() =>{
       toast.error("Veuillez sélectionner un trajet.");
       return;
     }
-    setIsTrackingActive(!isTrackingActive);
-    toast.success(`Suivi GPS ${isTrackingActive ? 'désactivé' : 'activé'}`);
-     if (!isTrackingActive) {
-          if (!navigator.geolocation) {
-            toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
-            return;
-          }
     
-          if (!socket || !dailyTrip?.id) {
-            toast.error('Connexion au serveur non établie ou trajet non sélectionné');
-            return;
-          }
-    
-          const interval = setInterval(() => {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const { latitude: lat, longitude: lng } = position.coords;
-                socket.emit('bus-position', {
-                  dailyTripId: dailyTrip.id,
-                  lat,
-                  lng,
-                  timestamp: new Date().toISOString()
-                });
-                setBusPosition({ lat, lng });
-              },
-              (err) => {
-                console.error('Erreur GPS:', err);
-                toast.error(`Erreur GPS: ${err.message}`);
-              },
-              { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-            );
-          }, 3000);
-    
-          setPositionInterval(interval);
-          setIsTrackingActive(true);
-          toast.success('Suivi GPS activé');
-        } else {
-          if (positionInterval) clearInterval(positionInterval);
-          setIsTrackingActive(false);
-          toast.success('Suivi GPS désactivé');
-        }
+    if (!isTrackingActive) {
+      if (!navigator.geolocation) {
+        toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
+        return;
+      }
+
+      if (!socket || !dailyTrip?.id) {
+        toast.error('Connexion au serveur non établie ou trajet non sélectionné');
+        return;
+      }
+
+      const interval = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude: lat, longitude: lng } = position.coords;
+            socket.emit('bus-position', {
+              dailyTripId: dailyTrip.id,
+              lat,
+              lng,
+              timestamp: new Date().toISOString()
+            });
+            setBusPosition({ lat, lng });
+          },
+          (err) => {
+            console.error('Erreur GPS:', err);
+            toast.error(`Erreur GPS: ${err.message}`);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      }, 3000);
+
+      setPositionInterval(interval);
+      setIsTrackingActive(true);
+      toast.success('Suivi GPS activé');
+    } else {
+      if (positionInterval) clearInterval(positionInterval);
+      setIsTrackingActive(false);
+      toast.success('Suivi GPS désactivé');
+    }
   };
 
   const getAttendanceStatusForStudent = useCallback(
@@ -312,6 +329,7 @@ const DriverDashboardPage =() =>{
     },
     [selectedDailyTrip]
   );
+  
   const handleOpenIncidentModal = () => {
     if (!selectedDailyTrip) {
       toast.error("Veuillez sélectionner un trajet.");
@@ -319,6 +337,7 @@ const DriverDashboardPage =() =>{
     }
     setIsIncidentModalOpen(true);
   };
+  
   const handleOpenAttendanceModal = (studentId) => {
     if (!selectedDailyTrip) {
       toast.error("Veuillez sélectionner un trajet.");
@@ -359,6 +378,7 @@ const DriverDashboardPage =() =>{
         return 'Inconnu';
     }
   };
+  
   const getAttendanceColor = (status) => {
     switch (status) {
       case 'PRESENT':
@@ -389,22 +409,43 @@ const DriverDashboardPage =() =>{
     }
   };
 
-  if (!dailyTrips) {
+  const getMapCenter = () => {
+    if (busPosition) {
+      return [busPosition.lat, busPosition.lng];
+    }
+    if (parentsCoordinates.length > 0) {
+      return [parentsCoordinates[0].lat, parentsCoordinates[0].lng];
+    }
+    return [36.8065, 10.1815]; // Default to Tunisia coordinates
+  };
+
+  // Custom icons for map markers
+  const busIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  const parentIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         Chargement des informations...
       </div>
     );
   }
-  const getMapCenter = () => {
-    if (parentsCoordinates.length > 0) {
-      return [parentsCoordinates[0].lat, parentsCoordinates[0].lng];
-    }
-    if (busPosition) {
-      return [busPosition.lat, busPosition.lng];
-    }
-    return [0, 0]; // Fallback
-  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -427,7 +468,6 @@ const DriverDashboardPage =() =>{
               <p>Trajets aujourd&apos;hui</p>
               <p className="text-2xl font-bold">
                 {dailyTrips.length}
-
               </p>
             </div>
           </CardContent>
@@ -444,10 +484,11 @@ const DriverDashboardPage =() =>{
         />
         <DatePickerWithRange date={selectedDate} setDate={setSelectedDate} />
       </div>
+      
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-        {selectedDailyTrip ? (
+          {selectedDailyTrip ? (
             <Card className="shadow-sm border border-gray-200 h-full flex flex-col">
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
@@ -466,21 +507,21 @@ const DriverDashboardPage =() =>{
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                     {selectedDailyTrip.status === 'PLANNED' && (
+                    {selectedDailyTrip.status === 'PLANNED' && (
                       <Button onClick={handleStartTrip} variant="default" size="sm">
-                          <Icon icon="heroicons:play" className="h-4 w-4 mr-2" /> Démarrer
-                        </Button>
-                      )}
-                      {selectedDailyTrip.status === 'ONGOING' && (
+                        <Icon icon="heroicons:play" className="h-4 w-4 mr-2" /> Démarrer
+                      </Button>
+                    )}
+                    {selectedDailyTrip.status === 'ONGOING' && (
                       <Button onClick={handleCompleteTrip} variant="default" size="sm">
-                          <Icon icon="heroicons:check" className="h-4 w-4 mr-2" /> Terminer
-                        </Button>
-                      )}
-                      {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING') && (
+                        <Icon icon="heroicons:check" className="h-4 w-4 mr-2" /> Terminer
+                      </Button>
+                    )}
+                    {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING') && (
                       <Button onClick={handleCancelTrip} variant="destructive" size="sm">
-                          <Icon icon="heroicons:x-mark" className="h-4 w-4 mr-2" /> Annuler
-                        </Button>
-                      )}
+                        <Icon icon="heroicons:x-mark" className="h-4 w-4 mr-2" /> Annuler
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -495,178 +536,158 @@ const DriverDashboardPage =() =>{
                   </TabsList>
 
                   <TabsContent value="overview" className="space-y-4">
-                 {/* Bus & Route Info */}
+                    {/* Bus & Route Info */}
                     <div className="grid grid-cols-2 gap-4 p-4 bg-default-50 rounded-lg">
-                  <div>
+                      <div>
                         <h4 className="font-semibold text-sm mb-2">Informations Bus</h4>
                         <p className="text-sm"><strong>Plaque:</strong> {selectedDailyTrip.trip?.bus?.plateNumber || 'N/A'}</p>
                         <p className="text-sm"><strong>Marque:</strong> {selectedDailyTrip.trip?.bus?.marque || 'N/A'}</p>
                         <p className="text-sm"><strong>Capacité:</strong> {selectedDailyTrip.trip?.bus?.capacity || 'N/A'} places</p>
-                  </div>
-                  <div>
+                      </div>
+                      <div>
                         <h4 className="font-semibold text-sm mb-2">Informations Route</h4>
                         <p className="text-sm"><strong>Route:</strong> {selectedDailyTrip.trip?.route?.name || 'N/A'}</p>
                         <p className="text-sm"><strong>Élèves:</strong> {studentsInSelectedTrip.length}</p>
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
                     {/* Quick Actions */}
-                    {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING')&& (
+                    {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING') && (
                       <div className="grid grid-cols-2 gap-4">
-                       <Button 
-                       onClick={handleToggleTracking} 
-                       variant={isTrackingActive ? "destructive" : "default"}
-                       className=" flex   gap-2"
-                     >
-                       <Icon icon="heroicons:map-pin" className="h-6 w-6" />
-                       {isTrackingActive ? 'Désactiver GPS' : 'Activer GPS'}
-                     </Button>
-                     <Button 
-                       onClick={handleOpenIncidentModal} 
-                       variant="outline"
-                       className="  flex   gap-2"
-                     >
-                       <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6" />
-                       Signaler Incident
-                     </Button>
-                    </div>
+                        <Button 
+                          onClick={handleToggleTracking} 
+                          variant={isTrackingActive ? "destructive" : "default"}
+                          className="flex gap-2"
+                        >
+                          <Icon icon="heroicons:map-pin" className="h-6 w-6" />
+                          {isTrackingActive ? 'Désactiver GPS' : 'Activer GPS'}
+                        </Button>
+                        <Button 
+                          onClick={handleOpenIncidentModal} 
+                          variant="outline"
+                          className="flex gap-2"
+                        >
+                          <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6" />
+                          Signaler Incident
+                        </Button>
+                      </div>
                     )}
-                    
-                     
                   </TabsContent>
 
                   <TabsContent value="students" className="space-y-4">
-  <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Élèves & Présence</h3>
-  {studentsInSelectedTrip.length > 0 ? (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Élève</TableHead>
-            <TableHead>Classe</TableHead>
-            <TableHead>Quartier</TableHead>
-            <TableHead>Statut</TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {studentsInSelectedTrip.map(student => {
-            const studentAttendanceStatus = getAttendanceStatusForStudent(student.id);
-            const isStatusUndefined = !studentAttendanceStatus || studentAttendanceStatus === 'EN_COURS';
-            
-            return (
-              <TableRow key={student.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>{student.fullname.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{student.fullname}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{student.class}</TableCell>
-                <TableCell>{student.quartie}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant="soft"
-                    color={getAttendanceColor(studentAttendanceStatus)}
-                    className="capitalize"
-                  >
-                    {isStatusUndefined ? 'En cours' : getAttendanceText(studentAttendanceStatus)}
-                  </Badge>
-                </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                      onClick={() => handleOpenAttendanceModal(student.id)}
-                                  className="text-primary-foreground bg-primary hover:bg-primary/90"
-                                >
-                                  <Icon icon="heroicons:check-circle" className="h-4 w-4 mr-2" /> Marquer
-                                </Button>
-                              </TableCell>
+                    <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Élèves & Présence</h3>
+                    {studentsInSelectedTrip.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Élève</TableHead>
+                              <TableHead>Classe</TableHead>
+                              <TableHead>Quartier</TableHead>
+                              <TableHead>Statut</TableHead>
+                              <TableHead className="text-right">Action</TableHead>
                             </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Aucun élève assigné à ce trajet.</p>
-                )}
+                          </TableHeader>
+                          <TableBody>
+                            {studentsInSelectedTrip.map(student => {
+                              const studentAttendanceStatus = getAttendanceStatusForStudent(student.id);
+                              const isStatusUndefined = !studentAttendanceStatus || studentAttendanceStatus === 'EN_COURS';
+                              
+                              return (
+                                <TableRow key={student.id}>
+                                  <TableCell>
+                                    <div className="flex items-center gap-2">
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarFallback>{student.fullname.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <span className="font-medium">{student.fullname}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell>{student.class}</TableCell>
+                                  <TableCell>{student.quartie}</TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant="soft"
+                                      color={getAttendanceColor(studentAttendanceStatus)}
+                                      className="capitalize"
+                                    >
+                                      {isStatusUndefined ? 'En cours' : getAttendanceText(studentAttendanceStatus)}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleOpenAttendanceModal(student.id)}
+                                      className="text-primary-foreground bg-primary hover:bg-primary/90"
+                                    >
+                                      <Icon icon="heroicons:check-circle" className="h-4 w-4 mr-2" /> Marquer
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Aucun élève assigné à ce trajet.</p>
+                    )}
                   </TabsContent>
 
                   <TabsContent value="route" className="space-y-4">
                     <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l&apos;Itinéraire</h3>
                     {parentsCoordinates.length > 0 || busPosition ? (
                       <div className="w-full h-[400px] rounded-md overflow-hidden border">
-                        {typeof window !== 'undefined' && (
-                          <MapContainer
-                           center={getMapCenter()}
-                            zoom={13}
-                            scrollWheelZoom={false}
-                            className="h-full w-full"
-                          >
-                            <TileLayer
-                              attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            />
-                            {/* Marqueurs pour les parents */}
-                            {parentsCoordinates.map((parent, index) => (
-                              parent.lat && parent.lng && (
-                                  <Marker
-                                      key={`parent-${parent.parentId || index}`}
-                                      position={[parent.lat, parent.lng]}
-                                      iconConfig={{
-                                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                                         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                                         iconSize: [25, 41],
-                                        iconAnchor: [12, 41],
-                                        popupAnchor: [1, -34],
-                                        shadowSize: [41, 41]
-                                      }}
-                                  >
-                                  <Popup>
-                                    <div className="text-center">
-                                      <strong>📍 Parent: {parent.parentName || 'Parent'}</strong>
-                                      <br />
-                                      {parent.parentPhone && (
-                                        <><small>Tél: {parent.parentPhone}</small><br /></>
-                                      )}
-                                      {parent.studentName && (
-                                        <><small>Élève: {parent.studentName}</small><br /></>
-                                      )}
-                                      <span className="text-green-600">● Domicile parent</span>
-                                    </div>
-                                  </Popup>
-                                </Marker>
-                              )
-                            ))}
-                            {parentsCoordinates.length > 1 && (
-                              <Polyline positions={parentsCoordinate.map(stop => [stop.lat, stop.lng])} color="blue" />
-                            )}
-                            {busPosition && (
-                              <Marker 
-                                position={[busPosition.lat, busPosition.lng]} 
-                                icon={typeof window !== 'undefined' && window.L ? new window.L.Icon({
-                                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                                  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                                  iconSize: [25, 41],
-                                  iconAnchor: [12, 41],
-                                  popupAnchor: [1, -34],
-                                  shadowSize: [41, 41]
-                                }) : undefined}
+                        <MapContainer
+                          center={getMapCenter()}
+                          zoom={13}
+                          scrollWheelZoom={false}
+                          className="h-full w-full"
+                        >
+                          <TileLayer
+                            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          {/* Marqueurs pour les parents */}
+                          {parentsCoordinates.map((parent, index) => (
+                            parent.lat && parent.lng && (
+                              <Marker
+                                key={`parent-${parent.parentId || index}`}
+                                position={[parent.lat, parent.lng]}
+                                icon={parentIcon}
                               >
-                                <Popup>Position actuelle du bus</Popup>
+                                <Popup>
+                                  <div className="text-center">
+                                    <strong>📍 Parent: {parent.parentName || 'Parent'}</strong>
+                                    <br />
+                                    {parent.parentPhone && (
+                                      <><small>Tél: {parent.parentPhone}</small><br /></>
+                                    )}
+                                    {parent.studentName && (
+                                      <><small>Élève: {parent.studentName}</small><br /></>
+                                    )}
+                                    <span className="text-green-600">● Domicile parent</span>
+                                  </div>
+                                </Popup>
                               </Marker>
-                            )}
-                          </MapContainer>
-                        )}
+                            )
+                          ))}
+                          
+                          {/* Bus position marker */}
+                          {busPosition && (
+                            <Marker 
+                              position={[busPosition.lat, busPosition.lng]} 
+                              icon={busIcon}
+                            >
+                              <Popup>Position actuelle du bus</Popup>
+                            </Marker>
+                          )}
+                        </MapContainer>
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">Aucun arrêt pour afficher l&apos;itinéraire.</p>
                     )}
-
 
                     {/* Statistiques des parents */}
                     {parentsCoordinates.length > 0 && (
@@ -704,13 +725,12 @@ const DriverDashboardPage =() =>{
                         }
                       </p>
                       <p className="text-sm mt-2">
-                          Statut WebSocket: 
-                          <Badge variant="outline" className="ml-2">
-                            {isConnected ? 'Connecté' : 'Déconnecté'}
-                          </Badge>
-                        </p>
+                        Statut WebSocket: 
+                        <Badge variant="outline" className="ml-2">
+                          {isConnected ? 'Connecté' : 'Déconnecté'}
+                        </Badge>
+                      </p>
                     </div>
-                    
 
                     {busPosition && (
                       <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -779,4 +799,5 @@ const DriverDashboardPage =() =>{
     </div>
   );
 };
+
 export default DriverDashboardPage;

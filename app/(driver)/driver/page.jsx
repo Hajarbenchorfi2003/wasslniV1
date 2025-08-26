@@ -38,6 +38,7 @@ import {getToken, isAuthenticated } from '@/utils/auth';
 
 // Import Leaflet CSS
 import 'leaflet/dist/leaflet.css';
+import dynamic from 'next/dynamic';
 
 // Fix for default markers in Leaflet - only on client side
 if (typeof window !== 'undefined') {
@@ -52,26 +53,12 @@ if (typeof window !== 'undefined') {
 }
 
 // Import Leaflet components dynamically to avoid SSR issues
-const MapContainer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Marker),
-  { ssr: false }
-);
-const Popup = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Popup),
-  { ssr: false }
-);
-const Polyline = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Polyline),
-  { ssr: false }
-);
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
+
 
 const ITEMS_PER_PAGE = 5;
 
@@ -659,6 +646,7 @@ const DriverDashboardPage =() =>{
                     <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l&apos;Itinéraire</h3>
                     {isClient && (parentsCoordinates.length > 0 || busPosition) ? (
                       <div className="w-full h-[400px] rounded-md overflow-hidden border">
+                        {typeof window !== 'undefined' && (
                         <MapContainer
                           center={getMapCenter()}
                           zoom={13}
@@ -704,6 +692,7 @@ const DriverDashboardPage =() =>{
                             </Marker>
                           )}
                         </MapContainer>
+                        )}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">Aucun arrêt pour afficher l&apos;itinéraire.</p>

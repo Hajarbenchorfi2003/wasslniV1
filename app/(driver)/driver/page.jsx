@@ -36,25 +36,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {getToken, isAuthenticated } from '@/utils/auth';
 
-// Import Leaflet components dynamically to avoid SSR issues
-import dynamic from 'next/dynamic';
-const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
-const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
-
-// Import Leaflet and its CSS
+// Import Leaflet CSS
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
-// Fix for default markers in Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+// Fix for default markers in Leaflet - only on client side
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line no-undef
+  delete L.Icon.Default.prototype._getIconUrl;
+  // eslint-disable-next-line no-undef
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  });
+}
+
+// Import Leaflet components dynamically to avoid SSR issues
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Popup),
+  { ssr: false }
+);
+const Polyline = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Polyline),
+  { ssr: false }
+);
 
 const ITEMS_PER_PAGE = 5;
 
@@ -75,6 +92,7 @@ const DriverDashboardPage =() =>{
   const [isConnected, setIsConnected] = useState(false);
   const [positionInterval, setPositionInterval] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,6 +113,12 @@ const DriverDashboardPage =() =>{
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
   
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     const newSocket = io('https://wasslni-backend.onrender.com/', {
       auth: {
         token: getToken()
@@ -121,7 +145,7 @@ const DriverDashboardPage =() =>{
       newSocket.disconnect();
       if (positionInterval) clearInterval(positionInterval);
     };
-  }, []);
+  }, [isClient]);
 
   // Load driver & trips on mount
   useEffect(() => {
@@ -420,23 +444,19 @@ const DriverDashboardPage =() =>{
   };
 
   // Custom icons for map markers
-  const busIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
-
-  const parentIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
+  const createIcon = (color) => {
+    if (typeof window === 'undefined') return null;
+    
+    // eslint-disable-next-line no-undef
+    return L.icon({
+      iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+  };
 
   if (loading) {
     return (
@@ -637,7 +657,7 @@ const DriverDashboardPage =() =>{
 
                   <TabsContent value="route" className="space-y-4">
                     <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l&apos;Itinéraire</h3>
-                    {parentsCoordinates.length > 0 || busPosition ? (
+                    {isClient && (parentsCoordinates.length > 0 || busPosition) ? (
                       <div className="w-full h-[400px] rounded-md overflow-hidden border">
                         <MapContainer
                           center={getMapCenter()}
@@ -655,7 +675,7 @@ const DriverDashboardPage =() =>{
                               <Marker
                                 key={`parent-${parent.parentId || index}`}
                                 position={[parent.lat, parent.lng]}
-                                icon={parentIcon}
+                                icon={createIcon('blue')}
                               >
                                 <Popup>
                                   <div className="text-center">
@@ -678,7 +698,7 @@ const DriverDashboardPage =() =>{
                           {busPosition && (
                             <Marker 
                               position={[busPosition.lat, busPosition.lng]} 
-                              icon={busIcon}
+                              icon={createIcon('red')}
                             >
                               <Popup>Position actuelle du bus</Popup>
                             </Marker>

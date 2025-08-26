@@ -1525,7 +1525,7 @@ export const menuParentConfig = {
     },
     {
       title: "Signaler une Préoccupation",
-      icon: "ChatBubbleLeftRight",  
+      icon: "Mail",  
       href: "/parent/report-concern", 
     },
     {
@@ -1533,11 +1533,7 @@ export const menuParentConfig = {
       icon: "User",  
       href: "/parent/profile", 
     },
-    {
-      title: "Aide & Support",
-      icon: "Monitor",  
-      href: "/parent/help", 
-    },
+    
   ],
 
   // Vous pouvez définir une section sidebarNav 'modern' ou 'classic' comme pour le SuperAdmin
@@ -1579,15 +1575,11 @@ export const menuParentConfig = {
         href: "/parent/profile",
         icon: "User",
       },
-      {
-        title: "Aide",
-        href: "/parent/help",
-        icon: "Monitor",
-      },
+    
       {
         title: "Signaler",
         href: "/parent/report-concern",
-        icon: "ChatBubbleLeftRight",
+        icon: "Mail",
       },
     ],
     // Vous pouvez également définir une version 'classic' si nécessaire, comme ceci:
@@ -1641,14 +1633,10 @@ export const menuParentConfig = {
       },
       {
         title: "Signaler une Préoccupation",
-        icon: "ChatBubbleLeftRight",
+        icon: "Mail",
         href: "/parent/report-concern",
       },
-      {
-        title: "Aide & Support",
-        icon: "Monitor",
-        href: "/parent/help",
-      },
+      
     ],
   },
 };

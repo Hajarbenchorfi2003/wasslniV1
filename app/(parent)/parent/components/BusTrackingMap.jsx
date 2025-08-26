@@ -2,9 +2,21 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Icon } from "@iconify/react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import dynamic from 'next/dynamic';
+import { useMap } from 'react-leaflet';
+import { useEffect } from 'react';
+
+function RecenterMap({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center);
+    }
+  }, [center, map]);
+  return null;
+}
 
 // Configuration des icônes Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -13,6 +25,11 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 
 // Icône personnalisée pour le bus
 const busIcon = new L.Icon({
@@ -50,6 +67,8 @@ export const BusTrackingMap = ({
 
   // Position actuelle validée
   const currentPosition = getSafePosition(busCurrentPosition) || defaultCenter;
+   console.log("test", currentPosition);
+
 
   // Trajet validé
   const safePath = path
@@ -95,44 +114,26 @@ export const BusTrackingMap = ({
         </div>
 
         <div className="w-full h-[400px] rounded-md overflow-hidden border">
-          <MapContainer 
-            center={currentPosition} 
-            zoom={14} 
-            scrollWheelZoom={true} 
-            className="h-full w-full"
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='© OpenStreetMap contributors'
-            />
-            
-            {/* Marqueur du bus seulement si position valide */}
-            {hasValidPosition && (
-              <Marker position={currentPosition} icon={busIcon}>
-                <Popup>
-                  <div className="text-center">
-                    <p className="font-bold">Bus {busPlateNumber || 'N/A'}</p>
-                    <p>
-                      {formatCoordinate(currentPosition[0])}, {formatCoordinate(currentPosition[1])}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date().toLocaleTimeString()}
-                    </p>
-                  </div>
-                </Popup>
-              </Marker>
-            )}
-            
-            {/* Trajet du bus seulement si assez de points valides */}
-            {safePath.length > 1 && (
-              <Polyline 
-                positions={safePath} 
-                color="#3b82f6" 
-                weight={4} 
-                opacity={0.7}
-              />
-            )}
-          </MapContainer>
+          {typeof window !== 'undefined' && (
+          <MapContainer center={defaultCenter} zoom={14} scrollWheelZoom className="h-full w-full">
+  <RecenterMap center={currentPosition} />
+  <TileLayer
+    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    attribution="© OpenStreetMap contributors"
+  />
+
+  {hasValidPosition && (
+    <Marker position={currentPosition} icon={busIcon}>
+      <Popup>Bus en mouvement</Popup>
+    </Marker>
+  )}
+
+  {safePath.length > 1 && (
+    <Polyline positions={safePath} color="blue" weight={5} opacity={0.7} />
+  )}
+</MapContainer>
+
+          )}
         </div>
         
         {/* Message si pas de position valide */}

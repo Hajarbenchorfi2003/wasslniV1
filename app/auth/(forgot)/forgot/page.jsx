@@ -28,13 +28,14 @@ const ForgotPage = () => {
               
                 <div className="text-4xl leading-[50px] 2xl:text-6xl 2xl:leading-[72px] font-semibold mt-2.5">
                   <span className="text-default-600 dark:text-default-300">
-                   Avec Wasslni, retrouvez rapidement l’accès à votre compte.
-                   <span className="text-default-900 dark:text-default-50"> Wasslni </span>
+                   Avec <span className="text-default-900 dark:text-default-50"> Wasslni </span>,<br/> 
+                   retrouvez rapidement l’accès à votre compte.
+                   
                   </span>
                 </div>
                 <div className="mt-5 2xl:mt-8 text-default-900 dark:text-default-200 text-2xl font-medium">
-                  Vous ne saurez jamais tout. <br />
-                  Mais vous en saurez davantage...
+                 Entrez votre email ci-dessus pour recevoir le code de réinitialisation de votre mot de passe.
+                  
                 </div>
               </div>
             </div>

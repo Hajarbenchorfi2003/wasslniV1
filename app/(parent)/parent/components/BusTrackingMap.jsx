@@ -113,28 +113,28 @@ export const BusTrackingMap = ({
           )}
         </div>
 
-        <div className="w-full h-[400px] rounded-md overflow-hidden border">
-          {typeof window !== 'undefined' && (
-          <MapContainer center={defaultCenter} zoom={14} scrollWheelZoom className="h-full w-full">
-  <RecenterMap center={currentPosition} />
-  <TileLayer
-    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-    attribution="© OpenStreetMap contributors"
-  />
+       <div className="w-full h-[400px] rounded-md overflow-hidden border">
+  {typeof window !== 'undefined' && (
+    <MapContainer center={defaultCenter} zoom={14} scrollWheelZoom className="h-full w-full">
+      <RecenterMap center={currentPosition} />
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="© OpenStreetMap contributors"
+      />
 
-  {hasValidPosition && (
-    <Marker position={currentPosition} icon={busIcon}>
-      <Popup>Bus en mouvement</Popup>
-    </Marker>
+      {hasValidPosition && (
+        <Marker position={currentPosition} icon={busIcon}>
+          <Popup>Bus en mouvement</Popup>
+        </Marker>
+      )}
+
+      {safePath.length > 1 && (
+        <Polyline positions={safePath} color="blue" weight={5} opacity={0.7} />
+      )}
+    </MapContainer>
   )}
+</div>
 
-  {safePath.length > 1 && (
-    <Polyline positions={safePath} color="blue" weight={5} opacity={0.7} />
-  )}
-</MapContainer>
-
-          )}
-        </div>
         
         {/* Message si pas de position valide */}
         {!hasValidPosition && (

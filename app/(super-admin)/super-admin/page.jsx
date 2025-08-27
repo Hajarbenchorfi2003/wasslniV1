@@ -322,7 +322,7 @@ const SuperAdminDashboardPage = () => {
                                       <span className="text-sm font-medium text-default-600">Établissements</span>
                                     </div>
                                     <div className="text-2xl font-bold text-default-900 ">{totalEstablishments}</div>
-                                    <Link href="/super-admin/establishments" className="text-xs text-primary hover:underline mt-2">Voir</Link>
+                                    <Link href="/super-admin/etablissements" className="text-xs text-primary hover:underline mt-2">Voir</Link>
                                 </div>
                                 {/* Total Students */}
                                 <div className="p-4 bg-default-50 rounded-lg flex flex-col items-center justify-center  ">
@@ -358,7 +358,7 @@ const SuperAdminDashboardPage = () => {
                                       <span className="text-sm font-medium text-default-600">Utilisateurs</span>
                                     </div>
                                     <div className="text-2xl font-bold text-default-900 mt-1">{totalUsers}</div>
-                                    <Link href="/super-admin/users" className="text-xs text-primary hover:underline mt-2">Voir</Link>
+                                   
                                 </div>
                             </div>
                         </CardContent>

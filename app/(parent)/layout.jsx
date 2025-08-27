@@ -46,7 +46,7 @@ const Layout = ({ children }) => {
       })
       .catch((err) => {
         console.error("Erreur lors du chargement des traductions :", err);
-        router.push("/auth/login");
+        router.push("/");
       });
   }, [router]);
 

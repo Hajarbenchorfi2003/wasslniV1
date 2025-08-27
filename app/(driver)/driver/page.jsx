@@ -641,6 +641,8 @@ const DriverDashboardPage =() =>{
                       <div className="w-full h-[400px] rounded-md overflow-hidden border">
                         {typeof window !== 'undefined' && (
                         <MapContainer
+
+                        key={`map-${dailyTrip?.id}-${isTrackingActive}`} 
                           center={getMapCenter()}
                           zoom={13}
                           scrollWheelZoom={false}

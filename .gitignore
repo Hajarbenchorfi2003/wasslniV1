@@ -36,3 +36,5 @@ yarn-error.log*
 tsconfig.tsbuildinfo
 /.contentlayer/
 package-lock.json
+
+.env.local

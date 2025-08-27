@@ -1,4 +1,3 @@
- 
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 
@@ -47,18 +46,18 @@ import {
 } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MangmentNotificationsList } from './MangmentNotificationsList';
-import { ModalIncidentDetails } from './ModalIncidentDetails'; // Vérifiez le chemin
+import { ModalIncidentDetails } from './ModalIncidentDetails';
+import { getUser } from '@/utils/auth'; // Import getUser to get user info
 
 const ITEMS_PER_PAGE_INCIDENTS = 10;
 
 const IncidentsNotificationsPage = () => {
-
-
   // États
   const [incidents, setIncidents] = useState([]);
   const [filteredIncidents, setFilteredIncidents] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [currentTab, setCurrentTab] = useState('incidents');
+  const [effectiveManagerEstablishmentId, setEffectiveManagerEstablishmentId] = useState(null);
 
   // Filtres incidents
   const [incidentSearchTerm, setIncidentSearchTerm] = useState('');
@@ -69,6 +68,14 @@ const IncidentsNotificationsPage = () => {
   // Modale détails incident
   const [isIncidentDetailsModalOpen, setIsIncidentDetailsModalOpen] = useState(false);
   const [selectedIncidentDetails, setSelectedIncidentDetails] = useState(null);
+
+  // Set the establishment ID based on the logged-in user
+  useEffect(() => {
+    const user = getUser();
+    if (user && user.establishmentId) {
+      setEffectiveManagerEstablishmentId(user.establishmentId);
+    }
+  }, []);
 
   // Charger les données via API
   const refreshIncidentsAndNotifications = useCallback(async () => {
@@ -147,7 +154,7 @@ const IncidentsNotificationsPage = () => {
     incidentDateRange,
     incidentStatusFilter,
     incidentCurrentPage,
-    effectiveManagerEstablishmentId
+    effectiveManagerEstablishmentId, // Add to dependencies
   ]);
 
   const paginatedIncidents = filteredIncidents.slice(
@@ -155,8 +162,6 @@ const IncidentsNotificationsPage = () => {
     incidentCurrentPage * ITEMS_PER_PAGE_INCIDENTS
   );
   
-   
-
   const totalIncidentPages = Math.ceil(filteredIncidents.length / ITEMS_PER_PAGE_INCIDENTS);
 
   const handleIncidentPageChange = (page) => setIncidentCurrentPage(page);
@@ -237,52 +242,52 @@ const IncidentsNotificationsPage = () => {
               </div>
 
               <ScrollArea className="h-[400px]">
-              <Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead>Description</TableHead>
-      <TableHead>Trajet Quotidien</TableHead>
-      <TableHead>Date Trajet</TableHead>
-      <TableHead>Rapporté par</TableHead>
-      <TableHead>Statut</TableHead>
-      <TableHead>Date/Heure Signalement</TableHead>
-      <TableHead className="text-right">Actions</TableHead>
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    {paginatedIncidents.length > 0 ? (
-      paginatedIncidents.map((incident) => (
-        <TableRow key={incident.id}>
-          <TableCell>{incident.description}</TableCell>
-          <TableCell>{incident.dailyTrip?.trip?.name || 'N/A'}</TableCell>
-          <TableCell>
-            {new Date(incident.dailyTrip?.date).toLocaleDateString()}
-          </TableCell>
-          <TableCell>{incident.reportedBy?.fullname || 'Inconnu'}</TableCell>
-          <TableCell>
-            <Badge color={getIncidentStatusColor(incident.status)}>
-              {getIncidentStatusText(incident.status)}
-            </Badge>
-          </TableCell>
-          <TableCell>
-            {new Date(incident.timestamp).toLocaleString()}
-          </TableCell>
-          <TableCell className="text-right">
-            <Button size="icon" variant="ghost" onClick={() => handleViewIncidentDetails(incident)}>
-              <Icon icon="heroicons:eye" />
-            </Button>
-          </TableCell>
-        </TableRow>
-      ))
-    ) : (
-      <TableRow>
-        <TableCell colSpan={7} className="text-center">
-          Aucun incident trouvé.
-        </TableCell>
-      </TableRow>
-    )}
-  </TableBody>
-</Table>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Trajet Quotidien</TableHead>
+                      <TableHead>Date Trajet</TableHead>
+                      <TableHead>Rapporté par</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Date/Heure Signalement</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedIncidents.length > 0 ? (
+                      paginatedIncidents.map((incident) => (
+                        <TableRow key={incident.id}>
+                          <TableCell>{incident.description}</TableCell>
+                          <TableCell>{incident.dailyTrip?.trip?.name || 'N/A'}</TableCell>
+                          <TableCell>
+                            {new Date(incident.dailyTrip?.date).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>{incident.reportedBy?.fullname || 'Inconnu'}</TableCell>
+                          <TableCell>
+                            <Badge color={getIncidentStatusColor(incident.status)}>
+                              {getIncidentStatusText(incident.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(incident.timestamp).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="icon" variant="ghost" onClick={() => handleViewIncidentDetails(incident)}>
+                              <Icon icon="heroicons:eye" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center">
+                          Aucun incident trouvé.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </ScrollArea>
 
               {/* Pagination */}

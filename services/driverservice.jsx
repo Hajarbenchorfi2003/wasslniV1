@@ -50,6 +50,14 @@ const driverService = {
           throw error;
         }
       },
+      async getallDailyTrips() {
+        try {
+          const response = await axiosInstance.get('/dailyTrip/');
+          return response.data.data;  
+        } catch (error) {
+          throw error;
+        }
+      },
     
       async getTripDetails(tripId) {
         try {

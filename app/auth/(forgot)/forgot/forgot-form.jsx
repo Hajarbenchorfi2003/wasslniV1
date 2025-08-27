@@ -60,14 +60,15 @@ const ForgotForm = () => {
   };
   return (
     <div className="w-full">
-      <Link href="/dashboard" className="inline-block">
+      <Link href="/" className="inline-block">
         <SiteLogo className="h-10 w-10 2xl:w-14 2xl:h-14 text-primary" />
       </Link>
       <div className="2xl:mt-8 mt-6 2xl:text-3xl text-2xl font-bold text-default-900">
-        Forget Your Password?
+         Mot de passe oublié ?
+        
       </div>
       <div className="2xl:text-lg text-base text-default-600 mt-2 leading-6">
-        Enter your email & instructions will be sent to you!
+        Entrez votre email et les instructions vous seront envoyées !
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="mt-5 xl:mt-7">
         <div>
@@ -91,13 +92,13 @@ const ForgotForm = () => {
 
         <Button className="w-full mt-6" size={!isDesktop2xl ? "lg" : "md"}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? 'sending...' : 'Send Recovery Email'}
+           {isPending ? 'Envoi...' : 'Envoyer le mail de récupération'}
         </Button>
       </form>
       <div className="mt-5 2xl:mt-8 text-center text-base text-default-600">
-        Forget it. Send me back to{' '}
-        <Link href="/auth/login" className="text-primary">
-          Sign In
+         Vous avez changé d'avis ? Retournez à{' '}
+        <Link href="/" className="text-primary">
+          la connexion
         </Link>
       </div>
     </div>

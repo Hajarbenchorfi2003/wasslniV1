@@ -15,7 +15,7 @@ const Layout = ({ children }) => {
     const userStr = localStorage.getItem("user");
 
     if (!userStr || userStr === "undefined" || userStr === "null") {
-      router.push("/auth/login");
+      router.push("/");
       return;
     }
 

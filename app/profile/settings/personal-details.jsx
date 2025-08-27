@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,52 +11,48 @@ import toast from 'react-hot-toast';
 import { userAPI } from '@/utils/auth';
 
 const PersonalDetails = ({ user, onUpdate }) => {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     fullname: '',
     email: '',
     phone: '',
     isActive: true,
     notificationEnabled: true,
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
-
-  // Initialize form data when user data is received
+  // ✅ Initialise formData avec les vraies données de l’utilisateur
   useEffect(() => {
-    if (user?.user) {
-      const u = user.user;
+    if (user) {
+      const u = user.user || user; // gère les deux cas: {user: {...}} ou {...}
       setFormData({
         fullname: u.fullname || '',
         email: u.email || '',
         phone: u.phone || '',
-        isActive: u.isActive !== undefined ? u.isActive : true,
-        notificationEnabled: u.notificationEnabled !== undefined ? u.notificationEnabled : true,
+        isActive: u.isActive ?? true,
+        notificationEnabled: u.notificationEnabled ?? true,
       });
     }
   }, [user]);
-  console.log("Données utilisateur resvoire:",user);
-  console.log(formData);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: value 
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSwitchChange = (field) => (checked) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      [field]: checked 
-    }));
+    setFormData(prev => ({ ...prev, [field]: checked }));
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
+      // ✅ Appel API avec formData
       const updatedUser = await userAPI.updateProfile(formData);
+
+      // ✅ Mets à jour le parent avec la nouvelle version
       onUpdate(updatedUser);
+
       setIsEditing(false);
       toast.success('Informations mises à jour avec succès!');
     } catch (error) {
@@ -66,7 +62,7 @@ const PersonalDetails = ({ user, onUpdate }) => {
       setLoading(false);
     }
   };
-  
+
   return (
     <Card className="rounded-t-none pt-6">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -115,7 +111,7 @@ const PersonalDetails = ({ user, onUpdate }) => {
               disabled={!isEditing || loading}
               placeholder="Entrez votre numéro de téléphone"
             />
-          </div> 
+          </div>
         </div>
 
         <div className="flex items-center justify-between mt-4">

@@ -122,10 +122,10 @@ export const userAPI = {
     }
   },
 
-  async updateProfile(userData) {
+   async updateProfile(userData) {
     try {
       const token = getToken();
-      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/voirmonprofil`, userData, {
+      const response = await axios.put(`${process.env.NEXT_PUBLIC_SITE_URL}/user/update-profile`, userData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
@@ -200,4 +200,28 @@ export const isResponsible = () => {
 export const getCurrentUserRole = () => {
   const user = getUser();
   return user ? user.role : null;
+};
+
+
+
+
+export const saveLocation = ({ lat, lng }) => {
+  try {
+    localStorage.setItem('lat', lat);
+    localStorage.setItem('lng', lng);
+  } catch (err) {
+    console.error('❌ Failed to save location:', err);
+  }
+};
+
+export const getLocation = () => {
+  try {
+    const lat = parseFloat(localStorage.getItem('lat'));
+    const lng = parseFloat(localStorage.getItem('lng'));
+    if (!lat || !lng) return null;
+    return { lat, lng };
+  } catch (err) {
+    console.error('❌ Failed to get location:', err);
+    return null;
+  }
 };

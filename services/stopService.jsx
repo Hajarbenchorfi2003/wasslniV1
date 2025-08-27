@@ -52,15 +52,28 @@ const stopService = {
     }
   },
 
-  
-  async getAllStops() {
+   async getParentsCoordinatesForTrip (tripId) {
     try {
-      const response = await axiosInstance.get('/stop');
+      const response = await  axiosInstance.get(`/stop/trips/${tripId}/parents/coordinates`);
       return response.data;
     } catch (error) {
-      return handleApiError(error);
+      console.error('Error fetching parents coordinates:', error);
+      throw error;
     }
   },
+
+  // Récupérer seulement les coordonnées lat/lng
+  async getParentsLatLngForTrip (tripId) {
+    try {
+      const response = await  axiosInstance.get(`/stop/trips/${tripId}/parents/coordinates/simple`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching parents coordinates:', error);
+      throw error;
+    }
+  },
+
+
 
   /**
    * Récupère les arrêts accessibles à l'utilisateur courant

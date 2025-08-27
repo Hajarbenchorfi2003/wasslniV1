@@ -38,7 +38,13 @@ import {getToken, isAuthenticated } from '@/utils/auth';
 
 // Import Leaflet components dynamically to avoid SSR issues
 import dynamic from 'next/dynamic';
-const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { 
+    ssr: false,
+    loading: () => <div className="h-full w-full flex items-center justify-center">Chargement de la carte...</div>
+  }
+);
 const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
 const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
@@ -275,10 +281,10 @@ const DriverDashboardPage =() =>{
     }
     
     if (!isTrackingActive) {
-      if (!navigator.geolocation) {
-        toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
-        return;
-      }
+     if (typeof window === 'undefined' || !navigator.geolocation) {
+    toast.error('La géolocalisation n\'est pas supportée');
+    return;
+  }
 
       if (!socket || !dailyTrip?.id) {
         toast.error('Connexion au serveur non établie ou trajet non sélectionné');
@@ -634,72 +640,77 @@ const DriverDashboardPage =() =>{
                     )}
                   </TabsContent>
 
-                  <TabsContent value="route" className="space-y-4">
-                    <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l&apos;Itinéraire</h3>
-                    {parentsCoordinates.length > 0 || busPosition ? (
-                      <div className="w-full h-[400px] rounded-md overflow-hidden border">
-                        {typeof window !== 'undefined' && (
-                        <MapContainer key={`map-${dailyTrip?.id}-${isTrackingActive}`} 
-                          center={getMapCenter()}
-                          zoom={13}
-                          scrollWheelZoom={false}
-                          className="h-full w-full"
-                        >
-                          <TileLayer
-                            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          />
-                          {/* Marqueurs pour les parents */}
-                          {parentsCoordinates.map((parent, index) => (
-                            parent.lat && parent.lng && (
-                              <Marker
-                                key={`parent-${parent.parentId || index}`}
-                                position={[parent.lat, parent.lng]}
-                                icon={parentIcon}
-                              >
-                                <Popup>
-                                  <div className="text-center">
-                                    <strong>📍 Parent: {parent.parentName || 'Parent'}</strong>
-                                    <br />
-                                    {parent.parentPhone && (
-                                      <><small>Tél: {parent.parentPhone}</small><br /></>
-                                    )}
-                                    {parent.studentName && (
-                                      <><small>Élève: {parent.studentName}</small><br /></>
-                                    )}
-                                    <span className="text-green-600">● Domicile parent</span>
-                                  </div>
-                                </Popup>
-                              </Marker>
-                            )
-                          ))}
-                          
-                          {/* Bus position marker */}
-                          {busPosition && (
-                            <Marker 
-                              position={[busPosition.lat, busPosition.lng]} 
-                              icon={busIcon}
-                            >
-                              <Popup>Position actuelle du bus</Popup>
-                            </Marker>
-                          )}
-                        </MapContainer>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Aucun arrêt pour afficher l&apos;itinéraire.</p>
+                 <TabsContent value="route" className="space-y-4">
+  <h3 className="font-semibold text-lg mb-2 text-default-700">Carte de l&apos;Itinéraire</h3>
+  {parentsCoordinates.length > 0 || busPosition ? (
+    <div className="w-full h-[400px] rounded-md overflow-hidden border">
+      {typeof window !== 'undefined' ? (
+        <MapContainer 
+          key={`map-${dailyTrip?.id}-${isTrackingActive}`} 
+          center={getMapCenter()}
+          zoom={13}
+          scrollWheelZoom={false}
+          className="h-full w-full"
+        >
+          <TileLayer
+            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {/* Marqueurs pour les parents */}
+          {parentsCoordinates.map((parent, index) => (
+            parent.lat && parent.lng && (
+              <Marker
+                key={`parent-${parent.parentId || index}`}
+                position={[parent.lat, parent.lng]}
+                icon={parentIcon}
+              >
+                <Popup>
+                  <div className="text-center">
+                    <strong>📍 Parent: {parent.parentName || 'Parent'}</strong>
+                    <br />
+                    {parent.parentPhone && (
+                      <><small>Tél: {parent.parentPhone}</small><br /></>
                     )}
+                    {parent.studentName && (
+                      <><small>Élève: {parent.studentName}</small><br /></>
+                    )}
+                    <span className="text-green-600">● Domicile parent</span>
+                  </div>
+                </Popup>
+              </Marker>
+            )
+          ))}
+          
+          {/* Bus position marker */}
+          {busPosition && (
+            <Marker 
+              position={[busPosition.lat, busPosition.lng]} 
+              icon={busIcon}
+            >
+              <Popup>Position actuelle du bus</Popup>
+            </Marker>
+          )}
+        </MapContainer>
+      ) : (
+        <div className="flex items-center justify-center h-full bg-gray-100">
+          <p className="text-gray-500">Chargement de la carte...</p>
+        </div>
+      )}
+    </div>
+  ) : (
+    <p className="text-sm text-muted-foreground">Aucun arrêt pour afficher l&apos;itinéraire.</p>
+  )}
 
-                    {/* Statistiques des parents */}
-                    {parentsCoordinates.length > 0 && (
-                      <div className="p-4 bg-green-50 rounded-lg">
-                        <h4 className="font-semibold text-green-800 mb-2">Domiciles des parents</h4>
-                        <p className="text-sm text-green-700">
-                          {parentsCoordinates.length} parent(s) ont partagé leur position
-                        </p>
-                      </div>
-                    )}
-                  </TabsContent>
+  {/* Statistiques des parents */}
+  {parentsCoordinates.length > 0 && (
+    <div className="p-4 bg-green-50 rounded-lg">
+      <h4 className="font-semibold text-green-800 mb-2">Domiciles des parents</h4>
+      <p className="text-sm text-green-700">
+        {parentsCoordinates.length} parent(s) ont partagé leur position
+      </p>
+    </div>
+  )}
+</TabsContent>
 
                   <TabsContent value="tracking" className="space-y-4">
                     <div className="flex items-center justify-between">

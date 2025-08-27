@@ -201,3 +201,27 @@ export const getCurrentUserRole = () => {
   const user = getUser();
   return user ? user.role : null;
 };
+
+
+
+
+export const saveLocation = ({ lat, lng }) => {
+  try {
+    localStorage.setItem('lat', lat);
+    localStorage.setItem('lng', lng);
+  } catch (err) {
+    console.error('❌ Failed to save location:', err);
+  }
+};
+
+export const getLocation = () => {
+  try {
+    const lat = parseFloat(localStorage.getItem('lat'));
+    const lng = parseFloat(localStorage.getItem('lng'));
+    if (!lat || !lng) return null;
+    return { lat, lng };
+  } catch (err) {
+    console.error('❌ Failed to get location:', err);
+    return null;
+  }
+};

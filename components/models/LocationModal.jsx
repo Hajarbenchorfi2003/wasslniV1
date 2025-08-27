@@ -3,16 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { getUser, saveUser, getToken } from "@/utils/auth";
+import { getUser, saveUser, getToken, saveLocation } from "@/utils/auth";
 
-export default function ParentLocationModal() {
+export default function LocationModal({ open, onClose, onLocationSaved }) {
   const [user, setUser] = useState(null);
-  const [open, setOpen] = useState(false);
-
-  const checkLocation = () => {
-    const currentUser = getUser();
-    return currentUser ? !currentUser.lat || !currentUser.lng : false;
-  };
+  const [currentLocation, setCurrentLocation] = useState({ lat: null, lng: null });
 
   useEffect(() => {
     const currentUser = getUser();
@@ -20,8 +15,8 @@ export default function ParentLocationModal() {
 
     setUser(currentUser);
 
-    if (!currentUser.lat || !currentUser.lng) {
-      setOpen(true);
+    if (currentUser.lat && currentUser.lng) {
+      setCurrentLocation({ lat: currentUser.lat, lng: currentUser.lng });
     }
   }, []);
 
@@ -40,9 +35,10 @@ export default function ParentLocationModal() {
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords;
+
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/users/me/location`, {
-          method: "POST",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -55,8 +51,16 @@ export default function ParentLocationModal() {
         if (res.ok) {
           const updatedUser = { ...currentUser, lat: latitude, lng: longitude };
           saveUser({ user: updatedUser, token });
+
+          // ✅ Sauvegarde globale de la position
+          saveLocation({ lat: latitude, lng: longitude });
+
           setUser(updatedUser);
-          setOpen(false);
+          setCurrentLocation({ lat: latitude, lng: longitude });
+
+          if (onLocationSaved) onLocationSaved(latitude, longitude);
+
+          onClose();
         } else {
           alert(data.message || "Erreur lors de l'envoi de la localisation");
         }
@@ -67,12 +71,8 @@ export default function ParentLocationModal() {
     });
   };
 
-  const handleLater = () => {
-    setOpen(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Partagez votre localisation</DialogTitle>
@@ -84,10 +84,16 @@ export default function ParentLocationModal() {
           <Button onClick={sendLocation} className="w-full">
             Envoyer ma localisation
           </Button>
-          <Button variant="outline" onClick={handleLater}>
+          <Button variant="outline" onClick={onClose}>
             Plus tard
           </Button>
         </div>
+        
+        {currentLocation.lat && currentLocation.lng && (
+          <div className="p-2 text-sm text-gray-500">
+            Localisation enregistrée : {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

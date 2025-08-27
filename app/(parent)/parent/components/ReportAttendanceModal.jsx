@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import toast from 'react-hot-toast';
-import parentService from '@/services/parentService';
+import parentService from '@/services/parentservice';
 
 export const ReportAttendanceModal = ({ isOpen, setIsOpen, childId, dailyTripId, onAttendanceReported }) => {
   const [status, setStatus] = useState('ABSENT');

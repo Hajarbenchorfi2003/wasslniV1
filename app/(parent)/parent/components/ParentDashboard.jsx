@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import toast from 'react-hot-toast';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import parentService from '@/services/parentService';
+import parentService from '@/services/parentservice';
 import { ChildInfoCard } from './ChildInfoCard';
 import { ParentNotificationsList } from './ParentNotificationsList';
 import { ParentIncidentList } from './ParentIncidentList';

@@ -13,7 +13,7 @@ import dynamic from 'next/dynamic';
 import { Icon } from '@iconify/react';
 import { io } from 'socket.io-client';
 import { getToken } from '@/utils/auth';
-import parentService from '@/services/parentService';
+import parentService from '@/services/parentservice';
 
 const BusTrackingMap = dynamic(
   () => import('./BusTrackingMap').then(mod => mod.BusTrackingMap),

@@ -2,7 +2,8 @@
 'use client';
 import { io } from 'socket.io-client';
 import React, { useState, useEffect, useCallback } from 'react';
-import driverService from '@/services/driverService';
+import driverService from '@/services/driverservice';
+import stopService from '@/services/stopService';
 import { MarkAttendanceModal } from '../MarkAttendanceModal';
 import { ReportIncidentModal } from '../ReportIncidentModal';
 
@@ -26,13 +27,18 @@ import {
 
 import {getToken, isAuthenticated } from '@/utils/auth';
 import dynamic from 'next/dynamic';
-
+if (typeof window !== 'undefined') {
+  require('leaflet/dist/leaflet.css');
+}
 // Import Leaflet components dynamically to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
 const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
+
+
+
 
 const DailyTripDetailsPage = () => {
   const [dailyTrips, setDailyTrips] = useState([]);
@@ -47,13 +53,56 @@ const DailyTripDetailsPage = () => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [positionInterval, setPositionInterval] = useState(null);
+  const [parentsCoordinates, setParentsCoordinates] = useState([]);
 
   // Modal states
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [attendanceModalStudentId, setAttendanceModalStudentId] = useState(null);
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] = useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+ const [icons, setIcons] = useState({ busIcon: null, parentIcon: null });
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("leaflet").then(L => {
+        // Fix default marker issue
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+          iconUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        });
+
+        const busIcon = new L.Icon({
+          iconUrl:
+            "/images/bus.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+          shadowSize: [40, 40],
+            iconSize: [40, 40],              // Adjust size for visibility
+           iconAnchor: [20, 40],            // Center bottom
+           popupAnchor: [0, -40], 
+        });
+
+        const parentIcon = new L.Icon({
+          iconUrl:
+            "/images/user.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+
+        setIcons({ busIcon, parentIcon });
+      });
+    }
+  }, []);
+ 
   // Connect to socket server
   useEffect(() => {
     const newSocket = io('https://wasslni-backend.onrender.com/', {
@@ -92,6 +141,7 @@ const DailyTripDetailsPage = () => {
         const tripsResponse = await driverService.getDailyTrips();
         setDailyTrips(tripsResponse);
         setLoading(false);
+        setParentsCoordinates([]);
       } catch (err) {
         setError(err.message);
         setLoading(false);
@@ -108,10 +158,18 @@ const DailyTripDetailsPage = () => {
       const tripDetails = await driverService.getTripDetails(tripId);
       setDailyTrip(tripDetails);
       
+      if (tripId) {
+          try {
+            const parentsCoords = await stopService.getParentsCoordinatesForTrip(tripDetails.tripId);
+            setParentsCoordinates(parentsCoords.data || []);
+          } catch (error) {
+            console.error('Error loading parents coordinates:', error);
+            setParentsCoordinates([]);
+          }
+        }
       // Extract students from tripDetails
       const tripStudents = tripDetails.trip?.tripStudents?.map(ts => ts.student) || [];
       setStudents(tripStudents);
-      
       // Extract stops from tripDetails
       const routeStops = tripDetails.trip?.route?.stops || [];
       setStops(routeStops);
@@ -363,19 +421,32 @@ const DailyTripDetailsPage = () => {
   }
 
   // Show trip details when a trip is selected
-  const { trip, date, status } = dailyTrip;
+ const trip = dailyTrip?.trip;
+const date = dailyTrip?.date;
+const status = dailyTrip?.status;
+
   const { name: tripName, bus, route, driver, establishment } = trip || {};
 
   // Determine map center for the Polyline
   const polylinePositions = stops.map(stop => [parseFloat(stop.lat), parseFloat(stop.lng)]);
   const mapInitialCenter = polylinePositions.length > 0 ? polylinePositions[0] : [33.5898, -7.6116];
-
+  const getMapCenter = () => {
+    if (busPosition) {
+      return [busPosition.lat, busPosition.lng];
+    }
+    if (parentsCoordinates.length > 0) {
+      return [parentsCoordinates[0].lat, parentsCoordinates[0].lng];
+    }
+    return [36.8065, 10.1815]; // Default to Tunisia coordinates
+  };
   // Calculate attendance statistics
   const attendanceStats = students.reduce((stats, student) => {
     const studentStatus = getAttendanceStatusForStudent(student.id);
     stats[studentStatus] = (stats[studentStatus] || 0) + 1;
     return stats;
   }, {});
+
+
 
   return (
     <div className="space-y-6 p-6">
@@ -448,8 +519,10 @@ const DailyTripDetailsPage = () => {
             <div className="flex items-center space-x-2">
               <Icon icon="heroicons:map-pin" className="h-5 w-5 text-purple-500" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Arrêts</p>
-                <p className="text-2xl font-bold">{stops.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">stop parent</p>
+                {parentsCoordinates.length > 0 && (
+                        <p className="text-2xl font-bold">{parentsCoordinates.length}</p>
+                    )}
               </div>
             </div>
           </CardContent>
@@ -520,10 +593,6 @@ const DailyTripDetailsPage = () => {
                     <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
                       <span className="text-sm font-medium">Nom de la route</span>
                       <span className="text-sm">{route?.name || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
-                      <span className="text-sm font-medium">Nombre d&rsquo;arrêts</span>
-                      <span className="text-sm">{stops.length}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-default-50 rounded-lg">
                       <span className="text-sm font-medium">Élèves assignés</span>
@@ -644,11 +713,13 @@ const DailyTripDetailsPage = () => {
               <div className="space-y-6">
                 <h3 className="font-semibold text-lg text-default-700">Carte de l&apos;Itinéraire</h3>
                 
-                {stops.length > 0 ? (
+                {parentsCoordinates.length > 0 || busPosition ? (
                   <div className="w-full h-[400px] rounded-md overflow-hidden border">
                     {typeof window !== 'undefined' && (
                       <MapContainer
-                        center={mapInitialCenter}
+
+                        key={`map-${dailyTrip?.id}-${isTrackingActive}`} 
+                        center={getMapCenter()}
                         zoom={13}
                         scrollWheelZoom={false}
                         className="h-full w-full"
@@ -657,31 +728,37 @@ const DailyTripDetailsPage = () => {
                           attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
-                        {stops.map((stop, index) => (
-                          <Marker key={stop.id} position={[parseFloat(stop.lat), parseFloat(stop.lng)]}>
-                            <Popup>
-                              <div>
-                                <strong>Arrêt {index + 1}: {stop.name}</strong>
-                                <br />
-                                {stop.address}
-                              </div>
-                            </Popup>
-                          </Marker>
-                        ))}
+                         
+{parentsCoordinates.map((parent, index) => (
+  parent.lat && parent.lng && (
+    <Marker
+      key={`parent-${parent.parentId || index}`}
+      position={[parent.lat, parent.lng]}
+      icon={icons.parentIcon}
+    >
+      <Popup>
+        <div className="text-center">
+          <strong>📍 Parent: {parent.parentName || 'Parent'}</strong>
+          <br />
+          {parent.parentPhone && (
+            <><small>Tél: {parent.parentPhone}</small><br /></>
+          )}
+          {parent.studentName && (
+            <><small>Élève: {parent.studentName}</small><br /></>
+          )}
+          <span className="text-green-600">● Domicile parent</span>
+        </div>
+      </Popup>
+    </Marker>
+  )
+))}
                         {polylinePositions.length > 1 && (
                           <Polyline positions={polylinePositions} color="blue" weight={5} opacity={0.7} />
                         )}
                         {busPosition && (
                           <Marker 
                             position={[busPosition.lat, busPosition.lng]} 
-                            icon={typeof window !== 'undefined' && window.L ? new window.L.Icon({
-                              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                              iconSize: [25, 41],
-                              iconAnchor: [12, 41],
-                              popupAnchor: [1, -34],
-                              shadowSize: [41, 41]
-                            }) : undefined}
+                            icon={icons.busIcon}
                           >
                             <Popup>Position actuelle du bus</Popup>
                           </Marker>
@@ -695,35 +772,16 @@ const DailyTripDetailsPage = () => {
                     <p className="text-gray-500">Aucun arrêt pour afficher l&apos;itinéraire.</p>
                   </div>
                 )}
+                {parentsCoordinates.length > 0 && (
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <h4 className="font-semibold text-green-800 mb-2">Domiciles des parents</h4>
+                        <p className="text-sm text-green-700">
+                          {parentsCoordinates.length} parent(s) ont partagé leur position
+                        </p>
+                      </div>
+                    )}
 
                 <Separator />
-
-                <h3 className="font-semibold text-lg text-default-700">Liste des Arrêts</h3>
-                {stops.length > 0 ? (
-                  <div className="space-y-2">
-                    {stops.map((stop, index) => (
-                      <div key={stop.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-semibold">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="font-medium">{stop.name}</p>
-                            <p className="text-sm text-muted-foreground">{stop.address}</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Icon icon="heroicons:bell" className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Icon icon="heroicons:map-pin" className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                    <p className="text-gray-500">Aucun arrêt défini pour cette route.</p>
-                  </div>
-                )}
               </div>
             </TabsContent>
 

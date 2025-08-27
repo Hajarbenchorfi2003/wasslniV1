@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import toast from 'react-hot-toast';
-import driverService from '@/services/driverService';
+import driverService from '@/services/driverservice';
 import { Icon } from '@iconify/react';
 
 export const MarkAttendanceModal = ({

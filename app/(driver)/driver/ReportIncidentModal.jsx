@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import toast from 'react-hot-toast';
-import driverService from '@/services/driverService';
+import driverService from '@/services/driverservice';
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const ReportIncidentModal = ({

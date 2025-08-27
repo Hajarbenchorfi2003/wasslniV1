@@ -78,18 +78,18 @@ const DailyTripDetailsPage = () => {
 
         const busIcon = new L.Icon({
           iconUrl:
-            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+            "/images/bus.png",
           shadowUrl:
             "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
+          shadowSize: [40, 40],
+            iconSize: [40, 40],              // Adjust size for visibility
+           iconAnchor: [20, 40],            // Center bottom
+           popupAnchor: [0, -40], 
         });
 
         const parentIcon = new L.Icon({
           iconUrl:
-            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+            "/images/user.png",
           shadowUrl:
             "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
           iconSize: [25, 41],

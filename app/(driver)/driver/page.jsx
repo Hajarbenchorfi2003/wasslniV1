@@ -35,7 +35,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {getToken, isAuthenticated } from '@/utils/auth';
-
+if (typeof window !== 'undefined') {
+  require('leaflet/dist/leaflet.css');
+}
 // Import Leaflet components dynamically to avoid SSR issues
 import dynamic from 'next/dynamic';
 const MapContainer = dynamic(
@@ -51,16 +53,12 @@ const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polylin
 const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 
 // Import Leaflet and its CSS
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+if (typeof window !== 'undefined') {
+  require('leaflet/dist/leaflet.css');
+}
 
-// Fix for default markers in Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+
+
 
 const ITEMS_PER_PAGE = 5;
 
@@ -99,6 +97,50 @@ const DriverDashboardPage =() =>{
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] =
     useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+  const [icons, setIcons] = useState({ busIcon: null, parentIcon: null });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("leaflet").then(L => {
+        // Fix default marker issue
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+          iconUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        });
+
+        const busIcon = new L.Icon({
+          iconUrl:
+            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+
+        const parentIcon = new L.Icon({
+          iconUrl:
+            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+
+        setIcons({ busIcon, parentIcon });
+      });
+    }
+  }, []);
+
+
   
   useEffect(() => {
     const newSocket = io('https://wasslni-backend.onrender.com/', {
@@ -424,24 +466,9 @@ const DriverDashboardPage =() =>{
     return [36.8065, 10.1815]; // Default to Tunisia coordinates
   };
 
-  // Custom icons for map markers
-  const busIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
+   
 
-  const parentIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
+  
 
   if (loading) {
     return (
@@ -660,9 +687,9 @@ const DriverDashboardPage =() =>{
           {parentsCoordinates.map((parent, index) => (
             parent.lat && parent.lng && (
               <Marker
-                key={`parent-${parent.parentId || index}`}
+                 key={`parent-${parent.parentId}-${parent.studentId}-${index} `}
                 position={[parent.lat, parent.lng]}
-                icon={parentIcon}
+                icon={icons.parentIcon}
               >
                 <Popup>
                   <div className="text-center">
@@ -685,7 +712,7 @@ const DriverDashboardPage =() =>{
           {busPosition && (
             <Marker 
               position={[busPosition.lat, busPosition.lng]} 
-              icon={busIcon}
+              icon={icons.busIcon}
             >
               <Popup>Position actuelle du bus</Popup>
             </Marker>

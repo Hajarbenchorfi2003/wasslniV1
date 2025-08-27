@@ -27,23 +27,17 @@ import {
 
 import {getToken, isAuthenticated } from '@/utils/auth';
 import dynamic from 'next/dynamic';
-
+if (typeof window !== 'undefined') {
+  require('leaflet/dist/leaflet.css');
+}
 // Import Leaflet components dynamically to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
 const Polyline = dynamic(() => import('react-leaflet').then((mod) => mod.Polyline), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
-// Fix for default markers in Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+
 
 
 const DailyTripDetailsPage = () => {
@@ -66,15 +60,49 @@ const DailyTripDetailsPage = () => {
   const [attendanceModalStudentId, setAttendanceModalStudentId] = useState(null);
   const [attendanceModalCurrentStatus, setAttendanceModalCurrentStatus] = useState(null);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+ const [icons, setIcons] = useState({ busIcon: null, parentIcon: null });
 
-  const parentIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("leaflet").then(L => {
+        // Fix default marker issue
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+          iconUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        });
+
+        const busIcon = new L.Icon({
+          iconUrl:
+            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+
+        const parentIcon = new L.Icon({
+          iconUrl:
+            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41],
+        });
+
+        setIcons({ busIcon, parentIcon });
+      });
+    }
+  }, []);
+ 
   // Connect to socket server
   useEffect(() => {
     const newSocket = io('https://wasslni-backend.onrender.com/', {
@@ -393,7 +421,10 @@ const DailyTripDetailsPage = () => {
   }
 
   // Show trip details when a trip is selected
-  const { trip, date, status } = dailyTrip;
+ const trip = dailyTrip?.trip;
+const date = dailyTrip?.date;
+const status = dailyTrip?.status;
+
   const { name: tripName, bus, route, driver, establishment } = trip || {};
 
   // Determine map center for the Polyline
@@ -703,7 +734,7 @@ const DailyTripDetailsPage = () => {
     <Marker
       key={`parent-${parent.parentId || index}`}
       position={[parent.lat, parent.lng]}
-      icon={parentIcon}
+      icon={icons.parentIcon}
     >
       <Popup>
         <div className="text-center">
@@ -727,14 +758,7 @@ const DailyTripDetailsPage = () => {
                         {busPosition && (
                           <Marker 
                             position={[busPosition.lat, busPosition.lng]} 
-                            icon={typeof window !== 'undefined' && window.L ? new window.L.Icon({
-                              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                              iconSize: [25, 41],
-                              iconAnchor: [12, 41],
-                              popupAnchor: [1, -34],
-                              shadowSize: [41, 41]
-                            }) : undefined}
+                            icon={icons.busIcon}
                           >
                             <Popup>Position actuelle du bus</Popup>
                           </Marker>

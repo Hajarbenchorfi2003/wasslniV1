@@ -50,7 +50,7 @@ const CommingSoonPage = () => {
           <Image src={logo} alt="logo" className="w-full h-full object-cover" />
         </div>
         <Button asChild variant="outline" size="lg">
-          <Link href="/dashboard">Contact Us</Link>
+          <Link href="/">Contact Us</Link>
         </Button>
       </div>
       {/* main */}

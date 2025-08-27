@@ -192,7 +192,6 @@ const DriverDashboardPage =() =>{
         // Charger les détails du trajet
         const tripDetails = await driverService.getTripDetails(selectedDailyTrip.id);
         setDailyTrip(tripDetails);
-        
         // Charger les coordonnées des parents
         const tripId = tripDetails.trip?.id || selectedDailyTrip.tripId;
         if (tripId) {
@@ -640,9 +639,7 @@ const DriverDashboardPage =() =>{
                     {parentsCoordinates.length > 0 || busPosition ? (
                       <div className="w-full h-[400px] rounded-md overflow-hidden border">
                         {typeof window !== 'undefined' && (
-                        <MapContainer
-
-                        key={`map-${dailyTrip?.id}-${isTrackingActive}`} 
+                        <MapContainer key={`map-${dailyTrip?.id}-${isTrackingActive}`} 
                           center={getMapCenter()}
                           zoom={13}
                           scrollWheelZoom={false}

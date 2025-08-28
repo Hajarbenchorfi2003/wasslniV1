@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { demoData as initialDemoData } from '@/data/data';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
@@ -27,7 +26,7 @@ const ITEMS_PER_PAGE = 9;
 
 
 const TripsPage = () => {
-  const [currentDemoData, setCurrentDemoData] = useState([]);
+  
   const [trips, setTrips] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState(null);
@@ -393,7 +392,7 @@ useEffect(() => {
         buses={buses}
         drivers={drivers}
         establishments={establishments}
-        tripStudents={currentDemoData.tripStudents}
+        
       />
 
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

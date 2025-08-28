@@ -1286,7 +1286,7 @@ export const menuAdminConfig = {
     },
     {
       title: "Profile",
-      icon: "Bell",
+       icon: "User", 
       href: "/admin/profile",
     },
     
@@ -1296,7 +1296,7 @@ export const menuAdminConfig = {
     modern: [
       {
         title: "Dashboard",
-        href: "/admin/dashboard",
+        href: "/admin/",
         icon: "DashBoard",
       },
       {
@@ -1384,7 +1384,7 @@ export const menuAdminConfig = {
       },
       {
         title: "Profile",
-        icon: "Bell",
+         icon: "User", 
         href: "/admin/profile",
       },
       
@@ -1397,7 +1397,7 @@ export const menuAdminConfig = {
       {
         title: "Dashboard",
         icon: "DashBoard",
-        href: "/admin/dashboard",
+        href: "/admin/",
       },
       {
         isHeader: true,
@@ -1483,7 +1483,7 @@ export const menuAdminConfig = {
       }, */
       {
         title: "Profile",
-        icon: "Bell",
+         icon: "User", 
         href: "/admin/profile",
       },
     ]  

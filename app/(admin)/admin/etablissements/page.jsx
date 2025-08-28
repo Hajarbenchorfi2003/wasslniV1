@@ -164,8 +164,6 @@ const EtablissementsPage = () => {
 
   // Function to handle saving (add or edit) an establishment
   const handleSaveEtablissement = (updatedata) => {
-    consol.log("data frome save",updatedata)
-    
      loadEstablishments();
     setIsAddEditDialogOpen(false);
     setEditingEtablissement(null); // Clear editing state after save

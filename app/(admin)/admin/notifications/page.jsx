@@ -74,7 +74,7 @@ export default function AdminNotificationsPage({ params }) {
     } from "@/components/ui/tabs";
     import { ScrollArea } from "@/components/ui/scroll-area";
     import { MangmentNotificationsList } from './MangmentNotificationsList';
-    import { ModalIncidentDetails } from './ModalIncidentDetails'; // Vérifiez le chemin
+    import { ModalIncidentDetails } from './ModalIncidentDetails'; 
     
     const ITEMS_PER_PAGE_INCIDENTS = 10;
     

@@ -16,13 +16,6 @@ const layoutOptions = [
     ),
   },
   {
-    key: "horizontal",
-    label: "Horizontal",
-    svg: (
-      <HorizontalSvg className="[&>rect]:fill-default-300 [&>circle]:fill-default-400 [&>path]:fill-default-400" />
-    ),
-  },
-  {
     key: "semibox",
     label: "Semi-Box",
     svg: (
@@ -51,12 +44,12 @@ const SelectLayout = () => {
       <div className="text-muted-foreground font-normal text-xs mb-4">
         Choose your layout
       </div>
-      <div className=" grid grid-cols-3 gap-3">
+      <div className=" grid grid-cols-2 gap-3">
         {layoutOptions.map((layoutOption) => (
           <div key={layoutOption.key}>
             <button
               onClick={() => setLayout(layoutOption.key)}
-              className={cn("border block  rounded relative h-[72px] w-full", {
+              className={cn("border block  rounded relative h-[110px] w-full", {
                 "text-[--theme-primary] border-[--theme-primary]":
                   layout === layoutOption.key,
                 "text-muted-foreground border-border":

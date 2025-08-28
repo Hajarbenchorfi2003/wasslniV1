@@ -29,7 +29,6 @@ const StudentsPage = () => {
   const [gradeFilter, setGradeFilter] = useState('ALL');
 
   useEffect(() => {
-    console.log("currentDemoData updated, filtering students...");
     const allStudents = currentDemoData.students.filter(student => !student.deletedAt);
 
     // Enrich students with establishment name and parent names
@@ -116,7 +115,6 @@ const StudentsPage = () => {
 
   const handleDeleteStudent = (id) => {
     try {
-      console.log(`Attempting to soft delete student with ID: ${id}`);
       const updatedStudents = currentDemoData.students.map(student =>
         student.id === id ? { ...student, deletedAt: new Date().toISOString() } : student
       );

@@ -35,7 +35,6 @@ const RoutesPage = () => {
           setEstablishmentsLoading(true);
           try {
             const data = await fetchUserEstablishments();
-            console.log("Établissements reçus :", data);
       
             if (isMounted && data && Array.isArray(data)) {
               setEstablishments(data);
@@ -68,7 +67,6 @@ const RoutesPage = () => {
       const data = await fetchroute(); // Récupère les données depuis l'API
       setRoutes(data || []); // Met à jour l'état local
       setCurrentDemoData(data);
-      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
     } catch (error) {
       console.error('Erreur lors du chargement des parents', error);
       toast.error("Impossible de charger les routes");

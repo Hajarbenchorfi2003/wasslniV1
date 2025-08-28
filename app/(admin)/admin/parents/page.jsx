@@ -52,7 +52,7 @@ const ParentsPage = () => {
     }, []); // ← tableau vide ici
      // ✅ seulement au montage du composant
 // 👈 pas `loading` global ici
-console.log("etablisment",establishments)
+
  const loadParents = async () => {
     setLoading(true);
     try {
@@ -60,7 +60,6 @@ console.log("etablisment",establishments)
       const safePrents = Array.isArray(data) ? data : [];
 
       setParents(afePrents); // Met à jour l'état local
-      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
     } catch (error) {
       console.error('Erreur lors du chargement des parents', error);
       toast.error("Impossible de charger les parents");
@@ -89,7 +88,6 @@ useEffect(() => {
 
   const handleDeleteParent =async (id) => {
     try {
-      console.log(`Attempting to delete parent with ID: ${id}`);
      await deleteUser(id);
 
       await loadParents();
@@ -119,7 +117,6 @@ useEffect(() => {
       await updateUser(editingParent.id, parentData);
       message = 'Parent modifié avec succès';
     } else {
-      console.log("Data to register:", parentData);
       await register(parentData);
       message = 'Parent ajouté avec succès';
     }

@@ -19,7 +19,7 @@ import SelectLayout from "./select-layout";
 import SelectTheme from "./select-theme";
 import HeaderStyle from "./header-style";
 import FooterStyle from "./footer-style";
-import RtlSwitcher from "./rtl-switch";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import RadiusInit from "./radius";
 import { Settings } from "@/components/svg";
@@ -54,7 +54,6 @@ const ThemeCustomize = ({
           <div className=" space-y-8 mt-3">
             <SelectLayout />
             <SelectTheme />
-            <RtlSwitcher />
             <ThemeChange />
             <SidebarChange />
             <SidebarImage />
@@ -63,19 +62,12 @@ const ThemeCustomize = ({
             <FooterStyle />
           </div>
         </ScrollArea>
-        <SheetFooter className="py-4 gap-3 lg:flex justify-between hidden  ">
-          <Button asChild className="w-full">
-            <Link href="https://1.envato.market/vNaJR3">Buy Now</Link>
-          </Button>
-          <Button asChild className="w-full">
-            <Link
-              href="https://themeforest.net/user/codeshaperbd/portfolio"
-              target="__blank"
-            >
-              Our Portfolio
-            </Link>
-          </Button>
-        </SheetFooter>
+      <SheetFooter className="py-4 px-2 flex items-center justify-center">
+  <div className="text-xs text-muted-foreground">
+    Made with ❤️ for{" "}
+    <span className="font-semibold text-[--theme-primary]">Wasslni</span>
+  </div>
+</SheetFooter>
       </SheetContent>
     </Sheet>
   );

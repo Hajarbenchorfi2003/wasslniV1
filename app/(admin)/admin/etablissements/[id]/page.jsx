@@ -24,7 +24,6 @@ import {getEstablishments} from '@/services/etablissements'
 // Helper function to get establishment details (can be moved to a utils file)
 const getEstablishmentDetails =async (establishmentId) => {
     const establishment = await getEstablishments(establishmentId) ;
-   console.log(establishment);
     if (!establishment) {
         return null;
     }
@@ -80,8 +79,6 @@ const EstablishmentDetailsPage = () => {
     loadDetails();
   }, [establishmentId]);
 
-    
-   console.log('details',details)
    if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">

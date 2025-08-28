@@ -39,7 +39,6 @@ useEffect(() => {
     setLoading(true);
     try {
       const data = await fetchResponsibles(); // Assurez-vous que cette fonction renvoie bien un tableau
-      console.log("Données reçues depuis l'API:", data);
 
      
         // Met à jour la liste des responsables
@@ -48,7 +47,6 @@ useEffect(() => {
         // Met à jour currentDemoData.users
         setCurrentDemoData((prev) => ({ ...prev, users: data }));
 
-        console.log("Données mises à jour dans currentDemoData:", currentDemoData);
       
     } catch (error) {
       console.error('Erreur lors du chargement des responsables', error);
@@ -70,17 +68,12 @@ useEffect(() => {
 
   // Effect to filter and set responsables whenever currentDemoData or searchQuery changes
   useEffect(() => {
-    
-     
-    console.log("currentDemoData or searchQuery updated, filtering responsables...");
-    console.log("currentData",currentDemoData)
     const allResponsibles = currentDemoData.users;
 
     // Enrich responsable data with associated establishment names
     const enrichedResponsibles = allResponsibles.map(responsable => {
       // Find establishments where this responsable is the responsableId
       const establishmentNames = responsable.establishments?.map(e => e.name).join(', ') || 'Aucun établissement';
-      console.log(establishmentNames)
    
 
       return {
@@ -133,7 +126,6 @@ useEffect(() => {
 
   const handleDeleteResponsable = (id) => {
     try {
-      console.log(`Attempting to delete user with ID: ${id}`);
       const updatedUsers = currentDemoData.users.filter(user => user.id !== id);
 
       const updatedEstablishments = currentDemoData.establishments.map(est => {
@@ -150,7 +142,6 @@ useEffect(() => {
       });
 
       toast.success('Responsable supprimé avec succès');
-      console.log("User deleted successfully, updated demoData:", { users: updatedUsers, establishments: updatedEstablishments });
     } catch (error) {
       console.error('Error deleting responsible:', error);
       toast.error('Erreur lors de la suppression du responsable');
@@ -178,7 +169,6 @@ useEffect(() => {
 
           updatedUsersArray[index] = updatedUser;
           message = 'Responsable modifié avec succès';
-          console.log("User updated:", updatedUser);
         } else {
           console.warn("Editing user not found in current demoData.users:", editingUser);
           throw new Error("Utilisateur à modifier non trouvé.");
@@ -189,10 +179,9 @@ useEffect(() => {
          role: 'RESPONSIBLE'
          };
 
-       console.log("Data being sent to register:",(dataToSend) );
 
        const response = await register(dataToSend);
-       console.log(response);
+
         const newId = Math.max(...currentDemoData.users.map(u => u.id), 0) + 1; // Generate a numeric ID
         const newUser = {
           ...dataToSend,
@@ -202,7 +191,6 @@ useEffect(() => {
         };
         updatedUsersArray.push(newUser);
         message = 'Responsable ajouté avec succès';
-        console.log("New user added:", newUser);
       }
 
       setCurrentDemoData(prevData => ({
@@ -211,7 +199,6 @@ useEffect(() => {
       }));
 
       toast.success(message);
-      console.log("Save operation successful. Final users array after save:", updatedUsersArray);
       setIsModalOpen(false);
       setEditingUser(null);
 

@@ -49,7 +49,6 @@ const AdminDashboardPage = () => {
     try {
       setLoading(true);
       
-      console.log('Début du chargement des données...');
       
       // Fetch all data in parallel
       const [
@@ -72,15 +71,7 @@ const AdminDashboardPage = () => {
         fetchResponsibles()
       ]);
        
-      // Log des données brutes
-      console.log('Établissements:', establishmentsData);
-      console.log('Bus:', busesData);
-      console.log('Routes:', routesData);
-      console.log('Trajets:', tripsData);
-      console.log('Incidents:', incidentsData);
-      console.log('Parents:', parentsData);
-      console.log('Chauffeurs:', driversData);
-      console.log('Responsables:', responsiblesData);
+
 
       // Get students for all establishments
       let allStudents = [];
@@ -93,8 +84,7 @@ const AdminDashboardPage = () => {
           .map(r => (Array.isArray(r?.data) ? r.data : Array.isArray(r) ? r : []))
           .flat();
       }
-      
-      console.log('Élèves:', allStudents);
+
 
       setDashboardData({
         establishments: Array.isArray(establishmentsData) ? establishmentsData : [],
@@ -110,22 +100,12 @@ const AdminDashboardPage = () => {
         }
       });
 
-      // Log des statistiques calculées
-      console.log('Total établissements:', Array.isArray(establishmentsData) ? establishmentsData.length : 0);
-      console.log('Total élèves:', allStudents.length);
-      console.log('Total bus:', Array.isArray(busesData) ? busesData.length : 0);
-      console.log('Total routes:', Array.isArray(routesData) ? routesData.length : 0);
-      console.log('Total trajets:', Array.isArray(tripsData) ? tripsData.length : 0);
-      console.log('Total incidents:', Array.isArray(incidentsData) ? incidentsData.length : 0);
-      console.log('Total parents:', Array.isArray(parentsData) ? parentsData.length : 0);
-      console.log('Total chauffeurs:', Array.isArray(driversData) ? driversData.length : 0);
-      console.log('Total responsables:', Array.isArray(responsiblesData) ? responsiblesData.length : 0);
 
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
       setLoading(false);
-      console.log('Chargement terminé');
+
     }
   };
 
@@ -273,28 +253,7 @@ const AdminDashboardPage = () => {
     };
   };
 
-  // Log des données finales pour le dashboard
-  useEffect(() => {
-    if (!loading) {
-      console.log('=== DONNÉES FINALES DU DASHBOARD ===');
-      console.log('Dashboard Data:', dashboardData);
-      console.log('Statistiques calculées:', {
-        totalEstablishments,
-        totalStudents,
-        totalBuses,
-        totalRoutes,
-        totalTrips,
-        totalIncidents,
-        totalDrivers,
-        totalParents,
-        totalResponsibles
-      });
-      console.log('Répartition par genre:', studentGenderCounts);
-      console.log('Répartition par classe:', studentClassCounts);
-      console.log('Statut des voyages:', dailyTripStatus);
-      console.log('Répartition des utilisateurs:', userRoleCounts);
-    }
-  }, [loading, dashboardData]);
+ 
 
   if (loading) {
     return (

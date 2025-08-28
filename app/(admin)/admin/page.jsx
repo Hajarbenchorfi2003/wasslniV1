@@ -7,71 +7,180 @@ import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useState, useEffect } from 'react';
 
-import {
-  demoData,
-  getUserCountsByRoleForAdminDashboard,
-  getTotalStudents,
-  getStudentCountsByGender,
-  getStudentCountsByClass,
-  getDailyTripStatusCounts,
-  getAttendanceStatusCounts,
-  getSchoolEstablishments,
-  getSchoolSubscriptionStatus,
-  getAllIncidents,
-  getIncidentsByEstablishment,
-  getStudentsByEstablishment,
-  getBusesByEstablishment,
-  getRoutesByEstablishment,
-  getTripsByEstablishment
-} from '@/data/data';
+// Import services
+import { fetchParents, fetchDrivers, fetchResponsibles } from '@/services/user';
+import { fetchUserEstablishments } from '@/services/etablissements';
+import { studentbyetablishment } from '@/services/students';
+import { fetchMyBuses } from '@/services/bus';
+import { fetchroute } from '@/services/route';
+import { getAllIncidents } from "@/services/notficationicidient";
+import { fetchAlltrip } from '@/services/trips';
+import dynamic from 'next/dynamic';
 
-import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import { useThemeStore } from "@/store";
 import { useTheme } from "next-themes";
 import { themes } from "@/config/thems";
 
 const AdminDashboardPage = () => {
-  // Example school ID (replace with dynamic retrieval based on logged-in admin)
-  const currentSchoolId = 1;
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    establishments: [],
+    students: [],
+    buses: [],
+    routes: [],
+    trips: [],
+    incidents: [],
+    users: {
+      parents: [],
+      drivers: [],
+      responsibles: []
+    }
+  });
 
-  // Prepare data for cards and charts
-  const userRoleCounts = getUserCountsByRoleForAdminDashboard();
+  // Load all data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      console.log('Début du chargement des données...');
+      
+      // Fetch all data in parallel
+      const [
+        establishmentsData,
+        busesData,
+        routesData,
+        tripsData,
+        incidentsData,
+        parentsData,
+        driversData,
+        responsiblesData
+      ] = await Promise.all([
+        fetchUserEstablishments(),
+        fetchMyBuses(),
+        fetchroute(),
+        fetchAlltrip(),
+        getAllIncidents(),
+        fetchParents(),
+        fetchDrivers(),
+        fetchResponsibles()
+      ]);
+       
+      // Log des données brutes
+      console.log('Établissements:', establishmentsData);
+      console.log('Bus:', busesData);
+      console.log('Routes:', routesData);
+      console.log('Trajets:', tripsData);
+      console.log('Incidents:', incidentsData);
+      console.log('Parents:', parentsData);
+      console.log('Chauffeurs:', driversData);
+      console.log('Responsables:', responsiblesData);
+
+      // Get students for all establishments
+      let allStudents = [];
+      if (Array.isArray(establishmentsData) && establishmentsData.length > 0) {
+        const studentsPromises = establishmentsData.map(establishment => 
+          studentbyetablishment(establishment.id)
+        );
+        const studentsResults = await Promise.all(studentsPromises);
+        allStudents = studentsResults
+          .map(r => (Array.isArray(r?.data) ? r.data : Array.isArray(r) ? r : []))
+          .flat();
+      }
+      
+      console.log('Élèves:', allStudents);
+
+      setDashboardData({
+        establishments: Array.isArray(establishmentsData) ? establishmentsData : [],
+        students: Array.isArray(allStudents) ? allStudents : [],
+        buses: Array.isArray(busesData) ? busesData : [],
+        routes: Array.isArray(routesData) ? routesData : [],
+        trips: Array.isArray(tripsData?.data) ? tripsData.data : (Array.isArray(tripsData) ? tripsData : []),
+        incidents: Array.isArray(incidentsData) ? incidentsData : [],
+        users: {
+          parents: Array.isArray(parentsData) ? parentsData : [],
+          drivers: Array.isArray(driversData) ? driversData : [],
+          responsibles: Array.isArray(responsiblesData) ? responsiblesData : []
+        }
+      });
+
+      // Log des statistiques calculées
+      console.log('Total établissements:', Array.isArray(establishmentsData) ? establishmentsData.length : 0);
+      console.log('Total élèves:', allStudents.length);
+      console.log('Total bus:', Array.isArray(busesData) ? busesData.length : 0);
+      console.log('Total routes:', Array.isArray(routesData) ? routesData.length : 0);
+      console.log('Total trajets:', Array.isArray(tripsData) ? tripsData.length : 0);
+      console.log('Total incidents:', Array.isArray(incidentsData) ? incidentsData.length : 0);
+      console.log('Total parents:', Array.isArray(parentsData) ? parentsData.length : 0);
+      console.log('Total chauffeurs:', Array.isArray(driversData) ? driversData.length : 0);
+      console.log('Total responsables:', Array.isArray(responsiblesData) ? responsiblesData.length : 0);
+
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+      console.log('Chargement terminé');
+    }
+  };
+
+  // Calculate statistics from real data with proper fallbacks
+  const totalEstablishments = Array.isArray(dashboardData.establishments) ? dashboardData.establishments.length : 0;
+  const totalStudents = Array.isArray(dashboardData.students) ? dashboardData.students.length : 0;
+  const totalBuses = Array.isArray(dashboardData.buses) ? dashboardData.buses.length : 0;
+  const totalRoutes = Array.isArray(dashboardData.routes) ? dashboardData.routes.length : 0;
+  const totalTrips = Array.isArray(dashboardData.trips) ? dashboardData.trips.length : 0;
+  const totalIncidents = Array.isArray(dashboardData.incidents) ? dashboardData.incidents.length : 0;
+  const totalDrivers = Array.isArray(dashboardData.users.drivers) ? dashboardData.users.drivers.length : 0;
+  const totalParents = Array.isArray(dashboardData.users.parents) ? dashboardData.users.parents.length : 0;
+  const totalResponsibles = Array.isArray(dashboardData.users.responsibles) ? dashboardData.users.responsibles.length : 0;
+
+  // Calculate student gender distribution with fallback
+  const studentGenderCounts = Array.isArray(dashboardData.students) ? 
+    dashboardData.students.reduce((acc, student) => {
+      const gender = student.gender || 'Non spécifié';
+      acc[gender] = (acc[gender] || 0) + 1;
+      return acc;
+    }, {}) : {};
+
+  // Calculate student class distribution with fallback
+  const studentClassCounts = Array.isArray(dashboardData.students) ? 
+    dashboardData.students.reduce((acc, student) => {
+      const className = student.className || 'Non spécifié';
+      acc[className] = (acc[className] || 0) + 1;
+      return acc;
+    }, {}) : {};
+
+  // Calculate trip status distribution with fallback
+  const dailyTripStatus = Array.isArray(dashboardData.trips) ? 
+    dashboardData.trips.reduce((acc, trip) => {
+      const status = trip.status || 'Non spécifié';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {}) : {};
+
+  // User role distribution
+  const userRoleCounts = {
+    PARENT: totalParents,
+    DRIVER: totalDrivers,
+    RESPONSIBLE: totalResponsibles
+  };
+
+  // Filter out SUPER_ADMIN (not applicable here)
   const filteredUserRoleCounts = Object.fromEntries(
     Object.entries(userRoleCounts).filter(([role]) => role !== 'SUPER_ADMIN')
   );
 
-  const totalStudents = getTotalStudents();
-  const studentGenderCounts = getStudentCountsByGender();
-  const studentClassCounts = getStudentCountsByClass();
-  const dailyTripStatus = getDailyTripStatusCounts();
-  const attendanceSummary = getAttendanceStatusCounts();
-  const totalEstablishments = getSchoolEstablishments(currentSchoolId).length;
-  const subscriptionStatus = getSchoolSubscriptionStatus(currentSchoolId);
-
-  // Enhanced statistics for school admin
-  const totalDrivers = demoData.users.filter(user => user.role === 'DRIVER' && demoData.userSchools.some(us => us.userId === user.id && us.schoolId === currentSchoolId)).length;
-  const totalParents = demoData.users.filter(user => user.role === 'PARENT' && demoData.userSchools.some(us => us.userId === user.id && us.schoolId === currentSchoolId)).length;
-  const totalBuses = demoData.buses.length;
-  const totalRoutes = demoData.routes.length;
-  const totalTrips = demoData.trips.length;
-  const totalIncidents = getAllIncidents().length;
-  const activeUsers = demoData.users.filter(user => user.isActive && user.role !== 'SUPER_ADMIN').length;
-  const inactiveUsers = demoData.users.filter(user => !user.isActive && user.role !== 'SUPER_ADMIN').length;
-
-  // Get establishments for this school
-  const schoolEstablishments = getSchoolEstablishments(currentSchoolId);
+  // Active users count (assuming all users are active unless specified otherwise)
+  const activeUsers = totalParents + totalDrivers + totalResponsibles;
   
-  // Calculate total students across all establishments
-  const totalStudentsInSchool = schoolEstablishments.reduce((total, establishment) => {
-    return total + getStudentsByEstablishment(establishment.id).length;
-  }, 0);
-
-  // Calculate total buses across all establishments
-  const totalBusesInSchool = schoolEstablishments.reduce((total, establishment) => {
-    return total + getBusesByEstablishment(establishment.id).length;
-  }, 0);
+  // Subscription status (placeholder - you might want to fetch this from your subscription service)
+  const subscriptionStatus = 'Actif';
 
   // Chart theme configurations
   const { theme: mode } = useTheme();
@@ -164,6 +273,40 @@ const AdminDashboardPage = () => {
     };
   };
 
+  // Log des données finales pour le dashboard
+  useEffect(() => {
+    if (!loading) {
+      console.log('=== DONNÉES FINALES DU DASHBOARD ===');
+      console.log('Dashboard Data:', dashboardData);
+      console.log('Statistiques calculées:', {
+        totalEstablishments,
+        totalStudents,
+        totalBuses,
+        totalRoutes,
+        totalTrips,
+        totalIncidents,
+        totalDrivers,
+        totalParents,
+        totalResponsibles
+      });
+      console.log('Répartition par genre:', studentGenderCounts);
+      console.log('Répartition par classe:', studentClassCounts);
+      console.log('Statut des voyages:', dailyTripStatus);
+      console.log('Répartition des utilisateurs:', userRoleCounts);
+    }
+  }, [loading, dashboardData]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Icon icon="heroicons:arrow-path" className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="mt-2 text-muted-foreground">Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -188,7 +331,6 @@ const AdminDashboardPage = () => {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Établissements</p>
                 <p className="text-3xl font-bold text-default-900">{totalEstablishments}</p>
-                <p className="text-xs text-green-600 mt-1">+1 ce mois</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Icon icon="heroicons:building-office-2" className="h-6 w-6 text-blue-600" />
@@ -203,8 +345,7 @@ const AdminDashboardPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Élèves</p>
-                <p className="text-3xl font-bold text-default-900">{totalStudentsInSchool}</p>
-                <p className="text-xs text-green-600 mt-1">+8 cette semaine</p>
+                <p className="text-3xl font-bold text-default-900">{totalStudents}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <Icon icon="heroicons:academic-cap" className="h-6 w-6 text-green-600" />
@@ -219,8 +360,7 @@ const AdminDashboardPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Bus Actifs</p>
-                <p className="text-3xl font-bold text-default-900">{totalBusesInSchool}</p>
-                <p className="text-xs text-green-600 mt-1">100% opérationnels</p>
+                <p className="text-3xl font-bold text-default-900">{totalBuses}</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <Icon icon="heroicons:truck" className="h-6 w-6 text-purple-600" />
@@ -229,17 +369,16 @@ const AdminDashboardPage = () => {
           </CardContent>
         </Card>
 
-        {/* Today&apos;s Attendance */}
+        {/* Today's Attendance */}
         <Card className="border-l-4 border-l-orange-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Présence Aujourd&apos;hui</p>
-                <p className="text-3xl font-bold text-default-900">95%</p>
-                <p className="text-xs text-green-600 mt-1">+2% vs hier</p>
+                <p className="text-sm font-medium text-muted-foreground">Incidents</p>
+                <p className="text-3xl font-bold text-default-900">{totalIncidents}</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Icon icon="heroicons:clipboard-document-check" className="h-6 w-6 text-orange-600" />
+                <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
@@ -264,29 +403,13 @@ const AdminDashboardPage = () => {
               <Icon icon="heroicons:truck" className="h-5 w-5 text-green-600" />
               <span className="font-medium text-green-800">Ajouter Bus</span>
             </Link>
-            <Link href="/admin/users?role=DRIVER" className="flex items-center space-x-2 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+            <Link href="/admin/drivers" className="flex items-center space-x-2 p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
               <Icon icon="heroicons:user" className="h-5 w-5 text-purple-600" />
               <span className="font-medium text-purple-800">Ajouter Chauffeur</span>
             </Link>
             <Link href="/admin/students" className="flex items-center space-x-2 p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
               <Icon icon="heroicons:academic-cap" className="h-5 w-5 text-orange-600" />
               <span className="font-medium text-orange-800">Ajouter Élève</span>
-            </Link>
-            <Link href="/admin/routes" className="flex items-center space-x-2 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
-              <Icon icon="heroicons:map" className="h-5 w-5 text-indigo-600" />
-              <span className="font-medium text-indigo-800">Créer Trajet</span>
-            </Link>
-            <Link href="/admin/users?role=PARENT" className="flex items-center space-x-2 p-3 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors">
-              <Icon icon="heroicons:users" className="h-5 w-5 text-pink-600" />
-              <span className="font-medium text-pink-800">Ajouter Parent</span>
-            </Link>
-            <Link href="/admin/incidents" className="flex items-center space-x-2 p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-              <Icon icon="heroicons:exclamation-triangle" className="h-5 w-5 text-red-600" />
-              <span className="font-medium text-red-800">Voir Incidents</span>
-            </Link>
-            <Link href="/admin/reports" className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <Icon icon="heroicons:chart-bar" className="h-5 w-5 text-gray-600" />
-              <span className="font-medium text-gray-800">Générer Rapport</span>
             </Link>
           </div>
         </CardContent>
@@ -313,7 +436,7 @@ const AdminDashboardPage = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-blue-700">Bus</span>
-                      <span className="font-semibold text-blue-900">{totalBusesInSchool}</span>
+                      <span className="font-semibold text-blue-900">{totalBuses}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-blue-700">Routes</span>
@@ -343,7 +466,7 @@ const AdminDashboardPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-green-700">Responsables</span>
-                      <span className="font-semibold text-green-900">{userRoleCounts.RESPONSIBLE || 0}</span>
+                      <span className="font-semibold text-green-900">{totalResponsibles}</span>
                     </div>
                   </div>
                 </div>
@@ -364,7 +487,7 @@ const AdminDashboardPage = () => {
                     <div className="flex justify-between">
                       <span className="text-sm text-purple-700">Utilisateurs</span>
                       <Badge variant="outline" className="text-xs">
-                        {activeUsers}/{activeUsers + inactiveUsers}
+                        {activeUsers} actifs
                       </Badge>
                     </div>
                     <div className="flex justify-between">
@@ -412,12 +535,16 @@ const AdminDashboardPage = () => {
             <CardTitle className="text-lg font-semibold text-default-900">Élèves par Sexe</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center p-4">
-            <Chart
-              options={getChartOptions(studentGenderCounts)}
-              series={Object.values(studentGenderCounts)}
-              type="pie"
-              height={250}
-            />
+            {Object.keys(studentGenderCounts).length > 0 ? (
+              <Chart
+                options={getChartOptions(studentGenderCounts)}
+                series={Object.values(studentGenderCounts)}
+                type="pie"
+                height={250}
+              />
+            ) : (
+              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
+            )}
           </CardContent>
         </Card>
 
@@ -426,12 +553,16 @@ const AdminDashboardPage = () => {
             <CardTitle className="text-lg font-semibold text-default-900">Élèves par Classe</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center p-4">
-            <Chart
-              options={getChartOptions(studentClassCounts, Object.keys(studentClassCounts), 'bar')}
-              series={[{ name: 'Nombre d\'Élèves', data: Object.values(studentClassCounts) }]}
-              type="bar"
-              height={250}
-            />
+            {Object.keys(studentClassCounts).length > 0 ? (
+              <Chart
+                options={getChartOptions(studentClassCounts, Object.keys(studentClassCounts), 'bar')}
+                series={[{ name: 'Nombre d\'Élèves', data: Object.values(studentClassCounts) }]}
+                type="bar"
+                height={250}
+              />
+            ) : (
+              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
+            )}
           </CardContent>
         </Card>
 
@@ -440,12 +571,16 @@ const AdminDashboardPage = () => {
             <CardTitle className="text-lg font-semibold text-default-900">État des Voyages</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center p-4">
-            <Chart
-              options={getChartOptions(dailyTripStatus, Object.keys(dailyTripStatus), 'bar')}
-              series={[{ name: 'Nombre de Voyages', data: Object.values(dailyTripStatus) }]}
-              type="bar"
-              height={250}
-            />
+            {Object.keys(dailyTripStatus).length > 0 ? (
+              <Chart
+                options={getChartOptions(dailyTripStatus, Object.keys(dailyTripStatus), 'bar')}
+                series={[{ name: 'Nombre de Voyages', data: Object.values(dailyTripStatus) }]}
+                type="bar"
+                height={250}
+              />
+            ) : (
+              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -462,7 +597,7 @@ const AdminDashboardPage = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {getAllIncidents().slice(0, 3).map((incident) => (
+              {Array.isArray(dashboardData.incidents) && dashboardData.incidents.slice(0, 3).map((incident) => (
                 <div key={incident.id} className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
                   <Icon icon="heroicons:exclamation-circle" className="h-4 w-4 text-red-600" />
                   <div className="flex-1">
@@ -473,7 +608,10 @@ const AdminDashboardPage = () => {
                   </div>
                 </div>
               ))}
-              <Link href="/admin/incidents" className="block text-center text-sm text-blue-600 hover:text-blue-800">
+              {(!Array.isArray(dashboardData.incidents) || dashboardData.incidents.length === 0) && (
+                <p className="text-gray-600 text-sm text-center">Aucun incident récent</p>
+              )}
+              <Link href="/admin/notifications" className="block text-center text-sm text-blue-600 hover:text-blue-800">
                 Voir tous les incidents →
               </Link>
             </div>
@@ -497,21 +635,21 @@ const AdminDashboardPage = () => {
                 </div>
                 <Badge variant="secondary">{totalEstablishments}</Badge>
               </Link>
-              <Link href="/admin/users?role=RESPONSIBLE" className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+              <Link href="/admin/responsables" className="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
                 <div className="flex items-center gap-3">
                   <Icon icon="heroicons:user" className="h-5 w-5 text-green-600" />
                   <span className="font-medium text-green-800">Gérer les Responsables</span>
                 </div>
-                <Badge variant="secondary">{userRoleCounts.RESPONSIBLE || 0}</Badge>
+                <Badge variant="secondary">{totalResponsibles}</Badge>
               </Link>
-              <Link href="/admin/users?role=DRIVER" className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+              <Link href="/admin/drivers" className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
                 <div className="flex items-center gap-3">
                   <Icon icon="heroicons:truck" className="h-5 w-5 text-purple-600" />
                   <span className="font-medium text-purple-800">Gérer les Chauffeurs</span>
                 </div>
                 <Badge variant="secondary">{totalDrivers}</Badge>
               </Link>
-              <Link href="/admin/users?role=PARENT" className="flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+              <Link href="/admin/parents" className="flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
                 <div className="flex items-center gap-3">
                   <Icon icon="heroicons:users" className="h-5 w-5 text-orange-600" />
                   <span className="font-medium text-orange-800">Gérer les Parents</span>
@@ -522,49 +660,6 @@ const AdminDashboardPage = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* System Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-default-900">Gestion du Système</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <Link href="/admin/students" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:academic-cap" className="h-5 w-5 text-primary" />
-              <span className="font-medium text-default-700">Élèves</span>
-            </Link>
-            <Link href="/admin/buses" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:truck" className="h-5 w-5 text-info" />
-              <span className="font-medium text-default-700">Bus</span>
-            </Link>
-            <Link href="/admin/routes" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:map" className="h-5 w-5 text-warning" />
-              <span className="font-medium text-default-700">Routes</span>
-            </Link>
-            <Link href="/admin/trips" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:map-pin" className="h-5 w-5 text-success" />
-              <span className="font-medium text-default-700">Trajets</span>
-            </Link>
-            <Link href="/admin/attendance" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:clipboard-document-check" className="h-5 w-5 text-purple-500" />
-              <span className="font-medium text-default-700">Présences</span>
-            </Link>
-            <Link href="/admin/incidents" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:exclamation-triangle" className="h-5 w-5 text-destructive" />
-              <span className="font-medium text-default-700">Incidents</span>
-            </Link>
-            <Link href="/admin/notifications" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:bell" className="h-5 w-5 text-orange-500" />
-              <span className="font-medium text-default-700">Notifications</span>
-            </Link>
-            <Link href="/admin/reports" className="flex items-center space-x-2 p-3 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-              <Icon icon="heroicons:chart-bar" className="h-5 w-5 text-indigo-500" />
-              <span className="font-medium text-default-700">Rapports</span>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

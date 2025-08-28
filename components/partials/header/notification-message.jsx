@@ -41,7 +41,7 @@ const NotificationMessage = () => {
     const role = user?.role?.toLowerCase();
     switch (role) {
       case "admin":
-        return "/admin/notfications";
+        return "/admin/notifications";
       case "super_admin":
         return "/super-admin/notifications";
       case "parent":

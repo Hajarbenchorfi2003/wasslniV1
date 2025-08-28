@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { demoData as initialDemoData } from '@/data/data'; // Adjust path if needed
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils'; // For conditional classnames
@@ -24,12 +23,6 @@ import {
 const ITEMS_PER_PAGE = 6; // Number of buses per page for pagination
 
 const BusPage = () => {
-  // Use a state variable for demoData to ensure re-renders when it changes
-  const [currentDemoData, setCurrentDemoData] = useState({
-  buses: [],
-  trips: [],
-  establishments: []
-});
   const [buses, setBuses] = useState([]);
   const [allBuses, setAllBuses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,7 +44,6 @@ const loadBuses = async (filters) => {
     setLoading(true);
     setError(null);
     const data = await fetchMyBuses(filters);
-    console.log("Données reçues depuis l'API:", data);
     setAllBuses(data);
     setBuses(data);
   } catch (err) {
@@ -193,7 +185,6 @@ useEffect(() => {
   const handleSaveBus = async (busData) => {
     try {
       let message = '';
-      let updatedBusesArray = [...currentDemoData.buses];
 
       if (editingBus) {
 
@@ -203,24 +194,12 @@ useEffect(() => {
       } else {
         console.log(busData);
         const add=await createBus(busData);
-        // const newId = Math.max(...currentDemoData.buses.map(b => b.id), 0) + 1;
-        // const newBus = {
-        //   ...busData,
-        //   id: newId,
-        // };
-        // updatedBusesArray.push(newBus);
         message = 'Bus ajouté avec succès';
         console.log("New bus added:", add);
       }
 
-      setCurrentDemoData(prevData => ({
-        ...prevData,
-        buses: updatedBusesArray,
-      }));
-
       toast.success(message);
       await loadBuses();
-      console.log("Save operation successful. Final buses array after save:", updatedBusesArray);
       setIsModalOpen(false);
       setEditingBus(null);
 

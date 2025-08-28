@@ -76,7 +76,6 @@ const TripsPage = () => {
       setLoadingbus(true);
       
       const data = await fetchMyBuses();
-      console.log("Données reçues depuis l'API:", data);
      
       setBuses(data);
     } catch (err) {
@@ -97,8 +96,6 @@ const TripsPage = () => {
       try {
         const data = await fetchroute(); // Récupère les données depuis l'API
         setRoutes(data || []); // Met à jour l'état local
-        
-        console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
       } catch (error) {
         console.error('Erreur lors du chargement des parents', error);
         toast.error("Impossible de charger les routes");
@@ -117,7 +114,6 @@ const TripsPage = () => {
 
       setDrivers(safeDrivers); // Met à jour l'état local
       
-      console.log("Données reçues depuis l'API :", data); // ✅ Affiche directement les données
     } catch (error) {
       console.error('Erreur lors du chargement des parents', error);
       toast.error("Impossible de charger les parents");
@@ -168,7 +164,7 @@ useEffect(() => {
   fetchTripsWithFilters();
 }, [fetchTripsWithFilters]); // ✅ maintenant ça passe ESLint
 
-console.log("trips",trips)
+
 
 const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE);
 const paginatedTrips = trips.slice(
@@ -253,7 +249,6 @@ useEffect(() => {
           if (Array.isArray(tripData.studentIds) && tripData.studentIds.length > 0) {
             const data={studentIds:tripData.studentIds};
              await createtripStudents(tripAdd.id,data);
-           console.log("Élèves assignés avec succès");
             } else {
            console.warn("Aucun élève sélectionné ou format incorrect");
            }

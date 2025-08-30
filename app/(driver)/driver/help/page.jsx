@@ -139,12 +139,10 @@ import toast from 'react-hot-toast';
  
       {/* Main Content */}
       <Tabs defaultValue="faq" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="faq">FAQ</TabsTrigger>
-          <TabsTrigger value="tutorials">Tutoriels</TabsTrigger>
           <TabsTrigger value="safety">Sécurité</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="info">Informations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="faq" className="space-y-6">
@@ -203,76 +201,7 @@ import toast from 'react-hot-toast';
           </Card>
         </TabsContent>
 
-        <TabsContent value="tutorials" className="space-y-6">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Icon icon="heroicons:play-circle" className="h-6 w-6 text-green-500" />
-                Tutoriels Vidéo
-              </CardTitle>
-              <CardDescription>
-                Apprenez à utiliser toutes les fonctionnalités de l&apos;application
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg">Fonctionnalités de base</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">Première connexion</p>
-                        <p className="text-sm text-muted-foreground">3 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">Activer le GPS</p>
-                        <p className="text-sm text-muted-foreground">2 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">Marquer la présence</p>
-                        <p className="text-sm text-muted-foreground">4 min</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg">Fonctionnalités avancées</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-green-500" />
-                      <div>
-                        <p className="font-medium">Signaler un incident</p>
-                        <p className="text-sm text-muted-foreground">3 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-green-500" />
-                      <div>
-                        <p className="font-medium">Consulter l&apos;itinéraire</p>
-                        <p className="text-sm text-muted-foreground">2 min</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                      <Icon icon="heroicons:play" className="h-5 w-5 text-green-500" />
-                      <div>
-                        <p className="font-medium">Gérer les notifications</p>
-                        <p className="text-sm text-muted-foreground">3 min</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      
 
         <TabsContent value="safety" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -427,72 +356,6 @@ import toast from 'react-hot-toast';
           </div>
         </TabsContent>
 
-        <TabsContent value="info" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* App Information */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon icon="heroicons:information-circle" className="h-6 w-6 text-blue-500" />
-                  Informations Application
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Version</span>
-                    <Badge variant="outline">v2.1.0</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Dernière mise à jour</span>
-                    <span className="text-sm text-muted-foreground">15 Mars 2024</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Support technique</span>
-                    <span className="text-sm text-muted-foreground">24/7</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">GPS</span>
-                    <Badge variant="outline" className="text-xs">
-                      Actif
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Reference */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon icon="heroicons:book-open" className="h-6 w-6 text-green-500" />
-                  Référence Rapide
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium text-blue-800 mb-2">Raccourcis clavier</h4>
-                    <div className="space-y-1 text-sm text-blue-700">
-                      <div>• GPS : Double-tap sur la carte</div>
-                      <div>• Présence : Swipe vers la droite</div>
-                      <div>• Incident : Bouton rouge flottant</div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <h4 className="font-medium text-green-800 mb-2">Statuts</h4>
-                    <div className="space-y-1 text-sm text-green-700">
-                      <div>• 🟢 Vert : Tout va bien</div>
-                      <div>• 🟡 Jaune : Attention</div>
-                      <div>• 🔴 Rouge : Urgence</div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
 
       {/* Contact Modal */}

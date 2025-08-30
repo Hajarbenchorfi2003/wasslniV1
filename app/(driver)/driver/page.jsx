@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { getUser } from '@/utils/auth';
 import {
   Card,
   CardContent,
@@ -457,6 +458,8 @@ const DriverDashboardPage =() =>{
         return 'Inconnu';
     }
   };
+  const user = getUser();
+  const fullName = user?.fullname|| "" ;
 
   const getMapCenter = () => {
     if (busPosition) {
@@ -484,14 +487,13 @@ const DriverDashboardPage =() =>{
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Tableau de bord Conducteur</h1>
-          <p>Bienvenue!</p>
-        </div>
-        <Badge variant="outline" color="success">
-          En ligne
-        </Badge>
+      <div className="flex-1">
+        <h1 className="text-3xl font-bold">Bienvenue {fullName} !</h1>
       </div>
+      <Badge variant="outline" color="success">
+        En ligne
+      </Badge>
+    </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -524,89 +526,135 @@ const DriverDashboardPage =() =>{
         <div className="lg:col-span-2">
           {selectedDailyTrip ? (
             <Card className="shadow-sm border border-gray-200 h-full flex flex-col">
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
-                      <Button onClick={handleGoBackToList} variant="ghost" size="icon" className="mr-2">
-                        <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
-                      </Button>
-                      Détails du Trajet: {selectedDailyTrip.trip?.name || 'N/A'}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      Date: {selectedDailyTrip.displayDate}
-                      <Badge className={cn("ml-2 capitalize")} color={getTripStatusColor(selectedDailyTrip.status)} variant="soft">
-                        {getTripStatusText(selectedDailyTrip.status)}
-                      </Badge>
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    {selectedDailyTrip.status === 'PLANNED' && (
-                      <Button onClick={handleStartTrip} variant="default" size="sm">
-                        <Icon icon="heroicons:play" className="h-4 w-4 mr-2" /> Démarrer
-                      </Button>
-                    )}
-                    {selectedDailyTrip.status === 'ONGOING' && (
-                      <Button onClick={handleCompleteTrip} variant="default" size="sm">
-                        <Icon icon="heroicons:check" className="h-4 w-4 mr-2" /> Terminer
-                      </Button>
-                    )}
-                    {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING') && (
-                      <Button onClick={handleCancelTrip} variant="destructive" size="sm">
-                        <Icon icon="heroicons:x-mark" className="h-4 w-4 mr-2" /> Annuler
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
+             <CardHeader className="pb-4">
+  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+    {/* Partie gauche (titre + description) */}
+    <div className="flex-1 flex-col flex">
+      <CardTitle className="text-lg md:text-xl font-semibold text-default-800 flex items-center gap-2 flex-1">
+        <Button
+          onClick={handleGoBackToList}
+          variant="ghost"
+          size="icon"
+          className="mr-1"
+        >
+          <Icon icon="heroicons:arrow-left" className="h-5 w-5" />
+        </Button>
+        Détails du Trajet: {selectedDailyTrip.trip?.name || "N/A"}
+      </CardTitle>
+      <CardDescription className="mt-1 text-sm md:text-base">
+        Date: {selectedDailyTrip.date}
+        <Badge
+          className={cn("ml-2 capitalize")}
+          color={getTripStatusColor(selectedDailyTrip.status)}
+          variant="soft"
+        >
+          {getTripStatusText(selectedDailyTrip.status)}
+        </Badge>
+      </CardDescription>
+    </div>
+
+    {/* Partie droite (boutons) */}
+    <div className="flex flex-wrap gap-2 justify-end">
+      {selectedDailyTrip.status === "PLANNED" && (
+        <Button onClick={handleStartTrip} variant="default" size="sm">
+          <Icon icon="heroicons:play" className="h-4 w-4 mr-2" /> Démarrer
+        </Button>
+      )}
+      {selectedDailyTrip.status === "ONGOING" && (
+        <Button onClick={handleCompleteTrip} variant="default" size="sm">
+          <Icon icon="heroicons:check" className="h-4 w-4 mr-2" /> Terminer
+        </Button>
+      )}
+      {(selectedDailyTrip.status === "PLANNED" ||
+        selectedDailyTrip.status === "ONGOING") && (
+        <Button onClick={handleCancelTrip} variant="destructive" size="sm">
+          <Icon icon="heroicons:x-mark" className="h-4 w-4 mr-2" /> Annuler
+        </Button>
+      )}
+    </div>
+  </div>
+</CardHeader>
+
               
               <CardContent className="flex-grow overflow-y-auto">
                 <Tabs defaultValue="overview" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
-                    <TabsTrigger value="students">Élèves</TabsTrigger>
-                    <TabsTrigger value="route">Itinéraire</TabsTrigger>
-                    <TabsTrigger value="tracking">Suivi GPS</TabsTrigger>
-                  </TabsList>
+                 <TabsList className="grid w-full grid-cols-4 gap-2">
+  <TabsTrigger value="overview" className="w-full">
+    {/* Icon always visible */}
+    <Icon icon="heroicons:eye" className="h-5 w-5 md:mr-2" />
+    {/* Text hidden on mobile, visible on md+ */}
+    <span className="hidden md:inline">Vue d&apos;ensemble</span>
+  </TabsTrigger>
+
+  <TabsTrigger value="students" className="w-full">
+    <Icon icon="heroicons:user-group" className="h-5 w-5 md:mr-2" />
+    <span className="hidden md:inline">Élèves</span>
+  </TabsTrigger>
+
+  <TabsTrigger value="route" className="w-full">
+    <Icon icon="heroicons:map" className="h-5 w-5 md:mr-2" />
+    <span className="hidden md:inline">Itinéraire</span>
+  </TabsTrigger>
+
+  <TabsTrigger value="tracking" className="w-full">
+    <Icon icon="heroicons:signal" className="h-5 w-5 md:mr-2" />
+    <span className="hidden md:inline">Suivi GPS</span>
+  </TabsTrigger>
+</TabsList>
+
 
                   <TabsContent value="overview" className="space-y-4">
-                    {/* Bus & Route Info */}
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-default-50 rounded-lg">
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2">Informations Bus</h4>
-                        <p className="text-sm"><strong>Plaque:</strong> {selectedDailyTrip.trip?.bus?.plateNumber || 'N/A'}</p>
-                        <p className="text-sm"><strong>Marque:</strong> {selectedDailyTrip.trip?.bus?.marque || 'N/A'}</p>
-                        <p className="text-sm"><strong>Capacité:</strong> {selectedDailyTrip.trip?.bus?.capacity || 'N/A'} places</p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2">Informations Route</h4>
-                        <p className="text-sm"><strong>Route:</strong> {selectedDailyTrip.trip?.route?.name || 'N/A'}</p>
-                        <p className="text-sm"><strong>Élèves:</strong> {studentsInSelectedTrip.length}</p>
-                      </div>
-                    </div>
+  {/* Bus & Route Info */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-default-50 rounded-lg">
+    <div>
+      <h4 className="font-semibold text-sm mb-2">Informations Bus</h4>
+      <p className="text-sm">
+        <strong>Plaque:</strong> {selectedDailyTrip.trip?.bus?.plateNumber || 'N/A'}
+      </p>
+      <p className="text-sm">
+        <strong>Marque:</strong> {selectedDailyTrip.trip?.bus?.marque || 'N/A'}
+      </p>
+      <p className="text-sm">
+        <strong>Capacité:</strong> {selectedDailyTrip.trip?.bus?.capacity || 'N/A'} places
+      </p>
+    </div>
+    <div>
+      <h4 className="font-semibold text-sm mb-2">Informations Route</h4>
+      <p className="text-sm">
+        <strong>Route:</strong> {selectedDailyTrip.trip?.route?.name || 'N/A'}
+      </p>
+      <p className="text-sm">
+        <strong>Élèves:</strong> {studentsInSelectedTrip.length}
+      </p>
+    </div>
+  </div>
 
-                    {/* Quick Actions */}
-                    {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING') && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <Button 
-                          onClick={handleToggleTracking} 
-                          variant={isTrackingActive ? "destructive" : "default"}
-                          className="flex gap-2"
-                        >
-                          <Icon icon="heroicons:map-pin" className="h-6 w-6" />
-                          {isTrackingActive ? 'Désactiver GPS' : 'Activer GPS'}
-                        </Button>
-                        <Button 
-                          onClick={handleOpenIncidentModal} 
-                          variant="outline"
-                          className="flex gap-2"
-                        >
-                          <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6" />
-                          Signaler Incident
-                        </Button>
-                      </div>
-                    )}
-                  </TabsContent>
+  {/* Quick Actions */}
+  {(selectedDailyTrip.status === 'PLANNED' || selectedDailyTrip.status === 'ONGOING') && (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <Button 
+        onClick={handleToggleTracking} 
+        variant={isTrackingActive ? "destructive" : "default"}
+        className="flex items-center justify-center gap-2"
+      >
+        <Icon icon="heroicons:map-pin" className="h-6 w-6" />
+       
+          {isTrackingActive ? 'Désactiver GPS' : 'Activer GPS'}
+         
+      </Button>
+
+      <Button 
+        onClick={handleOpenIncidentModal} 
+        variant="outline"
+        className="flex items-center justify-center gap-2"
+      >
+        <Icon icon="heroicons:exclamation-triangle" className="h-6 w-6" />
+        Signaler Incident
+      </Button>
+    </div>
+  )}
+</TabsContent>
+
 
                   <TabsContent value="students" className="space-y-4">
                     <h3 className="font-semibold text-lg mb-2 text-default-700">Liste des Élèves & Présence</h3>

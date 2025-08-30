@@ -58,7 +58,7 @@ export const ChildInfoCard = ({ child, dailyTripDetails, busPosition, onTrackBus
     <Card className="border border-gray-200">
       <CardHeader className="py-4 px-6">
         <div className="flex items-center justify-between">
-          <div>
+          <div className='flex-1'>
             <CardTitle className="text-xl font-semibold text-default-800 flex items-center gap-2">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground">

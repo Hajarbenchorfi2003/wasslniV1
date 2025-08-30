@@ -561,11 +561,28 @@ const status = dailyTrip?.status;
 
         <CardContent className="p-0">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Vue d&rsquo;ensemble</TabsTrigger>
-              <TabsTrigger value="students">Élèves</TabsTrigger>
-              <TabsTrigger value="route">Itinéraire</TabsTrigger>
-              <TabsTrigger value="tracking">Suivi GPS</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4 gap-2">
+              <TabsTrigger value="overview" className="w-full">
+                {/* Icon always visible */}
+                <Icon icon="heroicons:eye" className="h-5 w-5 md:mr-2" />
+                {/* Text hidden on mobile, visible on md+ */}
+                <span className="hidden md:inline">Vue d&apos;ensemble</span>
+              </TabsTrigger>
+            
+              <TabsTrigger value="students" className="w-full">
+                <Icon icon="heroicons:user-group" className="h-5 w-5 md:mr-2" />
+                <span className="hidden md:inline">Élèves</span>
+              </TabsTrigger>
+            
+              <TabsTrigger value="route" className="w-full">
+                <Icon icon="heroicons:map" className="h-5 w-5 md:mr-2" />
+                <span className="hidden md:inline">Itinéraire</span>
+              </TabsTrigger>
+            
+              <TabsTrigger value="tracking" className="w-full">
+                <Icon icon="heroicons:signal" className="h-5 w-5 md:mr-2" />
+                <span className="hidden md:inline">Suivi GPS</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="p-6 space-y-6">
@@ -609,7 +626,7 @@ const status = dailyTrip?.status;
               {/* Quick Actions */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg text-default-700">Actions rapides</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Dans la section &quot;Suivi GPS en Temps Réel&quot; */}
 <div className="p-4 bg-blue-50 rounded-lg">
   <div className="flex items-center gap-2 mb-2">

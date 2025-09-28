@@ -3,6 +3,7 @@
 
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -23,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react"; 
 import toast from 'react-hot-toast'; // Assuming react-hot-toast
 
 // Define the Zod schema for validation
@@ -42,6 +44,7 @@ const createFormSchema = (isAddingMode) =>
   });
 
 export function FormUserRes({ initialData, onSubmit, onCancel, role }) {
+  const [loading, setLoading] = useState(false);
      const isAddingMode = !initialData;
   const form = useForm({
     resolver: zodResolver(createFormSchema(isAddingMode)), // ✅ Schéma dynamique
@@ -87,12 +90,15 @@ export function FormUserRes({ initialData, onSubmit, onCancel, role }) {
         form.setError("password", { message: "Le mot de passe est requis pour un nouvel utilisateur." });
         return;
       }
-      
+       setLoading(true);
       await onSubmit(values); // Call the onSave prop from ModalUser/ResponsablesPage
       form.reset(); // Reset form after successful submission
     } catch (error) {
       // onSubmit (handleSaveUser) in ResponsablesPage will handle toast for errors
       console.error("Form submission error:", error);
+    }
+    finally {
+      setLoading(false); // ✅ Stop loading after API call
     }
   };
 
@@ -182,9 +188,16 @@ export function FormUserRes({ initialData, onSubmit, onCancel, role }) {
           <Button type="button" variant="outline" onClick={onCancel}>
             Annuler
           </Button>
-          <Button type="submit">
-            {initialData ? "Sauvegarder les modifications" : "Ajouter"}
-          </Button>
+         <Button type="submit" disabled={loading}>
+                     {loading ? (
+                       <>
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                         Chargement...
+                       </>
+                     ) : (
+                       initialData ? "Sauvegarder les modifications" : "Ajouter"
+                     )}
+                   </Button>
         </div>
       </form>
     </Form>

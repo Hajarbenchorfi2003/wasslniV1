@@ -152,7 +152,11 @@ const [loading, setLoading] = useState(false);
       let updatedUsersArray = [...currentDemoData.users];
 
       if (editingUser) {
+
+        console.log('test');
         const response=await updateUser(editingUser.id,userData)
+        console.log("✅ Réponse API update :", response);
+
         const index = updatedUsersArray.findIndex(u => u.id === editingUser.id);
         if (index !== -1) {
           const userToUpdate = updatedUsersArray[index];

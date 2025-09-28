@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2 } from "lucide-react"; 
 
 // Updated Zod Schema for Etablissement (quartie already added)
 const etablissementSchema = z.object({
@@ -65,6 +66,7 @@ export default function EtablissementResponsableForm({
 }) {
   console.log("onSubmit", onSubmit); 
   const [addNewResponsable, setAddNewResponsable] = useState(defaultValues?.addNewResponsable !== undefined ? defaultValues.addNewResponsable : true);
+   const [loading, setLoading] = useState(false);
 
   // Determine if school selection is required
   const isSchoolSelectRequired = fixedSchoolId === null;
@@ -171,7 +173,7 @@ const handleSubmit = (data) => {
     toast.error("Corrigez les erreurs avant de continuer");
     return;
   }
-
+ setLoading(true);
   console.log("formData", data); // ✅ Devrait s'afficher ici
   onSubmit(data);
 };

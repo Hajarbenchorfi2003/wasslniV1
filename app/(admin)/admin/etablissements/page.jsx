@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { demoData } from '@/data/data'; // Make sure this path is correct
-import ModalEtablissement from '@/components/models/ModalEtablissement1'; // Adjust path if necessary
+import ModalEtablissement from '@/components/models/ModalEtablissementadmin'; // Adjust path if necessary
 import TableEtablissement from './tableEtablissement'; // You'll need to create this component
 import { Button } from '@/components/ui/button';
 import { Icon } from '@iconify/react';

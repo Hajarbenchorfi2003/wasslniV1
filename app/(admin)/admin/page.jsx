@@ -1,7 +1,6 @@
 // app/[lang]/(admin)/admin/page.jsx
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import DatePickerWithRange from "@/components/date-picker-with-range";
 import { Icon } from "@iconify/react";
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,7 @@ import { fetchMyBuses } from '@/services/bus';
 import { fetchroute } from '@/services/route';
 import { getAllIncidents } from "@/services/notficationicidient";
 import { fetchAlltrip } from '@/services/trips';
+import {fetchdailytrip} from '@/services/dailyTrip';
 import dynamic from 'next/dynamic';
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -32,6 +32,7 @@ const AdminDashboardPage = () => {
     buses: [],
     routes: [],
     trips: [],
+    tripsdaily: [],
     incidents: [],
     users: {
       parents: [],
@@ -56,6 +57,7 @@ const AdminDashboardPage = () => {
         busesData,
         routesData,
         tripsData,
+        tripsdailyData,
         incidentsData,
         parentsData,
         driversData,
@@ -65,6 +67,7 @@ const AdminDashboardPage = () => {
         fetchMyBuses(),
         fetchroute(),
         fetchAlltrip(),
+        fetchdailytrip(),
         getAllIncidents(),
         fetchParents(),
         fetchDrivers(),
@@ -92,6 +95,7 @@ const AdminDashboardPage = () => {
         buses: Array.isArray(busesData) ? busesData : [],
         routes: Array.isArray(routesData) ? routesData : [],
         trips: Array.isArray(tripsData?.data) ? tripsData.data : (Array.isArray(tripsData) ? tripsData : []),
+        tripsdaily: Array.isArray(tripsdailyData?.data) ? tripsdailyData.data : (Array.isArray(tripsdaily) ? tripsdaily : []),
         incidents: Array.isArray(incidentsData) ? incidentsData : [],
         users: {
           parents: Array.isArray(parentsData) ? parentsData : [],
@@ -128,21 +132,30 @@ const AdminDashboardPage = () => {
       return acc;
     }, {}) : {};
 
-  // Calculate student class distribution with fallback
-  const studentClassCounts = Array.isArray(dashboardData.students) ? 
-    dashboardData.students.reduce((acc, student) => {
-      const className = student.className || 'Non spécifié';
-      acc[className] = (acc[className] || 0) + 1;
-      return acc;
-    }, {}) : {};
+
 
   // Calculate trip status distribution with fallback
-  const dailyTripStatus = Array.isArray(dashboardData.trips) ? 
-    dashboardData.trips.reduce((acc, trip) => {
-      const status = trip.status || 'Non spécifié';
-      acc[status] = (acc[status] || 0) + 1;
+
+  // Count how many daily trips exist for each trip
+const dailyTripStatush = Array.isArray(dashboardData.tripsdaily)
+  ? dashboardData.tripsdaily.reduce((acc, dailyTrip) => {
+      // Use dailyTrip.tripId as the key
+      const tripId = dailyTrip.tripId || 'Unknown Trip';
+      acc[tripId] = (acc[tripId] || 0) + 1;
       return acc;
-    }, {}) : {};
+    }, {})
+  : {};
+  const dailyTripStatus = Array.isArray(dashboardData.tripsdaily)
+  ? dashboardData.tripsdaily.reduce((acc, dailyTrip) => {
+      const trip = dashboardData.trips.find(t => t.id === dailyTrip.tripId);
+      const tripName = trip?.name || `Trip ${dailyTrip.tripId}`;
+      acc[tripName] = (acc[tripName] || 0) + 1;
+      return acc;
+    }, {})
+  : {};
+
+
+
 
   // User role distribution
   const userRoleCounts = {
@@ -278,7 +291,6 @@ const AdminDashboardPage = () => {
             Gestion de l&apos;école et de ses établissements
           </p>
         </div>
-        <DatePickerWithRange />
       </div>
 
       {/* Key Statistics Overview */}
@@ -460,7 +472,49 @@ const AdminDashboardPage = () => {
               </div>
             </CardContent>
           </Card>
+          {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2  gap-6 pt-4">
+        <Card>
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg font-semibold text-default-900">Élèves par Sexe</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center p-4">
+            {Object.keys(studentGenderCounts).length > 0 ? (
+              <Chart
+                options={getChartOptions(studentGenderCounts)}
+                series={Object.values(studentGenderCounts)}
+                type="pie"
+                height={250}
+              />
+            ) : (
+              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
+            )}
+          </CardContent>
+        </Card>
+
+
+        <Card>
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg font-semibold text-default-900">État des Voyages</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center p-4">
+            {Object.keys(dailyTripStatus).length > 0 ? (
+              <Chart
+                options={getChartOptions(dailyTripStatus, Object.keys(dailyTripStatus), 'bar')}
+                series={[{ name: 'Nombre de Voyages', data: Object.values(dailyTripStatus) }]}
+                type="bar"
+                height={250}
+              />
+            ) : (
+              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+          
         </div>
+
+        
 
         {/* User Role Distribution Chart */}
         <div className="col-span-12 lg:col-span-4">
@@ -487,62 +541,7 @@ const AdminDashboardPage = () => {
         </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-semibold text-default-900">Élèves par Sexe</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center p-4">
-            {Object.keys(studentGenderCounts).length > 0 ? (
-              <Chart
-                options={getChartOptions(studentGenderCounts)}
-                series={Object.values(studentGenderCounts)}
-                type="pie"
-                height={250}
-              />
-            ) : (
-              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-semibold text-default-900">Élèves par Classe</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center p-4">
-            {Object.keys(studentClassCounts).length > 0 ? (
-              <Chart
-                options={getChartOptions(studentClassCounts, Object.keys(studentClassCounts), 'bar')}
-                series={[{ name: 'Nombre d\'Élèves', data: Object.values(studentClassCounts) }]}
-                type="bar"
-                height={250}
-              />
-            ) : (
-              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-semibold text-default-900">État des Voyages</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center p-4">
-            {Object.keys(dailyTripStatus).length > 0 ? (
-              <Chart
-                options={getChartOptions(dailyTripStatus, Object.keys(dailyTripStatus), 'bar')}
-                series={[{ name: 'Nombre de Voyages', data: Object.values(dailyTripStatus) }]}
-                type="bar"
-                height={250}
-              />
-            ) : (
-              <p className="text-gray-600 text-sm">Aucune donnée disponible</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      
 
       {/* Recent Activity & Quick Access */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

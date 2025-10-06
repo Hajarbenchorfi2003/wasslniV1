@@ -74,7 +74,7 @@ const LogInForm = () => {
       }
         
 
-    toast.success("Connexion réussie");
+  
 
       // Sauvegarder l'utilisateur dans le localStorage
       localStorage.setItem("user", JSON.stringify(result.user));
@@ -215,13 +215,14 @@ const LogInForm = () => {
           </Link>
         </div>
         <Button
-          className="w-full"
-          disabled={isPending}
-          size={!isDesktop2xl ? "lg" : "md"}
-        >
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isPending ? "Loading..." : "Sign In"}
-        </Button>
+  className="w-full"
+  disabled={isLoading} // use isLoading
+  size={!isDesktop2xl ? "lg" : "md"}
+>
+  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+  {isLoading ? "Chargement..." : "Se connecter"}
+</Button>
+
       </form>
     </div>
   );

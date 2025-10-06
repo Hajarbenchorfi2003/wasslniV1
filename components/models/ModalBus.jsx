@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2 } from "lucide-react"; 
 
 export const ModalBus = ({ isOpen, onClose, editingBus, onSave, establishments }) => {
   const [formData, setFormData] = useState({
@@ -26,6 +27,7 @@ export const ModalBus = ({ isOpen, onClose, editingBus, onSave, establishments }
     marque: '',
     establishmentId: null, // To link the bus to an establishment
   });
+  const [loading, setLoading] = useState(false);
 
   // Set form data when editing an existing bus or resetting for a new one
   useEffect(() => {
@@ -62,10 +64,19 @@ export const ModalBus = ({ isOpen, onClose, editingBus, onSave, establishments }
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(formData);
-  };
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    setLoading(true); // start loading
+    await onSave(formData); // wait for async save
+  } catch (error) {
+    console.error("Erreur lors de la soumission:", error);
+    toast.error("Une erreur est survenue");
+  } finally {
+    setLoading(false); // stop loading
+  }
+};
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -114,7 +125,10 @@ export const ModalBus = ({ isOpen, onClose, editingBus, onSave, establishments }
           )}
         </div>
           <DialogFooter>
-            <Button type="submit">Sauvegarder</Button>
+            <Button type="submit" disabled={loading}>
+    {loading ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
+    {loading ? 'Sauvegarde en cours...' : 'Sauvegarder'}
+  </Button>
           </DialogFooter>
         </form>
       </DialogContent>

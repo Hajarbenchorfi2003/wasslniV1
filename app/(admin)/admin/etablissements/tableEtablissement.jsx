@@ -179,7 +179,7 @@ const TableEtablissement = ({ etablissements, onEditEtablissement, onDeleteEtabl
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                               {/* Establishment Details */}
                               <div>
-                                <h4 className="font-medium mb-2">Détails de l&apos;établissement</h4>
+                                <h4 className="font-medium text-center mb-2">Détails de l&apos;établissement</h4>
                                 <div className="space-y-2 text-sm">
                                   <p className="flex items-center gap-2">
                                     <Icon icon="heroicons:phone" className="w-4 h-4 opacity-50" />
@@ -195,7 +195,7 @@ const TableEtablissement = ({ etablissements, onEditEtablissement, onDeleteEtabl
 
                               {/* Responsible Details */}
                               <div>
-                                <h4 className="font-medium mb-2">Informations du responsable</h4>
+                                <h4 className="font-medium text-center mb-2">Informations du responsable</h4>
                                 <div className="space-y-2 text-sm">
                                   {responsible.fullname !== 'Non Assigné' ? (
                                     <>

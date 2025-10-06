@@ -370,7 +370,7 @@ const EstablishmentDetailsPage = () => {
 
             {/* Associated Entities */}
             <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-12 lg:col-span-3">
+                <div className="col-span-12 lg:col-span-6">
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
@@ -397,7 +397,7 @@ const EstablishmentDetailsPage = () => {
                     </Card>
                 </div>
 
-                <div className="col-span-12 lg:col-span-3">
+                <div className="col-span-12 lg:col-span-6">
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
@@ -424,7 +424,7 @@ const EstablishmentDetailsPage = () => {
                     </Card>
                 </div>
 
-                <div className="col-span-12 lg:col-span-3">
+                <div className="col-span-12 lg:col-span-6">
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
@@ -451,7 +451,7 @@ const EstablishmentDetailsPage = () => {
                     </Card>
                 </div>
 
-                <div className="col-span-12 lg:col-span-3">
+                <div className="col-span-12 lg:col-span-6">
                     <Card>
                         <CardHeader className="border-none p-6 pt-5 mb-0">
                             <CardTitle className="text-lg font-semibold text-default-900 p-0">
